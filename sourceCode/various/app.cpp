@@ -707,7 +707,8 @@ void App::addStatusbarMessage(const std::string& txt)
             {
                 mainWindow->statusBar->appendPlainText(txt.c_str());
                 mainWindow->statusBar->moveCursor(QTextCursor::End);
-                mainWindow->statusBar->moveCursor(QTextCursor::PreviousBlock);
+//                mainWindow->statusBar->moveCursor(QTextCursor::PreviousBlock);
+                mainWindow->statusBar->verticalScrollBar()->setValue(mainWindow->statusBar->verticalScrollBar()->maximum());
                 mainWindow->statusBar->ensureCursorVisible();
             }
         }

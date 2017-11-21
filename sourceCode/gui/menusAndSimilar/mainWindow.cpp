@@ -215,7 +215,7 @@ CMainWindow::CMainWindow() : QMainWindow()
 // -----------
 
 // --- Status bar ---
-    statusBar=new QPlainTextEdit();
+    statusBar=new CStatusBar();
     statusBar->setReadOnly(true);
     statusBar->setLineWrapMode(QPlainTextEdit::NoWrap);
     statusBar->setMaximumBlockCount(500);

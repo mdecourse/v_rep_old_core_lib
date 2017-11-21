@@ -3309,9 +3309,8 @@ luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString)
     // --------------------------------------------
 
 
-    printf("'print()' now prints to the statusbar, instead of the console (use 'print=printToConsole' to revert).\n");
     luaWrap_luaL_dostring(L,"printToConsole=print");
-    luaWrap_luaL_dostring(L,"function print(a) sim.addStatusbarMessage(tostring(a)) end");
+    luaWrap_luaL_dostring(L,"function print(...) local a={...} local t='' for i=1,#a,1 do if i~=1 then t=t..',' end t=t..tostring(a[i]) end sim.addStatusbarMessage(t) end");
 
 
     luaWrap_luaL_dostring(L,"sim=require('sim')");

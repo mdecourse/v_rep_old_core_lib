@@ -828,6 +828,7 @@ WITH_GUI {
         $$PWD/sourceCode/gui/menusAndSimilar/customMenuBarItemContainer.h \
         $$PWD/sourceCode/gui/menusAndSimilar/customMenuBarItem.h \
         $$PWD/sourceCode/gui/menusAndSimilar/mainWindow.h \
+        $$PWD/sourceCode/gui/menusAndSimilar/statusBar.h \
         $$PWD/sourceCode/gui/menusAndSimilar/helpMenu.h \
 
     HEADERS += $$PWD/sourceCode/gui/various/simRecorder.h \
@@ -1325,6 +1326,7 @@ WITH_GUI {
         $$PWD/sourceCode/gui/menusAndSimilar/customMenuBarItemContainer.cpp \
         $$PWD/sourceCode/gui/menusAndSimilar/customMenuBarItem.cpp \
         $$PWD/sourceCode/gui/menusAndSimilar/mainWindow.cpp \
+        $$PWD/sourceCode/gui/menusAndSimilar/statusBar.cpp \
         $$PWD/sourceCode/gui/menusAndSimilar/helpMenu.cpp \
 
     SOURCES += $$PWD/sourceCode/gui/various/simRecorder.cpp \

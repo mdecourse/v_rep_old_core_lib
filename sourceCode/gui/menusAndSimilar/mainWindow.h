@@ -7,11 +7,11 @@
 #include <QToolButton>
 #include <QSignalMapper>
 #include <QSplitter>
-#include <QPlainTextEdit>
 #include <QMenu>
 #include <QAction>
 #include <QComboBox>
 #include <QBoxLayout>
+#include "statusBar.h"
 #include "mainWindowBase.h"
 #include "qvrep_openglwidget.h"
 #include "global.h"
@@ -129,7 +129,7 @@ public:
 
     QSignalMapper* getPopupSignalMapper();
     COpenglWidget* openglWidget;
-    QPlainTextEdit* statusBar;
+    CStatusBar* statusBar;
     CModelFolderWidget* modelFolderWidget;
     CModelListWidget* modelListWidget;
     CSceneHierarchyWidget* sceneHierarchyWidget;
