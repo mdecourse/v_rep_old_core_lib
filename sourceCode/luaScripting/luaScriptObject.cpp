@@ -2705,6 +2705,7 @@ void CLuaScriptObject::serialize(CSer& ar)
         handleVerSpec_adjustScriptText7(this,(ar.getVrepVersionThatWroteThisFile()<=30302)&&(VREP_PROGRAM_VERSION_NB>30302));
         handleVerSpec_adjustScriptText8(this,App::userSettings->changeScriptCodeForNewApiNotation);
         handleVerSpec_adjustScriptText9(this);
+        handleVerSpec_adjustScriptText10(this,ar.getVrepVersionThatWroteThisFile()<30401);
 
         fromBufferToFile();
     }
