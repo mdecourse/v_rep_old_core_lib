@@ -604,15 +604,17 @@ simInt simRunSimulator_internal(const simChar* applicationName,simInt options,si
 #endif
 
     App::run(initCallBack,loopCallBack,deinitCallBack); // We stay in here until we quit the application!
+    printf(".");
 #ifdef SIM_WITH_GUI
     App::deleteMainWindow();
 #endif
-
+    printf(".");
     App::deleteMainContainer();
-
+    printf(".");
     handleVerSpecRunSimulator5();
-
+    printf(".");
     CThreadPool::cleanUp();
+    printf("done.\n");
     return(1);
 }
 
