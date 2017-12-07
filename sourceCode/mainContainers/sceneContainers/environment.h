@@ -100,21 +100,9 @@ public:
     bool deleteCurrentJob();
     bool renameCurrentJob(std::string newName);
     bool switchJob(int index);
+    bool getJobFunctionalityEnabled();
+    void setJobFunctionalityEnabled(bool en);
 
-    /*
-    void setVisualizePackMlStates(bool en);
-    bool getVisualizePackMlStates();
-    void setVisualizeSimplifiedPackMlStates(bool en);
-    bool getVisualizeSimplifiedPackMlStates();
-    void setVisualizeTime(bool en);
-    bool getVisualizeTime();
-    void setVisualizeSimplifiedTime(bool en);
-    bool getVisualizeSimplifiedTime();
-    void setVisualizeOee(bool en);
-    bool getVisualizeOee();
-    void setShowPropertiesDlg(bool en);
-    bool getShowPropertiesDlg();
-    */
     void setShowPartRepository(bool en);
     bool getShowPartRepository();
     void setShowPalletRepository(bool en);
@@ -160,12 +148,7 @@ protected:
     bool _useCustomContactHandlingViaScript_OLD;
     bool _useGeneralCallbackHandlingViaScript_OLD;
 
-//    bool _visualizePackMlStates;
-//    bool _simplifiedPackMlStatesVisualization;
-//    bool _visualizeTime;
-//    bool _simplifiedTimeVisualization;
-//    bool _visualizeOee;
-    //    bool _showPropertiesDlg; // not serialized
+    bool _jobFuncEnabled; // not serialized
     bool _showPartRepository; // not serialized
     bool _showPalletRepository; // not serialized
 

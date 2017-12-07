@@ -141,18 +141,9 @@ void CEnvironment::setUpDefaultValues()
     _saveExistingCalculationStructures=false;
     _useCustomContactHandlingViaScript_OLD=false;
     _useGeneralCallbackHandlingViaScript_OLD=false;
-    /*
-    _visualizePackMlStates=false;
-    _simplifiedPackMlStatesVisualization=false;
-    _visualizeTime=false;
-    _simplifiedTimeVisualization=false;
-    _visualizeOee=false;
-    _showPropertiesDlg=false;
-    */
     _showPartRepository=false;
     _showPalletRepository=false;
-
-
+    _jobFuncEnabled=false;
     _currentJob="default";
     _jobs.clear();
     _jobs.push_back(_currentJob);
@@ -836,67 +827,16 @@ bool CEnvironment::switchJob(int index)
     return(false);
 }
 
-/*
-void CEnvironment::setVisualizePackMlStates(bool en)
+bool CEnvironment::getJobFunctionalityEnabled()
 {
-    _visualizePackMlStates=en;
+    return(_jobFuncEnabled);    
 }
 
-bool CEnvironment::getVisualizePackMlStates()
+void CEnvironment::setJobFunctionalityEnabled(bool en)
 {
-    return(_visualizePackMlStates);
+    _jobFuncEnabled=en;
 }
 
-void CEnvironment::setVisualizeSimplifiedPackMlStates(bool en)
-{
-    _simplifiedPackMlStatesVisualization=en;
-}
-
-bool CEnvironment::getVisualizeSimplifiedPackMlStates()
-{
-    return(_simplifiedPackMlStatesVisualization);
-}
-
-void CEnvironment::setVisualizeTime(bool en)
-{
-    _visualizeTime=en;
-}
-
-bool CEnvironment::getVisualizeTime()
-{
-    return(_visualizeTime);
-}
-
-void CEnvironment::setVisualizeSimplifiedTime(bool en)
-{
-    _simplifiedTimeVisualization=en;
-}
-
-bool CEnvironment::getVisualizeSimplifiedTime()
-{
-    return(_simplifiedTimeVisualization);
-}
-
-void CEnvironment::setVisualizeOee(bool en)
-{
-    _visualizeOee=en;
-}
-
-bool CEnvironment::getVisualizeOee()
-{
-    return(_visualizeOee);
-}
-
-void CEnvironment::setShowPropertiesDlg(bool en)
-{
-    _showPropertiesDlg=en;
-}
-
-bool CEnvironment::getShowPropertiesDlg()
-{
-    return(_showPropertiesDlg);
-}
-*/
 void CEnvironment::setShowPartRepository(bool en)
 {
     _showPartRepository=en;
@@ -926,21 +866,6 @@ void CEnvironment::addLayoutMenu(VMenu* menu)
     menu->appendMenuItem(simStopped&&noEditMode,false,BR_COMMAND_1_SCCMD+0,"Save configuration file");
     menu->appendMenuItem(simStopped&&noEditMode,false,BR_COMMAND_1_SCCMD+2,"Get quote");
 
-    /*
-    VMenu* packMl=new VMenu();
-    packMl->appendMenuItem(simStopped&&noEditMode,false,BR_COMMAND_1_SCCMD+1,"Edit PackML code");
-    packMl->appendMenuSeparator();
-    packMl->appendMenuItem(noEditMode,_visualizePackMlStates,BR_COMMAND_1_SCCMD+6,"Visualize PackML states during execution",true);
-    packMl->appendMenuItem(noEditMode&&_visualizePackMlStates,_simplifiedPackMlStatesVisualization,BR_COMMAND_1_SCCMD+7,"Simplified visualization",true);
-    menu->appendMenuAndDetach(packMl,true,"PackML");
-
-    VMenu* time=new VMenu();
-    time->appendMenuItem(noEditMode,_visualizeTime,BR_COMMAND_1_SCCMD+8,"Visualize time during execution",true);
-    time->appendMenuItem(noEditMode&&_visualizeTime,_simplifiedTimeVisualization,BR_COMMAND_1_SCCMD+9,"Simplified visualization",true);
-    menu->appendMenuAndDetach(time,true,"Time");
-
-    menu->appendMenuItem(noEditMode,_visualizeOee,BR_COMMAND_1_SCCMD+10,"Visualize OEE during execution",true);
-    */
     menu->appendMenuItem(noEditMode,_showPartRepository,BR_COMMAND_1_SCCMD+3,"Part repository",true);
     menu->appendMenuItem(noEditMode,_showPalletRepository,BR_COMMAND_1_SCCMD+4,"Pallet repository",true);
     // BR_COMMAND_1_SCCMD+11 is for the verify layout toolbar button
@@ -948,7 +873,7 @@ void CEnvironment::addLayoutMenu(VMenu* menu)
 
 void CEnvironment::addJobsMenu(VMenu* menu)
 { // GUI THREAD only
-    bool enabled=App::ct->simulation->isSimulationStopped()&&(App::getEditModeType()==NO_EDIT_MODE);
+    bool enabled=App::ct->simulation->isSimulationStopped()&&(App::getEditModeType()==NO_EDIT_MODE)&&_jobFuncEnabled;
     menu->appendMenuItem((_jobs.size()<99)&&enabled,false,BR_COMMAND_1_SCCMD+297,"Create new job");
     menu->appendMenuItem((_jobs.size()>1)&&enabled,false,BR_COMMAND_1_SCCMD+298,"Delete current job");
     menu->appendMenuItem(enabled,false,BR_COMMAND_1_SCCMD+299,"Rename current job");

@@ -315,7 +315,7 @@
 #define IDS_LAYOUT_MENU_ITEM "Layout"
 #define IDS_JOBS_MENU_ITEM "Jobs"
 
-#define IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM "Associate view with selected graph" //modifiedOn 10/3/2012
+//#define IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM "Associate view with selected graph" //modifiedOn 10/3/2012
 #define IDS_LOOK_THROUGH_SELECTED_CAMERA_MENU_ITEM "Associate view with selected camera" //modifiedOn 10/3/2012
 #define IDS_LOOK_AT_SELECTED_VISION_SENSOR_MENU_ITEM "Associate view with selected vision sensor" //modifiedOn 10/3/2012
 

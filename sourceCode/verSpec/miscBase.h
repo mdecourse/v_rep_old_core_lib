@@ -28,6 +28,7 @@ public:
     static bool handleVerSpec_canAbortScriptExecutionViaEmergencyButton(){return(true);}
     static std::string handleVerSpec_getAbortScriptExecutionEmergencyButtonTxt(){return("");}
     static bool handleVerSpec_statusbarDefaultInitiallyVisible(){return(true);}
+    static bool handleVerSpec_statusbarMsgToConsole(){return(false);}
     static bool handleVerSpec_fullEditionAdd(){return(true);}
     static bool handleVerSpec_isDisplayNameAltName(){return(false);}
 };

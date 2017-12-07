@@ -15,6 +15,7 @@
 #include "luaWrapper.h"
 #include "geometric.h"
 #include "rendering.h"
+#include "miscBase.h"
 #ifdef SIM_WITH_GUI
     #include "auxLibVideo.h"
     #include "vMessageBox.h"
@@ -690,34 +691,31 @@ void App::setFullScreen(bool f)
 
 void App::addStatusbarMessage(const std::string& txt)
 {
-#ifdef SIM_WITH_GUI
-    if (mainWindow!=NULL)
-    {
-        if ((operationalUIParts&sim_gui_statusbar)&&(mainWindow->statusBar!=NULL) )
-        {
-            if (!VThread::isCurrentThreadTheUiThread())
-            { // we are NOT in the UI thread. We execute the command in a delayed manner:
-                SUIThreadCommand cmdIn;
-                SUIThreadCommand cmdOut;
-                cmdIn.cmdId=ADD_STATUSBAR_MESSAGE_UITHREADCMD;
-                cmdIn.stringParams.push_back(txt);
-                uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
-            }
-            else
-            {
-                mainWindow->statusBar->appendPlainText(txt.c_str());
-                mainWindow->statusBar->moveCursor(QTextCursor::End);
-//                mainWindow->statusBar->moveCursor(QTextCursor::PreviousBlock);
-                mainWindow->statusBar->verticalScrollBar()->setValue(mainWindow->statusBar->verticalScrollBar()->maximum());
-                mainWindow->statusBar->ensureCursorVisible();
-            }
-        }
+    if (!VThread::isCurrentThreadTheUiThread())
+    { // we are NOT in the UI thread. We execute the command in a delayed manner:
+        SUIThreadCommand cmdIn;
+        SUIThreadCommand cmdOut;
+        cmdIn.cmdId=ADD_STATUSBAR_MESSAGE_UITHREADCMD;
+        cmdIn.stringParams.push_back(txt);
+        uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
     }
     else
-#endif
     {
-        if (userSettings->redirectStatusbarMsgToConsoleInHeadlessMode)
-            printf("%s\n",txt.c_str());
+        #ifdef SIM_WITH_GUI
+            if (mainWindow!=NULL)
+            {
+                if ((operationalUIParts&sim_gui_statusbar)&&(mainWindow->statusBar!=NULL) )
+                {
+                    mainWindow->statusBar->appendPlainText(txt.c_str());
+                    mainWindow->statusBar->moveCursor(QTextCursor::End);
+        //            mainWindow->statusBar->moveCursor(QTextCursor::PreviousBlock);
+                    mainWindow->statusBar->verticalScrollBar()->setValue(mainWindow->statusBar->verticalScrollBar()->maximum());
+                    mainWindow->statusBar->ensureCursorVisible();
+                }
+            }
+        #endif
+        if ( ((mainWindow==NULL)&&userSettings->redirectStatusbarMsgToConsoleInHeadlessMode)||CMiscBase::handleVerSpec_statusbarMsgToConsole() )
+            printf("[statusbar]: %s\n",txt.c_str());
     }
 }
 

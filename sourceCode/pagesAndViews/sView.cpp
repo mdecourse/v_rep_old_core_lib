@@ -669,6 +669,7 @@ bool CSView::processCommand(int commandID,int subViewIndex)
         }
         return(true);
     }
+    /*
     if (commandID==VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD)
     {
         if (!VThread::isCurrentThreadTheUiThread())
@@ -693,6 +694,7 @@ bool CSView::processCommand(int commandID,int subViewIndex)
         }
         return(true);
     }
+    */
     if (commandID==VIEW_FUNCTIONS_LOOK_AT_VISION_SENSOR_VFCMD)
     {
         if (!VThread::isCurrentThreadTheUiThread())
@@ -946,19 +948,19 @@ void CSView::render(int mainWindowXPos,bool clipWithMainWindowXPos,bool drawText
 #ifdef SIM_WITH_GUI
 void CSView::addMenu(VMenu* menu)
 {
-    CCamera* camera=App::ct->objCont->getCamera(linkedObjectID);
+    //bool lastSelIsGraph=false;
     CGraph* graph=App::ct->objCont->getGraph(linkedObjectID);
+    CCamera* camera=App::ct->objCont->getCamera(linkedObjectID);
     CVisionSensor* sensor=App::ct->objCont->getVisionSensor(linkedObjectID);
     int selSize=App::ct->objCont->getSelSize();
     bool lastSelIsCamera=false;
-    bool lastSelIsGraph=false;
     bool lastSelIsRendSens=false;
     if (selSize>0)
     {
+//        if (App::ct->objCont->getLastSelection_object()->getObjectType()==sim_object_graph_type)
+//            lastSelIsGraph=true;
         if (App::ct->objCont->getLastSelection_object()->getObjectType()==sim_object_camera_type)
             lastSelIsCamera=true;
-        if (App::ct->objCont->getLastSelection_object()->getObjectType()==sim_object_graph_type)
-            lastSelIsGraph=true;
         if (App::ct->objCont->getLastSelection_object()->getObjectType()==sim_object_visionsensor_type)
             lastSelIsRendSens=true;
     }
@@ -972,9 +974,9 @@ void CSView::addMenu(VMenu* menu)
         menu->appendMenuItem(true,App::ct->environment->getShapeTexturesEnabled(),VIEW_FUNCTIONS_TEXTURED_DISPLAY_VFCMD,IDSN_SHAPE_TEXTURES_ENABLED,true);
         menu->appendMenuSeparator();
 
-        if ( (selSize==1)&&lastSelIsGraph )
-            menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD,IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM);
-        else if ( (selSize==1)&&lastSelIsRendSens )
+//        if ( (selSize==1)&&lastSelIsGraph )
+//            menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD,IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM);
+        /*else*/ if ( (selSize==1)&&lastSelIsRendSens )
             menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_VISION_SENSOR_VFCMD,IDS_LOOK_AT_SELECTED_VISION_SENSOR_MENU_ITEM);
         else
             menu->appendMenuItem(lastSelIsCamera&&(selSize==1),false,VIEW_FUNCTIONS_LOOK_THROUGH_CAMERA_VFCMD,IDS_LOOK_THROUGH_SELECTED_CAMERA_MENU_ITEM);
@@ -1014,16 +1016,16 @@ void CSView::addMenu(VMenu* menu)
             menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_THROUGH_CAMERA_VFCMD,IDS_LOOK_THROUGH_SELECTED_CAMERA_MENU_ITEM);
         else if ( (selSize==1)&&lastSelIsRendSens )
             menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_VISION_SENSOR_VFCMD,IDS_LOOK_AT_SELECTED_VISION_SENSOR_MENU_ITEM);
-        else
-            menu->appendMenuItem(lastSelIsGraph&&(selSize==1),false,VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD,IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM);
+//        else
+//            menu->appendMenuItem(lastSelIsGraph&&(selSize==1),false,VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD,IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM);
 
         menu->appendMenuItem(true,false,VIEW_SELECTOR_SELECT_ANY_VSCMD,IDSN_SELECT_VIEWABLE_OBJECT);
     }
     if (sensor!=NULL)
     { // The linked object is a vision sensor:
-        if ( (selSize==1)&&lastSelIsGraph )
-            menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD,IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM);
-        else if ( (selSize==1)&&lastSelIsCamera )
+//        if ( (selSize==1)&&lastSelIsGraph )
+//            menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD,IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM);
+        /*else*/ if ( (selSize==1)&&lastSelIsCamera )
             menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_THROUGH_CAMERA_VFCMD,IDS_LOOK_THROUGH_SELECTED_CAMERA_MENU_ITEM);
         else
             menu->appendMenuItem(lastSelIsRendSens&&(selSize==1),false,VIEW_FUNCTIONS_LOOK_AT_VISION_SENSOR_VFCMD,IDS_LOOK_AT_SELECTED_VISION_SENSOR_MENU_ITEM);
@@ -1032,9 +1034,9 @@ void CSView::addMenu(VMenu* menu)
     }
     if ( (camera==NULL)&&(graph==NULL)&&(sensor==NULL) )
     {
-        if ( (selSize==1)&&lastSelIsGraph )
-            menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD,IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM);
-        else if ( (selSize==1)&&lastSelIsRendSens )
+//        if ( (selSize==1)&&lastSelIsGraph )
+//            menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_GRAPH_VFCMD,IDS_LOOK_AT_SELECTED_GRAPH_MENU_ITEM);
+        /*else*/ if ( (selSize==1)&&lastSelIsRendSens )
             menu->appendMenuItem(true,false,VIEW_FUNCTIONS_LOOK_AT_VISION_SENSOR_VFCMD,IDS_LOOK_AT_SELECTED_VISION_SENSOR_MENU_ITEM);
         else
             menu->appendMenuItem(lastSelIsCamera&&(selSize==1),false,VIEW_FUNCTIONS_LOOK_THROUGH_CAMERA_VFCMD,IDS_LOOK_THROUGH_SELECTED_CAMERA_MENU_ITEM);

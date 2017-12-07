@@ -2637,50 +2637,6 @@ simInt simSetBoolParameter_internal(simInt parameter,simBool boolState)
             }
             return(0);
         }
-        /*
-        if (parameter==sim_boolparam_br_showpackml)
-        {
-            if (App::ct->environment==NULL)
-                return(-1);
-            App::ct->environment->setVisualizePackMlStates(boolState!=0);
-            return(1);
-        }
-        if (parameter==sim_boolparam_br_showsimplifiedpackml)
-        {
-            if (App::ct->environment==NULL)
-                return(-1);
-            App::ct->environment->setVisualizeSimplifiedPackMlStates(boolState!=0);
-            return(1);
-        }
-        if (parameter==sim_boolparam_br_showtime)
-        {
-            if (App::ct->environment==NULL)
-                return(-1);
-            App::ct->environment->setVisualizeTime(boolState!=0);
-            return(1);
-        }
-        if (parameter==sim_boolparam_br_showsimplifiedtime)
-        {
-            if (App::ct->environment==NULL)
-                return(-1);
-            App::ct->environment->setVisualizeSimplifiedTime(boolState!=0);
-            return(1);
-        }
-        if (parameter==sim_boolparam_br_showoee)
-        {
-            if (App::ct->environment==NULL)
-                return(-1);
-            App::ct->environment->setVisualizeOee(boolState!=0);
-            return(1);
-        }
-        if (parameter==sim_boolparam_br_generalproperties)
-        {
-            if (App::ct->environment==NULL)
-                return(-1);
-            App::ct->environment->setShowPropertiesDlg(boolState!=0);
-            return(1);
-        }
-        */
         if (parameter==sim_boolparam_br_partrepository)
         {
             if (App::ct->environment==NULL)
@@ -2693,6 +2649,13 @@ simInt simSetBoolParameter_internal(simInt parameter,simBool boolState)
             if (App::ct->environment==NULL)
                 return(-1);
             App::ct->environment->setShowPalletRepository(boolState!=0);
+            return(1);
+        }
+        if (parameter==sim_boolparam_br_jobfunc)
+        {
+            if (App::ct->environment==NULL)
+                return(-1);
+            App::ct->environment->setJobFunctionalityEnabled(boolState!=0);
             return(1);
         }
         if (parameter==sim_boolparam_use_glfinish_cmd)
@@ -2786,63 +2749,6 @@ simInt simGetBoolParameter_internal(simInt parameter)
                 retVal=1;
             return(retVal);
         }
-        /*
-        if (parameter==sim_boolparam_br_showpackml)
-        {
-            int retVal=0;
-            if (App::ct->environment==NULL)
-                return(-1);
-            if (App::ct->environment->getVisualizePackMlStates())
-                retVal=1;
-            return(retVal);
-        }
-        if (parameter==sim_boolparam_br_showsimplifiedpackml)
-        {
-            int retVal=0;
-            if (App::ct->environment==NULL)
-                return(-1);
-            if (App::ct->environment->getVisualizeSimplifiedPackMlStates())
-                retVal=1;
-            return(retVal);
-        }
-
-        if (parameter==sim_boolparam_br_showtime)
-        {
-            int retVal=0;
-            if (App::ct->environment==NULL)
-                return(-1);
-            if (App::ct->environment->getVisualizeTime())
-                retVal=1;
-            return(retVal);
-        }
-        if (parameter==sim_boolparam_br_showsimplifiedtime)
-        {
-            int retVal=0;
-            if (App::ct->environment==NULL)
-                return(-1);
-            if (App::ct->environment->getVisualizeSimplifiedTime())
-                retVal=1;
-            return(retVal);
-        }
-        if (parameter==sim_boolparam_br_showoee)
-        {
-            int retVal=0;
-            if (App::ct->environment==NULL)
-                return(-1);
-            if (App::ct->environment->getVisualizeOee())
-                retVal=1;
-            return(retVal);
-        }
-        if (parameter==sim_boolparam_br_generalproperties)
-        {
-            int retVal=0;
-            if (App::ct->environment==NULL)
-                return(-1);
-            if (App::ct->environment->getShowPropertiesDlg())
-                retVal=1;
-            return(retVal);
-        }
-        */
         if (parameter==sim_boolparam_br_partrepository)
         {
             int retVal=0;
@@ -2858,6 +2764,15 @@ simInt simGetBoolParameter_internal(simInt parameter)
             if (App::ct->environment==NULL)
                 return(-1);
             if (App::ct->environment->getShowPalletRepository())
+                retVal=1;
+            return(retVal);
+        }
+        if (parameter==sim_boolparam_br_jobfunc)
+        {
+            int retVal=0;
+            if (App::ct->environment==NULL)
+                return(-1);
+            if (App::ct->environment->getJobFunctionalityEnabled())
                 retVal=1;
             return(retVal);
         }

@@ -1280,16 +1280,9 @@ const SLuaVariables simLuaVariables[]=
     {"sim.boolparam_full_model_copy_from_api",sim_boolparam_reserved3,true},
     {"sim.boolparam_realtime_simulation",sim_boolparam_realtime_simulation,true},
     {"sim.boolparam_online_mode",sim_boolparam_online_mode,true},
-/*
-    {"sim.boolparam_br_showpackml",sim_boolparam_br_showpackml,true},
-    {"sim.boolparam_br_showsimplifiedpackml",sim_boolparam_br_showsimplifiedpackml,true},
-    {"sim.boolparam_br_showtime",sim_boolparam_br_showtime,true},
-    {"sim.boolparam_br_showsimplifiedtime",sim_boolparam_br_showsimplifiedtime,true},
-    {"sim.boolparam_br_showoee",sim_boolparam_br_showoee,true},
-    {"sim.boolparam_br_generalproperties",sim_boolparam_br_generalproperties,true},
-        */
     {"sim.boolparam_br_partrepository",sim_boolparam_br_partrepository,true},
     {"sim.boolparam_br_palletrepository",sim_boolparam_br_palletrepository,true},
+    {"sim.boolparam_br_jobfunc",sim_boolparam_br_jobfunc,true},
     {"sim.boolparam_scene_closing",sim_boolparam_scene_closing,true},
     {"sim.boolparam_use_glfinish_cmd",sim_boolparam_use_glfinish_cmd,true},
     {"sim.boolparam_force_show_wireless_emission",sim_boolparam_force_show_wireless_emission,true},
