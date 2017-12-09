@@ -221,7 +221,7 @@ CMainWindow::CMainWindow() : QMainWindow()
     statusBar->setMaximumBlockCount(500);
     statusBar->moveCursor(QTextCursor::End);
     statusBar->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    statusBar->setMinimumHeight(36);
+    statusBar->setMinimumHeight(50);
     statusBar->setMaximumHeight(600);
     statusBar->setObjectName("statusBar");
     if ((App::operationalUIParts&sim_gui_statusbar)==0)

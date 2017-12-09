@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "vrepMainHeader.h"
@@ -7,7 +6,6 @@
 #include "7Vector.h"
 #include "3DObject.h"
 #include "uiThreadBase.h"
-#include <QObject>
 
 struct SUIThreadCommand
 {
@@ -151,6 +149,7 @@ enum {  OPEN_OR_CLOSE_UITHREADCMD=0,
 class CUiThread : public CUiThreadBase
 {
 #else
+#include <QObject>
 class CUiThread : public QObject, public CUiThreadBase
 {
     Q_OBJECT

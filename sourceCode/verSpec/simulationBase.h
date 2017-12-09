@@ -1,12 +1,15 @@
 
 #pragma once
 
-#include "vMenubar.h"
-#include "app.h"
+#ifndef SIM_WITHOUT_QT_AT_ALL
+    #include "vMenubar.h"
+    #include "app.h"
+#endif
 
 class CSimulationBase
 {
 public:
+#ifndef SIM_WITHOUT_QT_AT_ALL
     static void handleVerSpec_addMenu(VMenu* menu)
     {
         bool noEditMode=(App::getEditModeType()==NO_EDIT_MODE);
@@ -43,4 +46,5 @@ public:
         if (App::mainWindow!=NULL)
             menu->appendMenuItem(true,App::mainWindow->dlgCont->isVisible(SIMULATION_DLG),TOGGLE_SIMULATION_DLG_CMD,IDSN_SIMULATION_SETTINGS,true);
     }
+#endif
 };

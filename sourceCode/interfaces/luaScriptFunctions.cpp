@@ -17163,6 +17163,7 @@ int _simAuxFunc(luaWrap_lua_State* L)
                     errorString=SIM_ERROR_INVALID_HANDLE;
             }
         }
+#ifdef SIM_WITH_GUI
         if (cmd.compare("drawImageLines")==0)
         {
             if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0,lua_arg_number,2,lua_arg_number,4,lua_arg_number,3,lua_arg_number,0))
@@ -17253,6 +17254,7 @@ int _simAuxFunc(luaWrap_lua_State* L)
                 }
             }
         }
+#endif
     }
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
     LUA_END(0);

@@ -60,6 +60,7 @@ void CButtonBlockContainer::emptySceneProcedure(bool mainContainer)
     shiftSelectionStart=-1;
     buttonsLocked=false;
 
+#ifdef SIM_WITH_GUI
     if ( CMiscBase::handleVerSpec_hasInfoBar()&&(newSceneProcedurePasses==0) )
     {
         if (mainContainer)
@@ -85,6 +86,7 @@ void CButtonBlockContainer::emptySceneProcedure(bool mainContainer)
             }
         }
     }
+#endif
     newSceneProcedurePasses++;
 }
 

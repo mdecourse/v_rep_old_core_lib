@@ -713,9 +713,9 @@ void App::addStatusbarMessage(const std::string& txt)
                     mainWindow->statusBar->ensureCursorVisible();
                 }
             }
+            if ( ((mainWindow==NULL)&&userSettings->redirectStatusbarMsgToConsoleInHeadlessMode)||CMiscBase::handleVerSpec_statusbarMsgToConsole() )
+                printf("[statusbar]: %s\n",txt.c_str());
         #endif
-        if ( ((mainWindow==NULL)&&userSettings->redirectStatusbarMsgToConsoleInHeadlessMode)||CMiscBase::handleVerSpec_statusbarMsgToConsole() )
-            printf("[statusbar]: %s\n",txt.c_str());
     }
 }
 

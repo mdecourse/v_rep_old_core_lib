@@ -2,9 +2,11 @@
 #pragma once
 
 #include <string>
-#include <QPixmap>
 #include "pluginContainer.h"
 #include "persistentDataContainer.h"
+#ifndef SIM_WITHOUT_QT_AT_ALL
+    #include <QPixmap>
+#endif
 
 class App;
 
@@ -16,12 +18,16 @@ public:
 
     static void handleVerSpecConstructor1()
     {
-        Q_INIT_RESOURCE(imageFiles_vrep);
+        #ifndef SIM_WITHOUT_QT_AT_ALL
+            Q_INIT_RESOURCE(imageFiles_vrep);
+        #endif
     }
 
     static void handleVerSpecDestructor1()
     {
-        Q_CLEANUP_RESOURCE(imageFiles_vrep);
+        #ifndef SIM_WITHOUT_QT_AT_ALL
+            Q_CLEANUP_RESOURCE(imageFiles_vrep);
+        #endif
     }
 
     static std::string handleVerSpecSetAppName1(const char* name)
@@ -43,6 +49,7 @@ public:
     static void handleVerSpecRun1(){}
     static void handleVerSpecRun2(){}
 
+#ifndef SIM_WITHOUT_QT_AT_ALL
     static void handleVerSpecShowSplash1(QPixmap& pixmap)
     {
         // At this stage the plugins are not yet loaded. So we verify if previous run used one of the major plugins that have a different license:
@@ -53,6 +60,7 @@ public:
         else
             pixmap.load(":/imageFiles_vrep/splashBasic.png");
     }
+#endif
 
     static std::string handleVerSpecSetIcon1()
     {

@@ -129,6 +129,7 @@ void CUiThread::__executeCommandViaUiThread(SUIThreadCommand* cmdIn,SUIThreadCom
     if (cmdIn->cmdId==DESTROY_GL_TEXTURE_UITHREADCMD)
         destroyGlTexture(cmdIn->uintParams[0]);
 
+#ifdef SIM_WITH_GUI
     if (cmdIn->cmdId==JOB_NAME_UITHREADCMD)
     {
         bool ok;
@@ -136,6 +137,7 @@ void CUiThread::__executeCommandViaUiThread(SUIThreadCommand* cmdIn,SUIThreadCom
         if (ok)
             cmdOut->stringParams.push_back(text.toStdString());
     }
+#endif
 
 #ifdef SIM_WITH_OPENGL
     if (cmdIn->cmdId==CREATE_GL_CONTEXT_FBO_TEXTURE_IF_NEEDED_UITHREADCMD)

@@ -18,4 +18,5 @@ public:
     void handleVerSpec_adjustScriptText7(CLuaScriptObject* scriptObject,bool doIt){}
     void handleVerSpec_adjustScriptText8(CLuaScriptObject* scriptObject,int adjust){}
     void handleVerSpec_adjustScriptText9(CLuaScriptObject* scriptObject){}
+    void handleVerSpec_adjustScriptText10(CLuaScriptObject* scriptObject,bool doIt){}
 };

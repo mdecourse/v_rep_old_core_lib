@@ -19,8 +19,8 @@ public:
     static void endThread();
 #ifndef SIM_WITHOUT_QT_AT_ALL
     static void launchSimpleThread(SIMPLE_VTHREAD_START_ADDRESS startAddress);
-    static void endSimpleThread();
 #endif
+    static void endSimpleThread();
     static void setProcessorCoreAffinity(int mode); // negative=multicore, 0=any single core, otherwise affinity mask (bit1=core1, bit2=core2, etc.)
     static int getThreadId_apiQueried();
     static int getCoreCount();

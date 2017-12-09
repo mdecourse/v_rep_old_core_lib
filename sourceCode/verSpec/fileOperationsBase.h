@@ -1,8 +1,10 @@
 
 #pragma once
 
-#include "vMenubar.h"
 #include "app.h"
+#ifdef SIM_WITH_GUI
+    #include "vMenubar.h"
+#endif
 
 class CFileOperationsBase
 {

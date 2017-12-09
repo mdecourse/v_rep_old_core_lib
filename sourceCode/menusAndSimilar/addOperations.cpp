@@ -26,6 +26,7 @@ CAddOperations::~CAddOperations()
 
 bool CAddOperations::processCommand(int commandID,CSView* subView)
 { // Return value is true if the command belonged to Add menu and was executed
+#ifdef SIM_WITH_GUI
     if ( (commandID==ADD_COMMANDS_ADD_PRIMITIVE_PLANE_ACCMD)||(commandID==ADD_COMMANDS_ADD_PRIMITIVE_DISC_ACCMD)||
         (commandID==ADD_COMMANDS_ADD_PRIMITIVE_RECTANGLE_ACCMD)||(commandID==ADD_COMMANDS_ADD_PRIMITIVE_SPHERE_ACCMD)||
         (commandID==ADD_COMMANDS_ADD_PRIMITIVE_CYLINDER_ACCMD) )
@@ -56,7 +57,7 @@ bool CAddOperations::processCommand(int commandID,CSView* subView)
         }
         return(true);
     }
-
+#endif
     if (commandID==ADD_COMMANDS_MAKE_GRAPH_CURVE_STATIC_ACCMD)
     { // can be executed via the UI or NON-UI thread!
         if (subView!=NULL)

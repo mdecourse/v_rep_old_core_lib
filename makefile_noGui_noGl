@@ -12,7 +12,10 @@ else
 endif
 
 CFLAGS += -I../../lua5_1_4_Linux26g4_64_lib/include
-CFLAGS += -I../include 
+
+CFLAGS += -I../programming/include
+CFLAGS += -I../programming/v_repMath
+
 CFLAGS += -IsourceCode
 CFLAGS += -IsourceCode/inverseKinematics/geomConstraintSolver
 CFLAGS += -IsourceCode/inverseKinematics/ik
@@ -51,6 +54,7 @@ CFLAGS += -IsourceCode/menusAndSimilar
 CFLAGS += -IsourceCode/variousFunctions
 CFLAGS += -IsourceCode/geometricAlgorithms
 CFLAGS += -IsourceCode/various
+CFLAGS += -IsourceCode/verSpec
 CFLAGS += -IsourceCode/rendering
 CFLAGS += -IsourceCode/libsAndPlugins
 CFLAGS += -IsourceCode/visual
@@ -61,8 +65,6 @@ CFLAGS += -IsourceCode/backwardCompatibility/motionPlanning
 CFLAGS += -IsourceCode/backwardCompatibility/pathPlanning
 CFLAGS += -IsourceCode/customUserInterfaces
 CFLAGS += -IsourceCode/undoRedo
-CFLAGS += -I../programming/include
-CFLAGS += -I../programming/v_repMath
 
 
 
@@ -285,7 +287,6 @@ all:
 	gcc $(CFLAGS) -c sourceCode/undoRedo/undoBuffer.cpp -o undoBuffer.o
 	gcc $(CFLAGS) -c sourceCode/undoRedo/undoBufferCameras.cpp -o undoBufferCameras.o
 	gcc $(CFLAGS) -c sourceCode/libsAndPlugins/pluginContainer.cpp -o pluginContainer.o
-	gcc $(CFLAGS) -c sourceCode/libsAndPlugins/auxLib.cpp -o auxLib.o
 	gcc $(CFLAGS) -c sourceCode/visual/visualParam.cpp -o visualParam.o
 	gcc $(CFLAGS) -c sourceCode/visual/thumbnail.cpp -o thumbnail.o
 	gcc $(CFLAGS) -c sourceCode/utils/threadPool.cpp -o threadPool.o
@@ -294,6 +295,8 @@ all:
 	gcc $(CFLAGS) -c sourceCode/utils/confReaderAndWriter.cpp -o confReaderAndWriter.o
 	gcc $(CFLAGS) -c sourceCode/customUserInterfaces/buttonBlock.cpp -o buttonBlock.o
 	gcc $(CFLAGS) -c sourceCode/customUserInterfaces/softButton.cpp -o softButton.o
+	gcc $(CFLAGS) -c sourceCode/various/sigHandler.cpp -o sigHandler.o
+	gcc $(CFLAGS) -c sourceCode/mainContainers/applicationContainers/addOnScriptContainer.cpp -o addOnScriptContainer.o
 
 	@mkdir -p lib
 	gcc *.o -o lib/libv_rep.$(EXT) -lpthread -ldl -llua5.1 -shared

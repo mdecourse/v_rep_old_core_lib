@@ -144,11 +144,13 @@ void CSimulation::simulationAboutToStart()
     _threadedRenderingToggle=false;
     _threadedRenderingMessageShown=false;
     _desiredFasterOrSlowerSpeed=0;
-    if ( (App::mainWindow!=NULL) && App::userSettings->sceneHierarchyHiddenDuringSimulation )
-    {
-        _hierarchyWasEnabledBeforeSimulation=App::mainWindow->oglSurface->isHierarchyEnabled();
-        App::mainWindow->dlgCont->processCommand(CLOSE_HIERARCHY_DLG_CMD);
-    }
+    #ifdef SIM_WITH_GUI
+        if ( (App::mainWindow!=NULL) && App::userSettings->sceneHierarchyHiddenDuringSimulation )
+        {
+            _hierarchyWasEnabledBeforeSimulation=App::mainWindow->oglSurface->isHierarchyEnabled();
+            App::mainWindow->dlgCont->processCommand(CLOSE_HIERARCHY_DLG_CMD);
+        }
+    #endif
 }
 
 void CSimulation::simulationEnded()
@@ -175,11 +177,10 @@ void CSimulation::simulationEnded()
     _threadedRenderingToggle=false;
     _desiredFasterOrSlowerSpeed=0;
 
-    if ( (App::mainWindow!=NULL) && _hierarchyWasEnabledBeforeSimulation && App::userSettings->sceneHierarchyHiddenDuringSimulation)
-    {
-        App::mainWindow->dlgCont->processCommand(OPEN_HIERARCHY_DLG_CMD);
-    }
-
+    #ifdef SIM_WITH_GUI
+        if ( (App::mainWindow!=NULL) && _hierarchyWasEnabledBeforeSimulation && App::userSettings->sceneHierarchyHiddenDuringSimulation)
+            App::mainWindow->dlgCont->processCommand(OPEN_HIERARCHY_DLG_CMD);
+    #endif
 }
 
 void CSimulation::setDisableWarningsFlags(int mask)
