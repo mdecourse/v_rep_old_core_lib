@@ -280,6 +280,13 @@ std::string CLuaScriptObject::getSystemCallbackString(int calltype,bool callTips
             r+="=()\nCan be called by a customized main script.";
         return(r);
     }
+    if (calltype==sim_syscb_threadmain)
+    {
+        std::string r("sysCall_threadmain");
+        if (callTips)
+            r+="=()\nMain function of a threaded child script.";
+        return(r);
+    }
     if (calltype==sim_syscb_br)
     {
         std::string r("sysCall_br");
@@ -294,8 +301,6 @@ bool CLuaScriptObject::canCallSystemCallback(int scriptType,bool threaded,int ca
 {
     if (scriptType==-1)
         return(true);
-    if (threaded)
-        return(false);
     if (scriptType==sim_scripttype_addonscript)
     {
         if (callType==sim_syscb_init)
@@ -405,34 +410,42 @@ bool CLuaScriptObject::canCallSystemCallback(int scriptType,bool threaded,int ca
     }
     if (scriptType==sim_scripttype_childscript)
     {
-        if (callType==sim_syscb_init)
-            return(true);
         if (callType==sim_syscb_cleanup)
             return(true);
-        if (callType==sim_syscb_actuation)
-            return(true);
-        if (callType==sim_syscb_sensing)
-            return(true);
-        if (callType==sim_syscb_suspend)
-            return(true);
-        if (callType==sim_syscb_resume)
-            return(true);
-        if (callType==sim_syscb_beforecopy)
-            return(true);
-        if (callType==sim_syscb_aftercopy)
-            return(true);
-        if (callType==sim_syscb_beforedelete)
-            return(true);
-        if (callType==sim_syscb_afterdelete)
-            return(true);
-        if (callType==sim_syscb_aftercreate)
-            return(true);
-        if (callType==sim_syscb_jointcallback)
-            return(true);
-        if (callType==sim_syscb_contactcallback)
-            return(true);
-        if ( (callType>=sim_syscb_customcallback1)&&(callType<=sim_syscb_customcallback4) )
-            return(true);
+        if (threaded)
+        {
+            if (callType==sim_syscb_threadmain)
+                return(true);
+        }
+        else
+        {
+            if (callType==sim_syscb_init)
+                return(true);
+            if (callType==sim_syscb_actuation)
+                return(true);
+            if (callType==sim_syscb_sensing)
+                return(true);
+            if (callType==sim_syscb_suspend)
+                return(true);
+            if (callType==sim_syscb_resume)
+                return(true);
+            if (callType==sim_syscb_beforecopy)
+                return(true);
+            if (callType==sim_syscb_aftercopy)
+                return(true);
+            if (callType==sim_syscb_beforedelete)
+                return(true);
+            if (callType==sim_syscb_afterdelete)
+                return(true);
+            if (callType==sim_syscb_aftercreate)
+                return(true);
+            if (callType==sim_syscb_jointcallback)
+                return(true);
+            if (callType==sim_syscb_contactcallback)
+                return(true);
+            if ( (callType>=sim_syscb_customcallback1)&&(callType<=sim_syscb_customcallback4) )
+                return(true);
+        }
     }
     return(false);
 }
@@ -492,6 +505,8 @@ std::vector<std::string> CLuaScriptObject::getAllSystemCallbackStrings(int scrip
         retVal.push_back(getSystemCallbackString(sim_syscb_customcallback3,callTips));
     if (canCallSystemCallback(scriptType,threaded,sim_syscb_customcallback4))
         retVal.push_back(getSystemCallbackString(sim_syscb_customcallback4,callTips));
+    if (canCallSystemCallback(scriptType,threaded,sim_syscb_threadmain))
+        retVal.push_back(getSystemCallbackString(sim_syscb_threadmain,callTips));
     if (canCallSystemCallback(scriptType,threaded,sim_syscb_br))
         retVal.push_back(getSystemCallbackString(sim_syscb_br,callTips));
     return(retVal);
@@ -1505,6 +1520,7 @@ int CLuaScriptObject::runThreadedChildScript()
 
 void CLuaScriptObject::_runThreadedChildScriptNow()
 {
+    /*
     FUNCTION_DEBUG;
     _scriptExecStartTime=VDateTime::getTimeInMs();
     if (L==NULL)
@@ -1568,6 +1584,105 @@ void CLuaScriptObject::_runThreadedChildScriptNow()
     _numberOfPasses++;
     _scriptExecStartTime=-1; // means: not initialized yet
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
+*/
+
+    FUNCTION_DEBUG;
+    _scriptExecStartTime=VDateTime::getTimeInMs();
+//    CApiErrors::pushLocation(scriptID); // for correct error handling (i.e. assignement to the correct script and output)
+    if (L==NULL)
+    {
+        _errorReportMode=sim_api_error_output|sim_api_warning_output;
+        _lastErrorString=SIM_API_CALL_NO_ERROR;
+        L=initializeNewLuaState(getScriptSuffixNumberString().c_str());
+    }
+    int oldTop=luaWrap_lua_gettop(L);   // We store lua's stack
+
+    std::string tmp("sim_current_script_id=");
+    tmp+=boost::lexical_cast<std::string>(getScriptID());
+    tmp+="\nsim_call_type=-1"; // for backward compatibility
+    luaWrap_luaL_dostring(L,tmp.c_str());
+
+    if (_luaLoadBuffer(L,_scriptTextExec.c_str(),_scriptTextExec.size(),getShortDescriptiveName().c_str()))
+    {
+        luaWrap_lua_getglobal(L,"debug");
+        luaWrap_lua_getfield(L,-1,"traceback");
+        luaWrap_lua_remove(L,-2);
+        int argCnt=0;
+        int errindex=-argCnt-2;
+        luaWrap_lua_insert(L,errindex);
+        if (_luaPCall(L,argCnt,luaWrapGet_LUA_MULTRET(),errindex)!=0)
+        { // a runtime error occurred!
+            // We have to exit the thread free mode if we are still in there (the instance should automatically be restored when this thread resumes):
+            if (CThreadPool::isThreadInFreeMode())
+                CThreadPool::setThreadFreeMode(false);
+
+            std::string errMsg;
+            if (luaWrap_lua_isstring(L,-1))
+                errMsg=std::string(luaWrap_lua_tostring(L,-1));
+            else
+                errMsg="(error unknown)";
+            luaWrap_lua_pop(L,-1); // pop error from stack
+
+            _displayScriptError(errMsg.c_str(),1);
+            // Here we can decide what happens uppon error:
+            App::ct->simulation->pauseOnErrorRequested();
+        }
+        else
+        {
+            int calls[2]={sim_syscb_threadmain,sim_syscb_cleanup};
+            bool errOccured=false;
+            for (size_t callIndex=0;callIndex<2;callIndex++)
+            {
+                // Push the function name onto the stack (will be automatically popped from stack after _luaPCall):
+                luaWrap_lua_getglobal(L,getSystemCallbackString(calls[callIndex],false).c_str());
+                if (luaWrap_lua_isfunction(L,-1))
+                { // ok, the function exists!
+                    // Push the arguments onto the stack (will be automatically popped from stack after _luaPCall):
+                    luaWrap_lua_getglobal(L,"debug");
+                    luaWrap_lua_getfield(L,-1,"traceback");
+                    luaWrap_lua_remove(L,-2);
+                    int argCnt=0;
+                    int errindex=-argCnt-2;
+                    luaWrap_lua_insert(L,errindex);
+                    if (_luaPCall(L,argCnt,luaWrapGet_LUA_MULTRET(),errindex)!=0)
+                    { // a runtime error occurred!
+                        if (CThreadPool::isThreadInFreeMode())
+                            CThreadPool::setThreadFreeMode(false);
+                        std::string errMsg;
+                        if (luaWrap_lua_isstring(L,-1))
+                            errMsg=std::string(luaWrap_lua_tostring(L,-1));
+                        else
+                            errMsg="(error unknown)";
+                        luaWrap_lua_pop(L,-1); // pop error from stack
+
+                        _displayScriptError(errMsg.c_str(),1);
+                        errOccured=true;
+                    }
+                }
+                else
+                    luaWrap_lua_pop(L,-1); // pop the function name
+            }
+            if (CThreadPool::isThreadInFreeMode())
+                CThreadPool::setThreadFreeMode(false);
+            if (errOccured)
+                App::ct->simulation->pauseOnErrorRequested();
+        }
+    }
+    else
+    { // A compilation error occurred!
+        std::string errMsg;
+        if (luaWrap_lua_isstring(L,-1))
+            errMsg=std::string(luaWrap_lua_tostring(L,-1));
+        else
+            errMsg="(error unknown)";
+        _displayScriptError(errMsg.c_str(),0);
+        luaWrap_lua_pop(L,-1); // pop error from stack
+        App::ct->simulation->pauseOnErrorRequested();
+    }
+    _numberOfPasses++;
+    _scriptExecStartTime=-1; // means: not initialized yet
+    luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
+//    CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
 }
 
 bool CLuaScriptObject::runCustomizationScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack)
@@ -1760,7 +1875,10 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
             }
         }
         else
+        {
+            luaWrap_lua_pop(L,-1); // pop the function name
             retVal=0;
+        }
     }
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
@@ -2076,6 +2194,8 @@ int CLuaScriptObject::callScriptFunctionEx(const char* functionName,CInterfaceSt
             retVal=0;
         }
     }
+    else
+        luaWrap_lua_pop(L,-1); // pop the function name
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
     if (setAndResetScriptExecStartTime)
@@ -3112,6 +3232,8 @@ void CLuaScriptObject::_runJointCtrlCallback_OLD(int callType,const std::vector<
                 }
 
             }
+            else
+                luaWrap_lua_pop(L,-1); // pop the function name
             if (callType!=sim_syscb_init)
                 break;
             else
