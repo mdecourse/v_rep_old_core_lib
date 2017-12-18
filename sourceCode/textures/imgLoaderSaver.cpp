@@ -9,7 +9,7 @@
     #include <QImage>
     #include <QImageWriter>
     #include <QColor>
-    #include <QBuffer>
+    #include <QtCore/QBuffer>
 #endif
 
 unsigned char* CImageLoaderSaver::load(const char* filename,int* resX,int* resY,int* colorComponents,int desiredColorComponents,int scaleTo)
