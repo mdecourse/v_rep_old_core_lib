@@ -429,6 +429,8 @@ simInt simGetShapeViz_internal(simInt shapeHandle,simInt index,struct SShapeVizI
 simInt simExecuteScriptString_internal(simInt scriptHandleOrType,const simChar* stringAtScriptName,simInt stackHandle);
 simChar* simGetApiFunc_internal(simInt scriptHandleOrType,const simChar* apiWord);
 simChar* simGetApiInfo_internal(simInt scriptHandleOrType,const simChar* apiWord);
+simInt simSetModuleInfo_internal(const simChar* moduleName,simInt infoType,const simChar* stringInfo,simInt intInfo);
+simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo);
 
 
 

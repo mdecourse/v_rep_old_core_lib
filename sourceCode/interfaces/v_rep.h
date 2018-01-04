@@ -439,6 +439,8 @@ VREP_DLLEXPORT simInt simGetShapeViz(simInt shapeHandle,simInt index,struct SSha
 VREP_DLLEXPORT simInt simExecuteScriptString(simInt scriptHandleOrType,const simChar* stringAtScriptName,simInt stackHandle);
 VREP_DLLEXPORT simChar* simGetApiFunc(simInt scriptHandleOrType,const simChar* apiWord);
 VREP_DLLEXPORT simChar* simGetApiInfo(simInt scriptHandleOrType,const simChar* apiWord);
+VREP_DLLEXPORT simInt simSetModuleInfo(const simChar* moduleName,simInt infoType,const simChar* stringInfo,simInt intInfo);
+VREP_DLLEXPORT simInt simGetModuleInfo(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo);
 
 
 VREP_DLLEXPORT simInt _simGetContactCallbackCount();

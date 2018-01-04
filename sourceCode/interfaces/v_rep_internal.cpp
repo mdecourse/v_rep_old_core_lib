@@ -18594,7 +18594,7 @@ simChar* simGetApiFunc_internal(simInt scriptHandleOrType,const simChar* apiWord
 {
     C_API_FUNCTION_DEBUG;
 
-    IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         int scriptType=-1;
         bool threaded=false;
@@ -18649,7 +18649,7 @@ simChar* simGetApiInfo_internal(simInt scriptHandleOrType,const simChar* apiWord
 {
     C_API_FUNCTION_DEBUG;
 
-    IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         int scriptType=-1;
         bool threaded=false;
@@ -18694,6 +18694,63 @@ simChar* simGetApiInfo_internal(simInt scriptHandleOrType,const simChar* apiWord
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
     return(NULL);
 }
+
+simInt simSetModuleInfo_internal(const simChar* moduleName,simInt infoType,const simChar* stringInfo,simInt intInfo)
+{
+    C_API_FUNCTION_DEBUG;
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
+    {
+        CPlugin* plug=CPluginContainer::getPluginFromName(moduleName);
+        if (plug!=NULL)
+        {
+            if (infoType==0)
+            {
+                plug->versionString=stringInfo;
+                return(1);
+            }
+            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_ARGUMENT);
+            return(-1);
+        }
+        CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_PLUGIN_NAME);
+        return(-1);
+    }
+
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
+    return(-1);
+}
+
+simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo)
+{
+    C_API_FUNCTION_DEBUG;
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        CPlugin* plug=CPluginContainer::getPluginFromName(moduleName);
+        if (plug!=NULL)
+        {
+            if (infoType==0)
+            {
+                char* txt=new char[plug->versionString.length()+1];
+                strcpy(txt,plug->versionString.c_str());
+                if (stringInfo!=NULL)
+                    stringInfo[0]=txt;
+                else
+                    delete[] txt;
+                return(1);
+            }
+            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_ARGUMENT);
+            return(-1);
+        }
+        CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_PLUGIN_NAME);
+        return(-1);
+    }
+
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+
+
 
 //************************************************************************************************************
 //************************************************************************************************************

@@ -97,6 +97,7 @@
 #define SIM_ERROR_INVALID_DATA_STREAM           "Invalid data stream."
 #define SIM_ERROR_INVALID_PORT_HANDLE           "Invalid port handle."
 #define SIM_ERROR_INVALID_FILE_FORMAT           "Invalid file format."
+#define SIM_ERROR_INVALID_PLUGIN_NAME           "Invalid plugin name."
 #define SIM_ERROR_FOUND_INVALID_HANDLES     "Found invalid handles."
 #define SIM_ERROR_DATA_STREAM_NOT_USER_DEFINED          "Data stream is not user-defined."
 #define SIM_ERROR_PATH_EMPTY            "Path is empty."

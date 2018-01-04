@@ -1695,6 +1695,14 @@ VREP_DLLEXPORT simChar* simGetApiInfo(simInt scriptHandleOrType,const simChar* a
 {
     return(simGetApiInfo_internal(scriptHandleOrType,apiWord));
 }
+VREP_DLLEXPORT simInt simSetModuleInfo(const simChar* moduleName,simInt infoType,const simChar* stringInfo,simInt intInfo)
+{
+    return(simSetModuleInfo_internal(moduleName,infoType,stringInfo,intInfo));
+}
+VREP_DLLEXPORT simInt simGetModuleInfo(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo)
+{
+    return(simGetModuleInfo_internal(moduleName,infoType,stringInfo,intInfo));
+}
 
 
 VREP_DLLEXPORT simInt _simGetContactCallbackCount()

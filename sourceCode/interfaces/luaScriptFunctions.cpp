@@ -454,6 +454,7 @@ const SLuaCommands simLuaCommands[]=
     {"sim.executeScriptString",_simExecuteScriptString,          "number result,executionResult=sim.executeScriptString(string stringAtScriptName,number scriptHandleOrType)",true},
     {"sim.getApiFunc",_simGetApiFunc,                            "table funcsAndVars=sim.getApiFunc(number scriptHandleOrType,string apiWord)",true},
     {"sim.getApiInfo",_simGetApiInfo,                            "string info=sim.getApiInfo(number scriptHandleOrType,string apiWord)",true},
+    {"sim.getModuleInfo",_simGetModuleInfo,                      "string/number info=sim.getModuleInfo(string moduleName,number infoType)",true},
 
     {"sim.test",_simTest,                                        "test function - shouldn't be used",true},
     // Add new commands here!
@@ -17527,6 +17528,34 @@ int _simGetApiInfo(luaWrap_lua_State* L)
             luaWrap_lua_pushstring(L,str);
             simReleaseBuffer_internal(str);
             LUA_END(1);
+        }
+        LUA_END(0);
+    }
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
+}
+
+int _simGetModuleInfo(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.getModuleInfo");
+
+    if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_number,0))
+    {
+        char* stringInfo;
+        int intInfo;
+        std::string moduleName(luaWrap_lua_tostring(L,1));
+        int infoType=luaWrap_lua_tointeger(L,2);
+        int res=simGetModuleInfo_internal(moduleName.c_str(),infoType,&stringInfo,&intInfo);
+        if (res>=0)
+        {
+            if (infoType==0)
+            {
+                luaWrap_lua_pushstring(L,stringInfo);
+                delete[] stringInfo;
+                LUA_END(1);
+            }
         }
         LUA_END(0);
     }

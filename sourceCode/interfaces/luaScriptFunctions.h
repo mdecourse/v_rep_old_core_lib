@@ -554,6 +554,7 @@ extern int _simGetShapeViz(luaWrap_lua_State* L);
 extern int _simExecuteScriptString(luaWrap_lua_State* L);
 extern int _simGetApiFunc(luaWrap_lua_State* L);
 extern int _simGetApiInfo(luaWrap_lua_State* L);
+extern int _simGetModuleInfo(luaWrap_lua_State* L);
 extern int _simTest(luaWrap_lua_State* L);
 
 // DEPRECATED
