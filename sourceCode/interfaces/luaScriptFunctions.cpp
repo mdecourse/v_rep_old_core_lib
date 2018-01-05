@@ -17556,6 +17556,11 @@ int _simGetModuleInfo(luaWrap_lua_State* L)
                 delete[] stringInfo;
                 LUA_END(1);
             }
+            if (infoType==2)
+            {
+                luaWrap_lua_pushinteger(L,intInfo);
+                LUA_END(1);
+            }
         }
         LUA_END(0);
     }

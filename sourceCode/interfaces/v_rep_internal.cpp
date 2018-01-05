@@ -18706,12 +18706,17 @@ simInt simSetModuleInfo_internal(const simChar* moduleName,simInt infoType,const
         {
             if (infoType==0)
             {
-                plug->versionString=stringInfo;
+                plug->extendedVersionString=stringInfo;
                 return(1);
             }
             if (infoType==1)
             {
                 plug->buildDateString=stringInfo;
+                return(1);
+            }
+            if (infoType==2)
+            {
+                plug->extendedVersionInt=intInfo;
                 return(1);
             }
             CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_ARGUMENT);
@@ -18736,8 +18741,8 @@ simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simCh
         {
             if (infoType==0)
             {
-                char* txt=new char[plug->versionString.length()+1];
-                strcpy(txt,plug->versionString.c_str());
+                char* txt=new char[plug->extendedVersionString.length()+1];
+                strcpy(txt,plug->extendedVersionString.c_str());
                 if (stringInfo!=NULL)
                     stringInfo[0]=txt;
                 else
@@ -18752,6 +18757,11 @@ simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simCh
                     stringInfo[0]=txt;
                 else
                     delete[] txt;
+                return(1);
+            }
+            if (infoType==2)
+            {
+                intInfo[0]=plug->extendedVersionInt;
                 return(1);
             }
             CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_ARGUMENT);

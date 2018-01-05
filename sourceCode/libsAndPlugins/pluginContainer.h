@@ -246,7 +246,8 @@ public:
     std::string name;
     std::string _filename;
     unsigned char pluginVersion;
-    std::string versionString;
+    int extendedVersionInt;
+    std::string extendedVersionString;
     std::string buildDateString;
     int handle;
     int _loadCount;
