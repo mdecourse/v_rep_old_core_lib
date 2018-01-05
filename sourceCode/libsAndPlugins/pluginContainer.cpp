@@ -262,15 +262,16 @@ int CPluginContainer::addPlugin(const char* filename,const char* pluginName)
         return(plug->handle);
     }
     plug=new CPlugin(filename,pluginName);
+    plug->handle=_nextHandle;
+    _allPlugins.push_back(plug);
     int loadRes=plug->load();
     if (loadRes<=0)
     { // failed
+        _allPlugins.pop_back();
         delete plug;
         return(loadRes-1);
     }
-    plug->handle=_nextHandle;
     _nextHandle++;
-    _allPlugins.push_back(plug);
     return(plug->handle);
 }
 
