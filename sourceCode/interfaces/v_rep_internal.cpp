@@ -18709,6 +18709,11 @@ simInt simSetModuleInfo_internal(const simChar* moduleName,simInt infoType,const
                 plug->versionString=stringInfo;
                 return(1);
             }
+            if (infoType==1)
+            {
+                plug->buildDateString=stringInfo;
+                return(1);
+            }
             CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_ARGUMENT);
             return(-1);
         }
@@ -18733,6 +18738,16 @@ simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simCh
             {
                 char* txt=new char[plug->versionString.length()+1];
                 strcpy(txt,plug->versionString.c_str());
+                if (stringInfo!=NULL)
+                    stringInfo[0]=txt;
+                else
+                    delete[] txt;
+                return(1);
+            }
+            if (infoType==1)
+            {
+                char* txt=new char[plug->buildDateString.length()+1];
+                strcpy(txt,plug->buildDateString.c_str());
                 if (stringInfo!=NULL)
                     stringInfo[0]=txt;
                 else

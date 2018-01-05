@@ -247,6 +247,7 @@ public:
     std::string _filename;
     unsigned char pluginVersion;
     std::string versionString;
+    std::string buildDateString;
     int handle;
     int _loadCount;
     WLibrary instance;

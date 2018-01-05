@@ -17550,7 +17550,7 @@ int _simGetModuleInfo(luaWrap_lua_State* L)
         int res=simGetModuleInfo_internal(moduleName.c_str(),infoType,&stringInfo,&intInfo);
         if (res>=0)
         {
-            if (infoType==0)
+            if ( (infoType==0)||(infoType==1) )
             {
                 luaWrap_lua_pushstring(L,stringInfo);
                 delete[] stringInfo;
