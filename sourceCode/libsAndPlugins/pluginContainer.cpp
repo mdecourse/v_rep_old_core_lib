@@ -14,6 +14,7 @@ CPlugin::CPlugin(const char* filename,const char* pluginName)
     name=pluginName;
     instance=NULL;
     _loadCount=1;
+    extendedVersionInt=-1;
 }
 
 CPlugin::~CPlugin()
