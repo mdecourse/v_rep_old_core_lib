@@ -3,6 +3,7 @@
 *.user
 ui_qdlg*.h
 .qmake.stash
+.DS_Store
 Makefile
 Makefile.Debug
 Makefile.Release
@@ -19,3 +20,4 @@ release
 mocinclude.opt
 object_script.*.Debug
 object_script.*.Release
+
