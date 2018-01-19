@@ -24,7 +24,17 @@ std::string VFileDialog::_getOpenOrSaveFileName(bool open,QWidget* parent,unsign
     QString retString;
     QString pathAndOptionalFilename(QString::fromLocal8Bit(startPath.c_str()));
     if (initFilename.length()!=0)
-        pathAndOptionalFilename=QString::fromLocal8Bit(initFilename.c_str());
+    {
+        if (pathAndOptionalFilename.length()==0)
+            pathAndOptionalFilename=QString::fromLocal8Bit(initFilename.c_str());
+        else
+        {
+            QChar c=pathAndOptionalFilename.at(pathAndOptionalFilename.length()-1);
+            if ( (c!='/')&&(c!='\\') )
+                pathAndOptionalFilename+='/';
+            pathAndOptionalFilename+=QString::fromLocal8Bit(initFilename.c_str());
+        }
+    }
     std::string filter=extensionName;
     if (extensionName.find(";;")==std::string::npos)
     {
