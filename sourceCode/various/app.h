@@ -62,6 +62,7 @@ public:
     static void setFullScreen(bool f); // helper
 
     static void addStatusbarMessage(const std::string& txt);
+    static void clearStatusbar();
 
     static float* getRGBPointerFromItem(int objType,int objID1,int objID2,int colComponent,std::string* auxDlgTitle);
     static CVisualParam* getVisualParamPointerFromItem(int objType,int objID1,int objID2,std::string* auxDlgTitle,int* allowedParts);

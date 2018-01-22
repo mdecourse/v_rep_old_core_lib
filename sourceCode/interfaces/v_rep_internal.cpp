@@ -6614,9 +6614,7 @@ simInt simAddStatusbarMessage_internal(const simChar* message)
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
@@ -6627,14 +6625,20 @@ simInt simAddStatusbarMessage_internal(const simChar* message)
             return(-1);
         }
 #endif
-        App::addStatusbarMessage(message);
-        if (std::string(message).compare(0,18,"Lua runtime error:")==0)
-        { // this is to intercept the xpcall error message generated in a threaded child script, and to flash the status bar
-            SUIThreadCommand cmdIn;
-            SUIThreadCommand cmdOut;
-            cmdIn.cmdId=FLASH_STATUSBAR_UITHREADCMD;
-            App::uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
+        if (message!=NULL)
+        {
+            App::addStatusbarMessage(message);
+            if (std::string(message).compare(0,18,"Lua runtime error:")==0)
+            { // this is to intercept the xpcall error message generated in a threaded child script, and to flash the status bar
+                SUIThreadCommand cmdIn;
+                SUIThreadCommand cmdOut;
+                cmdIn.cmdId=FLASH_STATUSBAR_UITHREADCMD;
+                App::uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
+            }
         }
+        else
+            App::clearStatusbar();
+
         return(1);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);

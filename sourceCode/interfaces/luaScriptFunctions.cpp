@@ -7007,8 +7007,14 @@ int _simAddStatusbarMessage(luaWrap_lua_State* L)
     LUA_START("sim.addStatusbarMessage");
 
     int retVal=-1; // means error
-    if (checkInputArguments(L,&errorString,lua_arg_string,0))
-        retVal=simAddStatusbarMessage_internal(luaWrap_lua_tostring(L,1));
+
+    if (luaWrap_lua_gettop(L)==0)
+        App::clearStatusbar();
+    else
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_string,0))
+            retVal=simAddStatusbarMessage_internal(luaWrap_lua_tostring(L,1));
+    }
 
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
     luaWrap_lua_pushnumber(L,retVal);

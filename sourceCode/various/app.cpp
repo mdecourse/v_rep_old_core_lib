@@ -719,6 +719,27 @@ void App::addStatusbarMessage(const std::string& txt)
     }
 }
 
+void App::clearStatusbar()
+{
+    if (!VThread::isCurrentThreadTheUiThread())
+    { // we are NOT in the UI thread. We execute the command in a delayed manner:
+        SUIThreadCommand cmdIn;
+        SUIThreadCommand cmdOut;
+        cmdIn.cmdId=CLEAR_STATUSBAR_UITHREADCMD;
+        uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
+    }
+    else
+    {
+        #ifdef SIM_WITH_GUI
+            if (mainWindow!=NULL)
+            {
+                if ((operationalUIParts&sim_gui_statusbar)&&(mainWindow->statusBar!=NULL) )
+                    mainWindow->statusBar->clear();
+            }
+        #endif
+    }
+}
+
 float* App::getRGBPointerFromItem(int objType,int objID1,int objID2,int colComponent,std::string* auxDlgTitle)
 { // auxDlgTitle can be NULL
     std::string __auxDlgTitle;
