@@ -164,7 +164,7 @@ void CMainContainer::simulationAboutToStart()
     App::setToolbarRefreshFlag();
     App::setFullDialogRefreshFlag();
     App::addStatusbarMessage(IDSNS_SIMULATION_STARTED);
-    if (VREP_PROGRAM_VERSION_NB==30401)
+    if (VREP_PROGRAM_VERSION_NB==30500)
         App::addStatusbarMessage("Warning: 'print()' now prints to the status bar, instead of the console (use 'print=printToConsole' to revert).");
 
 #ifdef SIM_WITH_GUI

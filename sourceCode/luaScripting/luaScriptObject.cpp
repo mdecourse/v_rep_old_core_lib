@@ -1116,7 +1116,7 @@ std::string CLuaScriptObject::getShortDescriptiveName() const
             return(strTranslate(pref+"UNASSOCIATED CHILD SCRIPT"));
 
         std::string retVal;
-        retVal=strTranslate(pref+"SCRIPT ");
+        retVal=strTranslate(pref+"CHILD SCRIPT ");
         retVal+=it->getName();
         return(retVal);
     }
@@ -1137,11 +1137,10 @@ std::string CLuaScriptObject::getShortDescriptiveName() const
     if (_scriptType==sim_scripttype_jointctrlcallback)
     {
         std::string retVal;
-        retVal=strTranslate(pref+"JOINT CTRL CALLBACK ");
+        retVal=strTranslate(pref+"JOINT CTRL CALLBACK (DEPRECATED) ");
         C3DObject* it=App::ct->objCont->getObject(_objectIDAttachedTo_callback);
-        if (it==NULL)
-            return(strTranslate(pref+"JOINT CTRL CALLBACK (UNASSOCIATED)"));
-        retVal+=it->getName();
+        if (it!=NULL)
+            retVal+=it->getName();
         return(retVal);
     }
     if (_scriptType==sim_scripttype_customizationscript)
@@ -1157,13 +1156,13 @@ std::string CLuaScriptObject::getShortDescriptiveName() const
     if (_scriptType==sim_scripttype_contactcallback)
     {
         std::string retVal;
-        retVal=strTranslate(pref+"CONTACT CALLBACK");
+        retVal=strTranslate(pref+"CONTACT CALLBACK (DEPRECATED)");
         return(retVal);
     }
     if (_scriptType==sim_scripttype_generalcallback)
     {
         std::string retVal;
-        retVal=strTranslate(pref+"GENERAL CALLBACK");
+        retVal=strTranslate(pref+"GENERAL CALLBACK (DEPRECATED)");
         return(retVal);
     }
     if (_scriptType==sim_scripttype_sandboxscript)
@@ -1750,6 +1749,15 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
         _errorReportMode=sim_api_error_output|sim_api_warning_output;
         _lastErrorString=SIM_API_CALL_NO_ERROR;
         L=initializeNewLuaState(getScriptSuffixNumberString().c_str());
+        if (_checkIfMixingOldAndNewCallMethods())
+        {
+            std::string msg("Warning: [");
+            msg+=getShortDescriptiveName();
+            msg+="]: detected a possible attempt to mix the old and new calling methods. For example:";
+            App::addStatusbarMessage(msg);
+            App::addStatusbarMessage("         with the old method: if sim_call_type==sim_childscriptcall_initialization then ... end");
+            App::addStatusbarMessage("         with the new method: function sysCall_init() ... end");
+        }
     }
     int oldTop=luaWrap_lua_gettop(L);   // We store lua's stack
     if (_compatibilityModeOrFirstTimeCall_sysCallbacks)
@@ -2523,6 +2531,11 @@ bool CLuaScriptObject::_prepareLuaStateAndCallScriptInitSectionIfNeeded()
         }
     }
     return(L!=NULL);
+}
+
+bool CLuaScriptObject::_checkIfMixingOldAndNewCallMethods()
+{
+    return ( (_scriptText.find("sim_call_type")!=std::string::npos)&&(_scriptText.find("sysCall_")!=std::string::npos) );
 }
 
 void CLuaScriptObject::_displayScriptError(const char* errMsg,int errorType)

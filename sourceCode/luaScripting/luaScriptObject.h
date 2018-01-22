@@ -183,6 +183,7 @@ protected:
     int _runScriptOrCallScriptFunction(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack,std::string* errorMsg,bool* hasJointCallbackFunc,bool* hasContactCallbackFunc);
 
     bool _prepareLuaStateAndCallScriptInitSectionIfNeeded();
+    bool _checkIfMixingOldAndNewCallMethods();
 
     void _runJointCtrlCallback_OLD(int callType,const std::vector<bool>& inDataBool,const std::vector<int>& inDataInt,const std::vector<float>& inDataFloat,std::vector<float>& outDataFloat,std::vector<bool>& outDataValidity);
 
