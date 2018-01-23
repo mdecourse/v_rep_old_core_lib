@@ -248,8 +248,20 @@ CInterfaceStackObject* CInterfaceStack::_generateObjectFromLuaStack(luaWrap_lua_
             return(table);
         }
     }
+    else if (t==STACK_OBJECT_USERDAT)
+    { // only supported as "USERDATA" string
+        return(new CInterfaceStackString("<USERDATA>",0));
+    }
+    else if (t==STACK_OBJECT_FUNC)
+    { // only supported as "FUNCTION" string
+        return(new CInterfaceStackString("<FUNCTION>",0));
+    }
+    else if (t==STACK_OBJECT_THREAD)
+    { // only supported as "THREAD" string
+        return(new CInterfaceStackString("<THREAD>",0));
+    }
     else
-    { // this can be a function, user data, etc. Not supported here
+    { // this is light user data. Not supported here
         return(new CInterfaceStackNull());
     }
 }
