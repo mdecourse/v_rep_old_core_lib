@@ -863,8 +863,7 @@ void CEnvironment::addLayoutMenu(VMenu* menu)
     bool simStopped=App::ct->simulation->isSimulationStopped();
     bool noEditMode=App::getEditModeType()==NO_EDIT_MODE;
     menu->appendMenuItem(noEditMode,false,BR_COMMAND_1_SCCMD+5,"General properties");
-    menu->appendMenuItem(simStopped&&noEditMode,false,BR_COMMAND_1_SCCMD+0,"Save configuration file");
-    menu->appendMenuItem(simStopped&&noEditMode,false,BR_COMMAND_1_SCCMD+2,"Get quote");
+    menu->appendMenuItem(simStopped&&noEditMode,false,BR_COMMAND_1_SCCMD+0,"Actions");
 
     menu->appendMenuItem(noEditMode,_showPartRepository,BR_COMMAND_1_SCCMD+3,"Part repository",true);
     menu->appendMenuItem(noEditMode,_showPalletRepository,BR_COMMAND_1_SCCMD+4,"Pallet repository",true);
