@@ -3393,7 +3393,7 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
         if (App::userSettings->abortScriptExecutionButton!=0)
         {
             bool doIt=( (App::ct->luaScriptContainer->getMainScriptExecTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000))&&App::ct->luaScriptContainer->getInMainScriptNow() );
-            if (App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL)
+            if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
             { // Otherwise can get very slow somehow
                 App::ct->simulation->showAndHandleEmergencyStopButton(doIt,it->getShortDescriptiveName().c_str());
             }
@@ -3423,7 +3423,7 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
 #ifdef SIM_WITH_GUI
         if (App::userSettings->abortScriptExecutionButton!=0)
         {
-            if (App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL)
+            if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
             { // Otherwise can get very slow somehow
                 if ( it->getScriptExecutionTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000) )
                 {

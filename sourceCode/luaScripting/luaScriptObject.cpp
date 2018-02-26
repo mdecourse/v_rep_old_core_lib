@@ -1994,7 +1994,6 @@ VTHREAD_RETURN_TYPE CLuaScriptObject::_startAddressForThreadedScripts(VTHREAD_AR
     CApiErrors::removeThreadFromErrorReporting(); // for correct error handling (i.e. assignement to the correct script and output)
 
     App::ct->calcInfo->scriptEnd(true,false);
-
     it->killLuaState(); // added on 2010/03/05 because of some crashes with threaded scripts (Lua said: resource destroyed by other thread than the one that created it!)
     it->_threadedExecutionUnderWay=false;
 
