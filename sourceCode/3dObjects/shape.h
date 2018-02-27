@@ -77,8 +77,8 @@ public:
     bool getShapeIsDynamicallyStatic();
     void setShapeIsDynamicallyStatic(bool sta);
 
-    C3Vector getInitialDynamicVelocity();
-    void setInitialDynamicVelocity(const C3Vector& vel);
+    C3Vector getInitialDynamicLinearVelocity();
+    void setInitialDynamicLinearVelocity(const C3Vector& vel);
     C3Vector getInitialDynamicAngularVelocity();
     void setInitialDynamicAngularVelocity(const C3Vector& vel);
     bool isCompound() const;
@@ -161,7 +161,7 @@ protected:
     C3Vector _dynamicAngularVelocity;
     C3Vector _additionalForce;
     C3Vector _additionalTorque;
-    C3Vector _initialDynamicVelocity;
+    C3Vector _initialDynamicLinearVelocity;
     C3Vector _initialDynamicAngularVelocity;
 
     bool _rigidBodyWasAlreadyPutToSleepOnce;

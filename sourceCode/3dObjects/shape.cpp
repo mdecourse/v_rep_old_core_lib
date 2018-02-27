@@ -51,14 +51,14 @@ void CShape::setDynMaterial(CDynMaterialObject* mat)
     _dynMaterial=mat;
 }
 
-C3Vector CShape::getInitialDynamicVelocity()
+C3Vector CShape::getInitialDynamicLinearVelocity()
 {
-    return(_initialDynamicVelocity);
+    return(_initialDynamicLinearVelocity);
 }
 
-void CShape::setInitialDynamicVelocity(const C3Vector& vel)
+void CShape::setInitialDynamicLinearVelocity(const C3Vector& vel)
 {
-    _initialDynamicVelocity=vel;
+    _initialDynamicLinearVelocity=vel;
 }
 
 C3Vector CShape::getInitialDynamicAngularVelocity()
@@ -225,7 +225,7 @@ void CShape::commonInit()
     _dynamicCollisionMask=0xffff;
     _parentFollowsDynamic=false;
     _lastParentForLocalGlobalCollidable=NULL;
-    _initialDynamicVelocity.clear();
+    _initialDynamicLinearVelocity.clear();
     _initialDynamicAngularVelocity.clear();
 
     layer=SHAPE_LAYER;
@@ -504,8 +504,11 @@ void CShape::initializeInitialValues(bool simulationIsRunning)
     _dynamicAngularVelocity.clear();
     _additionalForce.clear();
     _additionalTorque.clear();
-    _initialDynamicVelocity.clear();
-    _initialDynamicAngularVelocity.clear();
+
+    // Removed on 27/2/2018 (couldn't change initial velocities while simulation was not running)
+    // _initialDynamicLinearVelocity.clear();
+    // _initialDynamicAngularVelocity.clear();
+
     _initialValuesInitialized=simulationIsRunning;
     if (simulationIsRunning)
     {
@@ -528,8 +531,11 @@ void CShape::simulationEnded()
 
     }
     _initialValuesInitialized=false;
-    _initialDynamicVelocity.clear();
-    _initialDynamicAngularVelocity.clear();
+
+    // Removed on 27/2/2018 (couldn't change initial velocities while simulation was not running)
+    // _initialDynamicLinearVelocity.clear();
+    // _initialDynamicAngularVelocity.clear();
+
     _dynamicLinearVelocity.clear();
     _dynamicAngularVelocity.clear();
     _additionalForce.clear();

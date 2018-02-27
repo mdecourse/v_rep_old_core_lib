@@ -11640,7 +11640,7 @@ simInt simGetObjectFloatParameter_internal(simInt objectHandle,simInt parameterI
         {
             if ((parameterID==sim_shapefloatparam_init_velocity_x)||(parameterID==sim_shapefloatparam_init_velocity_y)||(parameterID==sim_shapefloatparam_init_velocity_z))
             {
-                C3Vector v(shape->getInitialDynamicVelocity());
+                C3Vector v(shape->getInitialDynamicLinearVelocity());
                 if (parameterID==sim_shapefloatparam_init_velocity_x)
                     parameter[0]=v(0);
                 if (parameterID==sim_shapefloatparam_init_velocity_y)
@@ -11997,14 +11997,14 @@ simInt simSetObjectFloatParameter_internal(simInt objectHandle,simInt parameterI
         {
             if ((parameterID==sim_shapefloatparam_init_velocity_x)||(parameterID==sim_shapefloatparam_init_velocity_y)||(parameterID==sim_shapefloatparam_init_velocity_z))
             {
-                C3Vector v(shape->getInitialDynamicVelocity());
+                C3Vector v(shape->getInitialDynamicLinearVelocity());
                 if (parameterID==sim_shapefloatparam_init_velocity_x)
                     v(0)=parameter;
                 if (parameterID==sim_shapefloatparam_init_velocity_y)
                     v(1)=parameter;
                 if (parameterID==sim_shapefloatparam_init_velocity_z)
                     v(2)=parameter;
-                shape->setInitialDynamicVelocity(v);
+                shape->setInitialDynamicLinearVelocity(v);
                 retVal=1;
             }
             if ((parameterID==sim_shapefloatparam_init_velocity_a)||(parameterID==sim_shapefloatparam_init_velocity_b)||(parameterID==sim_shapefloatparam_init_velocity_g))
@@ -18964,13 +18964,13 @@ simBool _simIsShapeDynamicallyStatic_internal(const simVoid* shape)
 simVoid _simGetInitialDynamicVelocity_internal(const simVoid* shape,simFloat* vel)
 {
     C_API_FUNCTION_DEBUG;
-    ((CShape*)shape)->getInitialDynamicVelocity().getInternalData(vel);
+    ((CShape*)shape)->getInitialDynamicLinearVelocity().getInternalData(vel);
 }
 
 simVoid _simSetInitialDynamicVelocity_internal(simVoid* shape,const simFloat* vel)
 {
     C_API_FUNCTION_DEBUG;
-    ((CShape*)shape)->setInitialDynamicVelocity(C3Vector(vel));
+    ((CShape*)shape)->setInitialDynamicLinearVelocity(C3Vector(vel));
 }
 
 simVoid _simGetInitialDynamicAngVelocity_internal(const simVoid* shape,simFloat* angularVel)
