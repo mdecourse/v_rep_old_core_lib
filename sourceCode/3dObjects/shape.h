@@ -154,6 +154,8 @@ protected:
     bool _parentFollowsDynamic;
     bool _containsTransparentComponents; // to be able to order shapes according to transparency
     bool _setAutomaticallyToNonStaticIfGetsParent;
+    C3Vector _initialDynamicLinearVelocity;
+    C3Vector _initialDynamicAngularVelocity;
     CDynMaterialObject* _dynMaterial;
 
     // other variables:
@@ -161,11 +163,11 @@ protected:
     C3Vector _dynamicAngularVelocity;
     C3Vector _additionalForce;
     C3Vector _additionalTorque;
-    C3Vector _initialDynamicLinearVelocity;
-    C3Vector _initialDynamicAngularVelocity;
 
     bool _rigidBodyWasAlreadyPutToSleepOnce;
 
     bool _initialValuesInitialized;
+    C3Vector _initialInitialDynamicLinearVelocity;
+    C3Vector _initialInitialDynamicAngularVelocity;
     static bool _visualizeObbStructures;
 };

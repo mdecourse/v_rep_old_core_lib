@@ -505,14 +505,11 @@ void CShape::initializeInitialValues(bool simulationIsRunning)
     _additionalForce.clear();
     _additionalTorque.clear();
 
-    // Removed on 27/2/2018 (couldn't change initial velocities while simulation was not running)
-    // _initialDynamicLinearVelocity.clear();
-    // _initialDynamicAngularVelocity.clear();
-
     _initialValuesInitialized=simulationIsRunning;
     if (simulationIsRunning)
     {
-
+        _initialInitialDynamicLinearVelocity=_initialDynamicLinearVelocity;
+        _initialInitialDynamicAngularVelocity=_initialDynamicAngularVelocity;
     }
 
     actualizeContainsTransparentComponent(); // added on 2010/11/22 to correct at least each time a simulation starts, when those values where not set correctly
@@ -528,13 +525,10 @@ void CShape::simulationEnded()
 { // Remember, this is not guaranteed to be run! (the object can be copied during simulation, and pasted after it ended). For thoses situations there is the initializeInitialValues routine!
     if (_initialValuesInitialized&&App::ct->simulation->getResetSceneAtSimulationEnd()&&((getCumulativeModelProperty()&sim_modelproperty_not_reset)==0))
     {
-
+        _initialDynamicLinearVelocity=_initialInitialDynamicLinearVelocity;
+        _initialDynamicAngularVelocity=_initialInitialDynamicAngularVelocity;
     }
     _initialValuesInitialized=false;
-
-    // Removed on 27/2/2018 (couldn't change initial velocities while simulation was not running)
-    // _initialDynamicLinearVelocity.clear();
-    // _initialDynamicAngularVelocity.clear();
 
     _dynamicLinearVelocity.clear();
     _dynamicAngularVelocity.clear();
@@ -595,6 +589,11 @@ void CShape::serialize(CSer& ar)
 
         ar.storeDataName("Dc2");
         ar << _dynamicCollisionMask;
+        ar.flush();
+
+        ar.storeDataName("Idv");
+        ar << _initialDynamicLinearVelocity(0) << _initialDynamicLinearVelocity(1) << _initialDynamicLinearVelocity(2);
+        ar << _initialDynamicAngularVelocity(0) << _initialDynamicAngularVelocity(1) << _initialDynamicAngularVelocity(2);
         ar.flush();
 
         ar.storeDataName("Sss");
@@ -664,6 +663,15 @@ void CShape::serialize(CSer& ar)
                     ar >> byteQuantity;
                     ar >> _dynamicCollisionMask;
                 }
+
+                if (theName.compare("Idv")==0)
+                {
+                    noHit=false;
+                    ar >> byteQuantity;
+                    ar >> _initialDynamicLinearVelocity(0) >> _initialDynamicLinearVelocity(1) >> _initialDynamicLinearVelocity(2);
+                    ar >> _initialDynamicAngularVelocity(0) >> _initialDynamicAngularVelocity(1) >> _initialDynamicAngularVelocity(2);
+                }
+
                 if (theName=="Sss")
                 {
                     noHit=false;
@@ -925,6 +933,8 @@ C3DObject* CShape::copyYourself()
     newShape->_containsTransparentComponents=_containsTransparentComponents;
     newShape->_rigidBodyWasAlreadyPutToSleepOnce=_rigidBodyWasAlreadyPutToSleepOnce;
     newShape->_setAutomaticallyToNonStaticIfGetsParent=_setAutomaticallyToNonStaticIfGetsParent;
+    newShape->_initialDynamicLinearVelocity=_initialDynamicLinearVelocity;
+    newShape->_initialDynamicAngularVelocity=_initialDynamicAngularVelocity;
 
 
     newShape->_initialValuesInitialized=_initialValuesInitialized;
