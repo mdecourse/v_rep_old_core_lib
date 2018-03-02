@@ -90,6 +90,7 @@
 #define SIM_ERROR_INVALID_DATA_HEADER           "Invalid data header."
 #define SIM_ERROR_INVALID_DATA_NAME             "Invalid data name."
 #define SIM_ERROR_INVALID_DATA          "Invalid data."
+#define SIM_ERROR_INVALID_BUFFER_SIZE   "Invalid buffer size."
 #define SIM_ERROR_INVALID_TYPE          "Invalid type."
 #define SIM_ERROR_INVALID_INDEX             "Invalid index."
 #define SIM_ERROR_INVALID_NUMBER_INPUT      "Invalid number input."

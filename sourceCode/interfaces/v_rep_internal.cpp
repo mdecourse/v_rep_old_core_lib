@@ -14177,9 +14177,7 @@ simInt simWriteTexture_internal(simInt textureId,simInt options,const simChar* d
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {

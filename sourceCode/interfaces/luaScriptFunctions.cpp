@@ -15601,8 +15601,23 @@ int _simWriteTexture(luaWrap_lua_State* L)
                             {
                                 int tSizeX,tSizeY;
                                 to->getTextureSize(tSizeX,tSizeY);
-                                if ( (posX>=0)&&(posY>=0)&&(sizeX>=0)&&(sizeY>=0)&&(posX+sizeX<=tSizeX)&&(posY+sizeY<=tSizeY)&&(int(dataLength)>=sizeX*sizeY*3) )
-                                    retVal=simWriteTexture_internal(textureId,options,data,posX,posY,sizeX,sizeY,interpol);
+                                if ( (posX>=0)&&(posY>=0)&&(sizeX>=0)&&(sizeY>=0)&&(posX+sizeX<=tSizeX)&&(posY+sizeY<=tSizeY) )
+                                {
+                                    if (sizeX==0)
+                                    {
+                                        posX=0;
+                                        sizeX=tSizeX;
+                                    }
+                                    if (sizeY==0)
+                                    {
+                                        posY=0;
+                                        sizeY=tSizeY;
+                                    }
+                                    if (int(dataLength)>=sizeX*sizeY*3)
+                                        retVal=simWriteTexture_internal(textureId,options,data,posX,posY,sizeX,sizeY,interpol);
+                                    else
+                                        errorString=SIM_ERROR_INVALID_BUFFER_SIZE;
+                                }
                                 else
                                     errorString=SIM_ERROR_INVALID_ARGUMENTS;
                             }
