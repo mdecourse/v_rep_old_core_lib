@@ -102,6 +102,8 @@ public:
     C3Vector getDynamicLinearVelocity();
     C3Vector getDynamicAngularVelocity();
     void addAdditionalForceAndTorque(const C3Vector& f,const C3Vector& t);
+    void clearAdditionalForce();
+    void clearAdditionalTorque();
     void clearAdditionalForceAndTorque();
     C3Vector getAdditionalForce();
     C3Vector getAdditionalTorque();

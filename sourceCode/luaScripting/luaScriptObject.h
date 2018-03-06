@@ -144,6 +144,7 @@ public:
 
     bool getContainsJointCallbackFunction() const;
     bool getContainsContactCallbackFunction() const;
+    bool getContainsDynCallbackFunction() const;
 
 
     std::string getFilenameForExternalScriptEditor() const;
@@ -180,7 +181,7 @@ protected:
     void _runThreadedChildScriptNow();
     bool _runCustomizationScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
     void _runAddOn(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
-    int _runScriptOrCallScriptFunction(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack,std::string* errorMsg,bool* hasJointCallbackFunc,bool* hasContactCallbackFunc);
+    int _runScriptOrCallScriptFunction(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack,std::string* errorMsg,bool* hasJointCallbackFunc,bool* hasContactCallbackFunc,bool* hasDynCallbackFunc);
 
     bool _prepareLuaStateAndCallScriptInitSectionIfNeeded();
     bool _checkIfMixingOldAndNewCallMethods();
@@ -230,6 +231,7 @@ protected:
     bool _compatibilityModeOrFirstTimeCall_sysCallbacks;
     bool _containsJointCallbackFunction;
     bool _containsContactCallbackFunction;
+    bool _containsDynCallbackFunction;
 
     int _messageReportingOverride;
 

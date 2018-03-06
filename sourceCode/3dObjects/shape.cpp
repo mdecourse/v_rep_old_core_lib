@@ -265,7 +265,17 @@ void CShape::addAdditionalForceAndTorque(const C3Vector& f,const C3Vector& t)
 
 void CShape::clearAdditionalForceAndTorque()
 {
+    clearAdditionalForce();
+    clearAdditionalTorque();
+}
+
+void CShape::clearAdditionalForce()
+{
     _additionalForce.clear();
+}
+
+void CShape::clearAdditionalTorque()
+{
     _additionalTorque.clear();
 }
 

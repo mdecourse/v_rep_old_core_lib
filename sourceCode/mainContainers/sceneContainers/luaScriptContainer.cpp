@@ -159,7 +159,7 @@ void CLuaScriptContainer::checkIfContactCallbackFunctionAvailable()
     for (size_t i=0;i<allScripts.size();i++)
     { // we prioritize child scripts:
         CLuaScriptObject* it=allScripts[i];
-        if ( (it->getScriptType()==sim_scripttype_childscript)&&it->getContainsContactCallbackFunction())
+        if ( (it->getScriptType()==sim_scripttype_childscript)&&it->getContainsContactCallbackFunction()&&(!it->getThreadedExecution()))
             _objectIdContactCallbackFunctionAvailable=it->getObjectIDThatScriptIsAttachedTo_child();
     }
     if (_objectIdContactCallbackFunctionAvailable==-1)
@@ -173,9 +173,33 @@ void CLuaScriptContainer::checkIfContactCallbackFunctionAvailable()
     }
 }
 
+void CLuaScriptContainer::checkAvailableDynCallbackFunctions()
+{
+    _objectIdsWhereDynCallbackFunctionsAvailable.clear();
+    for (size_t i=0;i<App::ct->objCont->objectList.size();i++)
+    {
+        int objId=App::ct->objCont->objectList[i];
+        bool addIt=false;
+        CLuaScriptObject* it=getScriptFromObjectAttachedTo_child(objId);
+        addIt=( (it!=NULL)&&it->getContainsDynCallbackFunction()&&(!it->getThreadedExecution()) );
+        if (!addIt)
+        {
+            it=getScriptFromObjectAttachedTo_customization(objId);
+            addIt=( (it!=NULL)&&it->getContainsDynCallbackFunction() );
+        }
+        if (addIt)
+            _objectIdsWhereDynCallbackFunctionsAvailable.push_back(objId);
+    }
+}
+
 int CLuaScriptContainer::getObjectIdContactCallbackFunctionAvailable() const
 {
     return(_objectIdContactCallbackFunctionAvailable);
+}
+
+const std::vector<int>* CLuaScriptContainer::getObjectIdsWhereDynCallbackFunctionsAvailable() const
+{
+    return(&_objectIdsWhereDynCallbackFunctionsAvailable);
 }
 
 void CLuaScriptContainer::removeAllScripts()

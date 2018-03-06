@@ -148,6 +148,7 @@ void CDynamicsContainer::handleDynamics(float dt)
     App::ct->calcInfo->dynamicsStart();
 
     App::ct->luaScriptContainer->checkIfContactCallbackFunctionAvailable();
+    App::ct->luaScriptContainer->checkAvailableDynCallbackFunctions();
 
     for (size_t i=0;i<App::ct->objCont->objectList.size();i++)
     {

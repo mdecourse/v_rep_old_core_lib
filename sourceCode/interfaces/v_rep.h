@@ -531,6 +531,7 @@ VREP_DLLEXPORT const simVoid* _simGetIkGroupObject(int ikGroupID);
 VREP_DLLEXPORT simInt _simMpHandleIkGroupObject(const simVoid* ikGroup);
 VREP_DLLEXPORT simFloat _simGetPureHollowScaling(const simVoid* geometric);
 VREP_DLLEXPORT simInt _simGetJointCallbackCallOrder(const simVoid* joint);
+VREP_DLLEXPORT simVoid _simDynCallback(const simInt* intData,const simFloat* floatData);
 
 
 // Deprecated begin

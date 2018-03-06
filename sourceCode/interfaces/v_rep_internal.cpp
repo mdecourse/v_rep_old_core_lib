@@ -8657,21 +8657,22 @@ simInt simAddForceAndTorque_internal(simInt shapeHandle,const simFloat* force,co
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
-        if (!doesObjectExist(__func__,shapeHandle))
+        int handle=shapeHandle;
+        int handleFlags=0;
+        if (shapeHandle>=0)
         {
-            return(-1);
+            handleFlags=shapeHandle&0x0ff00000;
+            handle=shapeHandle&0x000fffff;
         }
-        if (!isShape(__func__,shapeHandle))
-        {
+        if (!doesObjectExist(__func__,handle))
             return(-1);
-        }
-        CShape* it=App::ct->objCont->getShape(shapeHandle);
+        if (!isShape(__func__,handle))
+            return(-1);
+        CShape* it=App::ct->objCont->getShape(handle);
         C3Vector f;
         C3Vector t;
         f.clear();
@@ -8680,6 +8681,12 @@ simInt simAddForceAndTorque_internal(simInt shapeHandle,const simFloat* force,co
             f.set(force);
         if (torque!=NULL)
             t.set(torque);
+
+        if ((handleFlags&sim_handleflag_resetforce)!=0)
+            it->clearAdditionalForce();
+        if ((handleFlags&sim_handleflag_resettorque)!=0)
+            it->clearAdditionalTorque();
+
         it->addAdditionalForceAndTorque(f,t);
         return(1);
     }
@@ -8692,20 +8699,14 @@ simInt simAddForce_internal(simInt shapeHandle,const simFloat* position,const si
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         if (!doesObjectExist(__func__,shapeHandle))
-        {
             return(-1);
-        }
         if (!isShape(__func__,shapeHandle))
-        {
             return(-1);
-        }
         CShape* it=App::ct->objCont->getShape(shapeHandle);
         C3Vector r(position);
         C3Vector f(force);
@@ -19583,6 +19584,47 @@ simInt _simGetJointCallbackCallOrder_internal(const simVoid* joint)
     }
     return(0);
 //  return(((CJoint*)joint)->getJointCallbackCallOrder());
+}
+
+simVoid _simDynCallback_internal(const simInt* intData,const simFloat* floatData)
+{
+    C_API_FUNCTION_DEBUG;
+
+    CInterfaceStack inStack;
+    const std::vector<int>* ids=App::ct->luaScriptContainer->getObjectIdsWhereDynCallbackFunctionsAvailable();
+    if (ids->size()>0)
+    {
+        inStack.pushTableOntoStack();
+        inStack.pushStringOntoStack("passCnt",0);
+        inStack.pushNumberOntoStack(double(intData[1]));
+        inStack.insertDataIntoStackTable();
+
+        inStack.pushStringOntoStack("totalPasses",0);
+        inStack.pushNumberOntoStack(double(intData[2]));
+        inStack.insertDataIntoStackTable();
+
+        inStack.pushStringOntoStack("dynStepSize",0);
+        inStack.pushNumberOntoStack(double(floatData[0]));
+        inStack.insertDataIntoStackTable();
+
+        inStack.pushStringOntoStack("afterStep",0);
+        inStack.pushBoolOntoStack(intData[3]!=0);
+        inStack.insertDataIntoStackTable();
+
+        for (size_t i=0;i<ids->size();i++)
+        {
+            C3DObject* obj=App::ct->objCont->getObject(ids->at(i));
+            if (obj!=NULL) // we could still run it in that situation, but is not desired, since the script itself will shortly be destroyed.. or is unattached!
+            {
+                CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(obj->getID());
+                if ( (it!=NULL)&&it->getContainsDynCallbackFunction() )
+                    it->runNonThreadedChildScript(sim_syscb_dyncallback,&inStack,NULL);
+                it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(obj->getID());
+                if ( (it!=NULL)&&it->getContainsDynCallbackFunction() )
+                    it->runCustomizationScript(sim_syscb_dyncallback,&inStack,NULL);
+            }
+        }
+    }
 }
 
 

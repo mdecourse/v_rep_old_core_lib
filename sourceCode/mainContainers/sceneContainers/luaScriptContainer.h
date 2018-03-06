@@ -34,6 +34,8 @@ public:
     int getMainScriptExecTimeInMs() const;
     void checkIfContactCallbackFunctionAvailable();
     int getObjectIdContactCallbackFunctionAvailable() const;
+    void checkAvailableDynCallbackFunctions();
+    const std::vector<int>* getObjectIdsWhereDynCallbackFunctionsAvailable() const;
 
     int removeDestroyedScripts(int scriptType);
 
@@ -67,6 +69,7 @@ protected:
     bool _inMainScriptNow;
     int _mainScriptStartTimeInMs;
     int _objectIdContactCallbackFunctionAvailable;
+    std::vector<int> _objectIdsWhereDynCallbackFunctionsAvailable;
 
     std::vector<SScriptCallBack*> _callbackStructureToDestroyAtEndOfSimulation_new;
     std::vector<SLuaCallBack*> _callbackStructureToDestroyAtEndOfSimulation_old;

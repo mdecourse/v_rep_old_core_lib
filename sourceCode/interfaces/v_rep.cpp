@@ -2057,6 +2057,10 @@ VREP_DLLEXPORT simInt _simGetJointCallbackCallOrder(const simVoid* joint)
 {
     return(_simGetJointCallbackCallOrder_internal(joint));
 }
+VREP_DLLEXPORT simVoid _simDynCallback(const simInt* intData,const simFloat* floatData)
+{
+    _simDynCallback_internal(intData,floatData);
+}
 
 
 

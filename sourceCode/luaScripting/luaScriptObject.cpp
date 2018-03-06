@@ -70,6 +70,7 @@ CLuaScriptObject::CLuaScriptObject(int scriptTypeOrMinusOneForSerialization)
     _compatibilityModeOrFirstTimeCall_sysCallbacks=true;
     _containsJointCallbackFunction=false;
     _containsContactCallbackFunction=false;
+    _containsDynCallbackFunction=false;
 
 
     L=NULL;
@@ -272,6 +273,13 @@ std::string CLuaScriptObject::getSystemCallbackString(int calltype,bool callTips
             r+="=()\nCalled by the physics engine when two respondable shapes are contacting.";
         return(r);
     }
+    if (calltype==sim_syscb_dyncallback)
+    {
+        std::string r("sysCall_dynCallback");
+        if (callTips)
+            r+="=()\nCalled by the physics engine twice per dynamic simulation pass.";
+        return(r);
+    }
     if ( (calltype>=sim_syscb_customcallback1)&&(calltype<=sim_syscb_customcallback4) )
     {
         std::string r("sysCall_customCallback");
@@ -380,6 +388,8 @@ bool CLuaScriptObject::canCallSystemCallback(int scriptType,bool threaded,int ca
             return(true);
         if (callType==sim_syscb_contactcallback)
             return(true);
+        if (callType==sim_syscb_dyncallback)
+            return(true);
         if ( (callType>=sim_syscb_customcallback1)&&(callType<=sim_syscb_customcallback4) )
             return(true);
     }
@@ -443,6 +453,8 @@ bool CLuaScriptObject::canCallSystemCallback(int scriptType,bool threaded,int ca
                 return(true);
             if (callType==sim_syscb_contactcallback)
                 return(true);
+            if (callType==sim_syscb_dyncallback)
+                return(true);
             if ( (callType>=sim_syscb_customcallback1)&&(callType<=sim_syscb_customcallback4) )
                 return(true);
         }
@@ -497,6 +509,8 @@ std::vector<std::string> CLuaScriptObject::getAllSystemCallbackStrings(int scrip
         retVal.push_back(getSystemCallbackString(sim_syscb_jointcallback,callTips));
     if (canCallSystemCallback(scriptType,threaded,sim_syscb_contactcallback))
         retVal.push_back(getSystemCallbackString(sim_syscb_contactcallback,callTips));
+    if (canCallSystemCallback(scriptType,threaded,sim_syscb_dyncallback))
+        retVal.push_back(getSystemCallbackString(sim_syscb_dyncallback,callTips));
     if (canCallSystemCallback(scriptType,threaded,sim_syscb_customcallback1))
         retVal.push_back(getSystemCallbackString(sim_syscb_customcallback1,callTips));
     if (canCallSystemCallback(scriptType,threaded,sim_syscb_customcallback2))
@@ -533,6 +547,11 @@ bool CLuaScriptObject::getContainsJointCallbackFunction() const
 bool CLuaScriptObject::getContainsContactCallbackFunction() const
 {
     return(_containsContactCallbackFunction);
+}
+
+bool CLuaScriptObject::getContainsDynCallbackFunction() const
+{
+    return(_containsDynCallbackFunction);
 }
 
 int CLuaScriptObject::getErrorReportMode() const
@@ -1422,7 +1441,7 @@ int CLuaScriptObject::_runMainScriptNow(int callType,const CInterfaceStack* inSt
 {
     std::string errorMsg;
     App::ct->luaScriptContainer->setInMainScriptNow(true,VDateTime::getTimeInMs());
-    int retVal=_runScriptOrCallScriptFunction(callType,inStack,outStack,&errorMsg,NULL,NULL);
+    int retVal=_runScriptOrCallScriptFunction(callType,inStack,outStack,&errorMsg,NULL,NULL,NULL);
     App::ct->luaScriptContainer->setInMainScriptNow(false,0);
     if (errorMsg.size()>0)
         _displayScriptError(errorMsg.c_str(),retVal+2); // 0=compilError, 1=runtimeError
@@ -1477,7 +1496,7 @@ int CLuaScriptObject::_runNonThreadedChildScript(int callType,const CInterfaceSt
 int CLuaScriptObject::_runNonThreadedChildScriptNow(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack)
 {
     std::string errorMsg;
-    int retVal=_runScriptOrCallScriptFunction(callType,inStack,outStack,&errorMsg,&_containsJointCallbackFunction,&_containsContactCallbackFunction);
+    int retVal=_runScriptOrCallScriptFunction(callType,inStack,outStack,&errorMsg,&_containsJointCallbackFunction,&_containsContactCallbackFunction,&_containsDynCallbackFunction);
     if (errorMsg.size()>0)
         _displayScriptError(errorMsg.c_str(),retVal+2); // 0=compilError, 1=runtimeError
     if (retVal<0)
@@ -1726,7 +1745,7 @@ bool CLuaScriptObject::runCustomizationScript(int callType,const CInterfaceStack
 bool CLuaScriptObject::_runCustomizationScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack)
 {
     std::string errorMsg;
-    int retVal=_runScriptOrCallScriptFunction(callType,inStack,outStack,&errorMsg,&_containsJointCallbackFunction,&_containsContactCallbackFunction);
+    int retVal=_runScriptOrCallScriptFunction(callType,inStack,outStack,&errorMsg,&_containsJointCallbackFunction,&_containsContactCallbackFunction,&_containsDynCallbackFunction);
     if (errorMsg.size()>0)
     {
         errorMsg+=errorWithCustomizationScript(); // might temporarily disable the custom. script
@@ -1735,7 +1754,7 @@ bool CLuaScriptObject::_runCustomizationScript(int callType,const CInterfaceStac
     return(retVal>0);
 }
 
-int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack,std::string* errorMsg,bool* hasJointCallbackFunc,bool* hasContactCallbackFunc)
+int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack,std::string* errorMsg,bool* hasJointCallbackFunc,bool* hasContactCallbackFunc,bool* hasDynCallbackFunc)
 { // retval: -2: compil error, -1: runtimeError, 0: function not there, 1: ok
     int retVal;
     if (errorMsg!=NULL)
@@ -1840,7 +1859,10 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
             luaWrap_lua_getglobal(L,getSystemCallbackString(sim_syscb_contactcallback,false).c_str());
             if (hasContactCallbackFunc!=NULL)
                 hasContactCallbackFunc[0]=luaWrap_lua_isfunction(L,-1);
-            luaWrap_lua_pop(L,2);
+            luaWrap_lua_getglobal(L,getSystemCallbackString(sim_syscb_dyncallback,false).c_str());
+            if (hasDynCallbackFunc!=NULL)
+                hasDynCallbackFunc[0]=luaWrap_lua_isfunction(L,-1);
+            luaWrap_lua_pop(L,3);
         }
         // Push the function name onto the stack (will be automatically popped from stack after _luaPCall):
         luaWrap_lua_getglobal(L,getSystemCallbackString(callType,false).c_str());
@@ -1948,10 +1970,10 @@ void CLuaScriptObject::_runAddOn(int callType,const CInterfaceStack* inStack,CIn
     { // for backward compatibility
         CInterfaceStack inStackLocal;
         inStackLocal.pushNumberOntoStack(double(callType));
-        retVal=_runScriptOrCallScriptFunction(callType,&inStackLocal,outStackProxy,&errorMsg,NULL,NULL);
+        retVal=_runScriptOrCallScriptFunction(callType,&inStackLocal,outStackProxy,&errorMsg,NULL,NULL,NULL);
     }
     else
-        retVal=_runScriptOrCallScriptFunction(callType,inStack,outStackProxy,&errorMsg,NULL,NULL);
+        retVal=_runScriptOrCallScriptFunction(callType,inStack,outStackProxy,&errorMsg,NULL,NULL,NULL);
     if (retVal>-2)
     {
         if ( (callType==sim_syscb_init)||(callType==sim_syscb_cleanup)||(callType==sim_syscb_aos_run)||(callType==sim_syscb_aos_suspend)||(callType==sim_syscb_aos_resume) )
@@ -2364,6 +2386,7 @@ void CLuaScriptObject::killLuaState()
     _compatibilityModeOrFirstTimeCall_sysCallbacks=true;
     _containsJointCallbackFunction=false;
     _containsContactCallbackFunction=false;
+    _containsDynCallbackFunction=false;
     _flaggedForDestruction=false;
 }
 

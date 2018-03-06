@@ -1134,6 +1134,7 @@ const SLuaVariables simLuaVariables[]=
     {"sim.syscb_aos_resume",sim_syscb_aos_resume,true},
     {"sim.syscb_jointcallback",sim_syscb_jointcallback,true},
     {"sim.syscb_contactcallback",sim_syscb_contactcallback,true},
+    {"sim.syscb_dyncallback",sim_syscb_dyncallback,true},
     {"sim.syscb_customcallback1",sim_syscb_customcallback1,true},
     {"sim.syscb_customcallback2",sim_syscb_customcallback2,true},
     {"sim.syscb_customcallback3",sim_syscb_customcallback3,true},
@@ -1201,6 +1202,8 @@ const SLuaVariables simLuaVariables[]=
     {"sim.handleflag_model",sim_handleflag_model,true},
     {"sim.handleflag_rawvalue",sim_handleflag_rawvalue,true},
     {"sim.handleflag_altname",sim_handleflag_altname,true},
+    {"sim.handleflag_resetforce",sim_handleflag_resetforce,true},
+    {"sim.handleflag_resettorque",sim_handleflag_resettorque,true},
     {"sim.handleflag_silenterror",sim_handleflag_silenterror,true},
     // General object main properties:
     {"sim.objectspecialproperty_collidable",sim_objectspecialproperty_collidable,true},
