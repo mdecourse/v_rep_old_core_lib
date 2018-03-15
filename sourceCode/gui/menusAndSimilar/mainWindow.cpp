@@ -100,14 +100,8 @@ CMainWindow::CMainWindow() : QMainWindow()
 
     customMenuBarItemContainer=new CCustomMenuBarItemContainer();
     dlgCont=new CDlgCont(this);
-    std::string p(App::directories->executableDirectory);// +VREP_SLASH);
 
-    #ifdef MAC_VREP
-        // We are inside of the package!!!
-        p+="../../..";// /";
-    #endif
-
-    simulationRecorder=new CSimRecorder(p.c_str());
+    simulationRecorder=new CSimRecorder(App::directories->videoDirectory.c_str());
     _mouseButtonsState=0;
     _keyDownState=0;
 

@@ -1,4 +1,3 @@
-
 #include "vrepMainHeader.h"
 #include "v_rep_internal.h"
 #include "directoryPaths.h"
@@ -20,6 +19,7 @@ CDirectoryPaths::CDirectoryPaths()
     uiDirectory=executableDirectory+"/../../../";
     cadFormatDirectory=executableDirectory+"/../../../"+V_REP_CADFILES_DIRECTORY_NAME;
     textureDirectory=executableDirectory+"/../../../";
+    videoDirectory=executableDirectory+"/../../../";
     otherFilesDirectory=executableDirectory+"/../../../";
 #else
     sceneDirectory=executableDirectory+VREP_SLASH+V_REP_SCENES_DIRECTORY_NAME;// if scenes can't be found, it will use the last used directory somehow!
@@ -27,6 +27,7 @@ CDirectoryPaths::CDirectoryPaths()
     uiDirectory=executableDirectory;
     cadFormatDirectory=executableDirectory+VREP_SLASH+V_REP_CADFILES_DIRECTORY_NAME;
     textureDirectory=executableDirectory;
+    videoDirectory=executableDirectory;
     otherFilesDirectory=executableDirectory;
 #endif
 

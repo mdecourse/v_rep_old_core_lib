@@ -973,6 +973,47 @@ void CUserSettings::saveUserSettings()
     c.writeConfiguration(filenameAndPath.c_str());
 }
 
+bool CUserSettings::getBooleanFromFileDirectly(const char* varName,bool& varValue)
+{ // static function
+    bool result=false;
+    CConfReaderAndWriter c;
+    std::string filenameAndPath(VVarious::getModulePath()+VREP_SLASH+V_REP_SYSTEM_DIRECTORY_NAME+VREP_SLASH+USER_SETTINGS_FILENAME); // The CDirectoryPaths object might not yet be set-up
+    if (c.readConfiguration(filenameAndPath.c_str()))
+        result=c.getBoolean(varName,varValue);
+    return(result);
+}
+
+bool CUserSettings::getIntegerFromFileDirectly(const char* varName,int& varValue)
+{ // static function
+    bool result=false;
+    CConfReaderAndWriter c;
+    std::string filenameAndPath(VVarious::getModulePath()+VREP_SLASH+V_REP_SYSTEM_DIRECTORY_NAME+VREP_SLASH+USER_SETTINGS_FILENAME); // The CDirectoryPaths object might not yet be set-up
+    if (c.readConfiguration(filenameAndPath.c_str()))
+        result=c.getInteger(varName,varValue);
+    return(result);
+}
+
+bool CUserSettings::getFloatFromFileDirectly(const char* varName,float& varValue)
+{ // static function
+    bool result=false;
+    CConfReaderAndWriter c;
+    std::string filenameAndPath(VVarious::getModulePath()+VREP_SLASH+V_REP_SYSTEM_DIRECTORY_NAME+VREP_SLASH+USER_SETTINGS_FILENAME); // The CDirectoryPaths object might not yet be set-up
+    if (c.readConfiguration(filenameAndPath.c_str()))
+        result=c.getFloat(varName,varValue);
+    return(result);
+}
+
+bool CUserSettings::getStringFromFileDirectly(const char* varName,std::string& varValue)
+{ // static function
+    bool result=false;
+    CConfReaderAndWriter c;
+    std::string filenameAndPath(VVarious::getModulePath()+VREP_SLASH+V_REP_SYSTEM_DIRECTORY_NAME+VREP_SLASH+USER_SETTINGS_FILENAME); // The CDirectoryPaths object might not yet be set-up
+    if (c.readConfiguration(filenameAndPath.c_str()))
+        result=c.getString(varName,varValue);
+    return(result);
+}
+
+
 void CUserSettings::loadUserSettings()
 {
     CConfReaderAndWriter c;

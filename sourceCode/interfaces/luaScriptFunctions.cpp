@@ -2933,7 +2933,7 @@ const SLuaVariables simLuaVariablesOldApi[]=
     {"sim_boolparam_joint_motion_handling_enabled",sim_boolparam_joint_motion_handling_enabled_deprecated,false},
     {"sim_boolparam_path_motion_handling_enabled",sim_boolparam_path_motion_handling_enabled_deprecated,false},
     {"sim_jointmode_motion",sim_jointmode_motion_deprecated,false},
-    {"",-1}
+    {"",-1,false}
 };
 
 
