@@ -241,9 +241,9 @@ CMainWindow::CMainWindow() : QMainWindow()
 
 // --- Browser splitter ---
     _modelBrowserSplitter=new QSplitter(Qt::Horizontal);
-    _modelBrowserSplitter->setCollapsible(0,false);
     _modelBrowserSplitter->addWidget(_modelBrowser);
     _modelBrowserSplitter->addWidget(_statusbarSplitter);
+    _modelBrowserSplitter->setCollapsible(0,false);
     _modelBrowserSplitter->setOpaqueResize(false);
     splitSizes.clear();
     splitSizes << 1 << 10000;
