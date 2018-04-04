@@ -244,6 +244,7 @@ void CInterfaceStackTable::appendArrayOrMapObject(CInterfaceStackObject* obj,CIn
             if (int(_tableObjects.size())+1==ind)
             {
                 _tableObjects.push_back(obj);
+                delete key;
                 valueInserted=true;
             }
         }

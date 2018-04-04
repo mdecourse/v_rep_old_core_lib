@@ -140,6 +140,14 @@ std::string CLuaScriptObject::getSystemCallbackString(int calltype,bool callTips
             r+="=()\nCalled when simulation is not running.";
         return(r);
     }
+    if (calltype==sim_syscb_beforemainscript)
+    {
+        std::string r("sysCall_beforeMainScript");
+        if (callTips)
+            r+="=()\nCalled just before the main script is called.\Can be used to temporarily suppress calling the main script.";
+        return(r);
+    }
+
     if (calltype==sim_syscb_beforesimulation)
     {
         std::string r("sysCall_beforeSimulation");
@@ -354,6 +362,8 @@ bool CLuaScriptObject::canCallSystemCallback(int scriptType,bool threaded,int ca
             return(true);
         if (callType==sim_syscb_nonsimulation)
             return(true);
+        if (callType==sim_syscb_beforemainscript)
+            return(true);
         if (callType==sim_syscb_beforesimulation)
             return(true);
         if (callType==sim_syscb_aftersimulation)
@@ -464,65 +474,48 @@ bool CLuaScriptObject::canCallSystemCallback(int scriptType,bool threaded,int ca
 
 std::vector<std::string> CLuaScriptObject::getAllSystemCallbackStrings(int scriptType,bool threaded,bool callTips)
 {
+    const int ct[]={
+                 sim_syscb_init,
+                 sim_syscb_cleanup,
+                 sim_syscb_nonsimulation,
+                 sim_syscb_beforemainscript,
+                 sim_syscb_beforesimulation,
+                 sim_syscb_aftersimulation,
+                 sim_syscb_actuation,
+                 sim_syscb_sensing,
+                 sim_syscb_suspended,
+                 sim_syscb_suspend,
+                 sim_syscb_resume,
+                 sim_syscb_beforeinstanceswitch,
+                 sim_syscb_afterinstanceswitch,
+                 sim_syscb_beforecopy,
+                 sim_syscb_aftercopy,
+                 sim_syscb_beforedelete,
+                 sim_syscb_afterdelete,
+                 sim_syscb_aftercreate,
+                 sim_syscb_aos_run,
+                 sim_syscb_aos_suspend,
+                 sim_syscb_aos_resume,
+                 sim_syscb_jointcallback,
+                 sim_syscb_contactcallback,
+                 sim_syscb_dyncallback,
+                 sim_syscb_customcallback1,
+                 sim_syscb_customcallback2,
+                 sim_syscb_customcallback3,
+                 sim_syscb_customcallback4,
+                 sim_syscb_threadmain,
+                 sim_syscb_br,
+                 -1
+            };
+
     std::vector<std::string> retVal;
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_init))
-        retVal.push_back(getSystemCallbackString(sim_syscb_init,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_cleanup))
-        retVal.push_back(getSystemCallbackString(sim_syscb_cleanup,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_nonsimulation))
-        retVal.push_back(getSystemCallbackString(sim_syscb_nonsimulation,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_beforesimulation))
-        retVal.push_back(getSystemCallbackString(sim_syscb_beforesimulation,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_aftersimulation))
-        retVal.push_back(getSystemCallbackString(sim_syscb_aftersimulation,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_actuation))
-        retVal.push_back(getSystemCallbackString(sim_syscb_actuation,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_sensing))
-        retVal.push_back(getSystemCallbackString(sim_syscb_sensing,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_suspended))
-        retVal.push_back(getSystemCallbackString(sim_syscb_suspended,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_suspend))
-        retVal.push_back(getSystemCallbackString(sim_syscb_suspend,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_resume))
-        retVal.push_back(getSystemCallbackString(sim_syscb_resume,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_beforeinstanceswitch))
-        retVal.push_back(getSystemCallbackString(sim_syscb_beforeinstanceswitch,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_afterinstanceswitch))
-        retVal.push_back(getSystemCallbackString(sim_syscb_afterinstanceswitch,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_beforecopy))
-        retVal.push_back(getSystemCallbackString(sim_syscb_beforecopy,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_aftercopy))
-        retVal.push_back(getSystemCallbackString(sim_syscb_aftercopy,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_beforedelete))
-        retVal.push_back(getSystemCallbackString(sim_syscb_beforedelete,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_afterdelete))
-        retVal.push_back(getSystemCallbackString(sim_syscb_afterdelete,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_aftercreate))
-        retVal.push_back(getSystemCallbackString(sim_syscb_aftercreate,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_aos_run))
-        retVal.push_back(getSystemCallbackString(sim_syscb_aos_run,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_aos_suspend))
-        retVal.push_back(getSystemCallbackString(sim_syscb_aos_suspend,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_aos_resume))
-        retVal.push_back(getSystemCallbackString(sim_syscb_aos_resume,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_jointcallback))
-        retVal.push_back(getSystemCallbackString(sim_syscb_jointcallback,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_contactcallback))
-        retVal.push_back(getSystemCallbackString(sim_syscb_contactcallback,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_dyncallback))
-        retVal.push_back(getSystemCallbackString(sim_syscb_dyncallback,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_customcallback1))
-        retVal.push_back(getSystemCallbackString(sim_syscb_customcallback1,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_customcallback2))
-        retVal.push_back(getSystemCallbackString(sim_syscb_customcallback2,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_customcallback3))
-        retVal.push_back(getSystemCallbackString(sim_syscb_customcallback3,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_customcallback4))
-        retVal.push_back(getSystemCallbackString(sim_syscb_customcallback4,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_threadmain))
-        retVal.push_back(getSystemCallbackString(sim_syscb_threadmain,callTips));
-    if (canCallSystemCallback(scriptType,threaded,sim_syscb_br))
-        retVal.push_back(getSystemCallbackString(sim_syscb_br,callTips));
+    size_t i=0;
+    while (ct[i]!=-1)
+    {
+        if (canCallSystemCallback(scriptType,threaded,ct[i]))
+            retVal.push_back(getSystemCallbackString(ct[i],callTips));
+        i++;
+    }
     return(retVal);
 }
 

@@ -498,6 +498,41 @@ void CLuaScriptContainer::handleNonThreadedChildScript_specialCall(int callType,
     }
 }
 
+bool CLuaScriptContainer::handleCustomizationScriptExecution_beforeMainScript()
+{ // return true: run main script, otherwise, do not run main script
+    bool retVal=true;
+
+    // Do 3 loops, for the first, normal and last execution order.
+    // We always go through the whole scripts, since some scripts might be destroyed
+    // on the way:
+    for (int priority=sim_scriptexecorder_first;priority<=sim_scriptexecorder_last;priority++)
+    {
+        for (size_t i=0;i<allScripts.size();i++)
+        {
+            CLuaScriptObject* it=allScripts[i];
+            if ( (it->getScriptType()==sim_scripttype_customizationscript)&&(it->getExecutionOrder()==priority) )
+            {
+                C3DObject* obj=App::ct->objCont->getObject(it->getObjectIDThatScriptIsAttachedTo_customization());
+                if (obj!=NULL) // we could still run it in that situation, but is not desired, since the script itself will shortly be destroyed.. or is unattached!
+                {
+                    CInterfaceStack outStack;
+                    if (it->runCustomizationScript(sim_syscb_beforemainscript,NULL,&outStack))
+                    {
+                        bool doNotRunMainScript;
+                        if (outStack.getStackMapBoolValue("doNotRunMainScript",doNotRunMainScript))
+                        {
+                            if (doNotRunMainScript)
+                                retVal=false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return(retVal);
+}
+
+
 int CLuaScriptContainer::handleCustomizationScriptExecution(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack)
 { // returns the number of different customization scripts executed
     int retVal=0;

@@ -5094,36 +5094,37 @@ simInt simHandleMainScript_internal()
 {
     C_API_FUNCTION_DEBUG;
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
+    int retVal=0;
+
+    // Plugins:
     int data[4]={0,0,0,0};
     int rtVal[4]={-1,-1,-1,-1};
     void* returnVal=CPluginContainer::sendEventCallbackMessageToAllPlugins(sim_message_eventcallback_mainscriptabouttobecalled,data,NULL,rtVal);
     delete[] (char*)returnVal;
-    if (rtVal[0]!=-1)
-    { // a plugin doesn't want to run the main script!
-        // Handle add-on execution (during non-simulation, it happens elsewhere!):
-        App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aos_run,NULL,NULL);
 
-        return(sim_script_main_script_not_called); // this should not generate an error
-    }
+    // Customization scripts:
+    bool cs=App::ct->luaScriptContainer->handleCustomizationScriptExecution_beforeMainScript();
 
-    App::ct->calcInfo->simulationPassStart();
-    CLuaScriptObject* it=App::ct->luaScriptContainer->getMainScript();
-    if (it==NULL)
+    if ( ( (rtVal[0]==-1)&&cs )||App::ct->simulation->didStopRequestCounterChangeSinceSimulationStart() )
     {
-        // Handle add-on execution (during non-simulation, it happens elsewhere!):
-        App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aos_run,NULL,NULL);
-
-        return(sim_script_main_script_nonexistent); // this should not generate an error
+        CLuaScriptObject* it=App::ct->luaScriptContainer->getMainScript();
+        if (it!=NULL)
+        {
+            App::ct->calcInfo->simulationPassStart();
+            retVal=it->runMainScript(-1,NULL,NULL);
+            App::ct->calcInfo->simulationPassEnd();
+        }
+        else
+        { // we don't have a main script
+            retVal=sim_script_main_script_nonexistent; // this should not generate an error
+        }
     }
-    int retVal=0;
-
-    retVal=it->runMainScript(-1,NULL,NULL);
-
-    App::ct->calcInfo->simulationPassEnd();
+    else
+    { // a plugin or customization script doesn't want to run the main script!
+        retVal=sim_script_main_script_not_called; // this should not generate an error
+    }
 
     // Handle add-on execution (during non-simulation, it happens elsewhere!):
     App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aos_run,NULL,NULL);
@@ -6504,9 +6505,7 @@ simInt simStopSimulation_internal()
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {

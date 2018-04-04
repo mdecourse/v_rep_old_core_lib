@@ -44,6 +44,7 @@ public:
     bool addCommandToOutsideCommandQueues(int commandID,int auxVal1,int auxVal2,int auxVal3,int auxVal4,const float aux2Vals[8],int aux2Count);
 
     int handleCustomizationScriptExecution(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack);
+    bool handleCustomizationScriptExecution_beforeMainScript();
     void handleNonThreadedChildScript_specialCall(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack);
     void callAddOnMainChildCustomizationWithData(int callType,CInterfaceStack* inStack);
     void sceneOrModelAboutToBeSaved(int modelBase);

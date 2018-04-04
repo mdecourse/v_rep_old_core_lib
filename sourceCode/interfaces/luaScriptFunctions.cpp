@@ -1118,6 +1118,7 @@ const SLuaVariables simLuaVariables[]=
     {"sim.syscb_init",sim_syscb_init,true},
     {"sim.syscb_cleanup",sim_syscb_cleanup,true},
     {"sim.syscb_nonsimulation",sim_syscb_nonsimulation,true},
+    {"sim.syscb_beforemainscript",sim_syscb_beforemainscript,true},
     {"sim.syscb_beforesimulation",sim_syscb_beforesimulation,true},
     {"sim.syscb_aftersimulation",sim_syscb_aftersimulation,true},
     {"sim.syscb_actuation",sim_syscb_actuation,true},
