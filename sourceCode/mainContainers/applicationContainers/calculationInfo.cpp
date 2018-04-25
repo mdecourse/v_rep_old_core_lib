@@ -26,8 +26,6 @@ CCalculationInfo::CCalculationInfo()
     _visionSensTxt[1]="";
     _ikTxt[0]="";
     _ikTxt[1]="";
-    _gcsTxt[0]="";
-    _gcsTxt[1]="";
     _millTxt[0]="";
     _millTxt[1]="";
     _dynamicsTxt[0]="";
@@ -63,14 +61,13 @@ void CCalculationInfo::resetInfo()
     _rendSensCalcDuration=0;
     _ikCalcCount=0;
     _ikCalcDuration=0;
-    _gcsCalcCount=0;
-    _gcsCalcDuration=0;
-    _regularScriptCount=0;
-    _mainScriptMessage="";
+    _mainScriptExecuted=false;
     _mainScriptDuration=0;
+    _mainScriptMessage="";
+    _regularScriptDuration=0;
+    _regularScriptCount=0;
     _threadedScriptDuration=0;
     _threadedScriptCount=0;
-
     _simulationPassDuration=0;
 
     _dynamicsCalcPasses=0;
@@ -87,13 +84,20 @@ void CCalculationInfo::resetInfo()
 void CCalculationInfo::formatInfo()
 {
     // Script functionality:
-    if (_regularScriptCount==0)
-        _scriptTxt[0]="&&fg930Main script not called";
+    if (_mainScriptExecuted)
+    {
+        _scriptTxt[0]="Simulation scripts called/resumed";
+        _scriptTxt[1]="main: 1 (";
+    }
     else
-        _scriptTxt[0]="Script(s) executed";
-    _scriptTxt[1]="Non-threaded: ";
+    {
+        _scriptTxt[0]="&&fg930Main script not called";
+        _scriptTxt[1]="main: 0 (";
+    }
+    _scriptTxt[1]+=boost::lexical_cast<std::string>(_mainScriptDuration);
+    _scriptTxt[1]+=" ms), non-threaded: ";
     _scriptTxt[1]+=boost::lexical_cast<std::string>(_regularScriptCount)+" (";
-    _scriptTxt[1]+=boost::lexical_cast<std::string>(_mainScriptDuration)+" ms), running threads: ";
+    _scriptTxt[1]+=boost::lexical_cast<std::string>(_regularScriptDuration)+" ms), running threads: ";
     _scriptTxt[1]+=boost::lexical_cast<std::string>(_threadedScriptCount);
     _scriptTxt[1]+=" (";
     _scriptTxt[1]+=boost::lexical_cast<std::string>(_threadedScriptDuration)+" ms) ";
@@ -165,15 +169,6 @@ void CCalculationInfo::formatInfo()
     _ikTxt[1]="Calculations: ";
     _ikTxt[1]+=boost::lexical_cast<std::string>(_ikCalcCount)+" (";
     _ikTxt[1]+=boost::lexical_cast<std::string>(_ikCalcDuration)+" ms)";
-
-    // GCS calculation:
-    if (!App::ct->mainSettings->gcsCalculationEnabled)
-        _gcsTxt[0]="&&fg930Mechanism handling disabled";
-    else
-        _gcsTxt[0]="Mechanism handling enabled";
-    _gcsTxt[1]="Calculations: ";
-    _gcsTxt[1]+=boost::lexical_cast<std::string>(_gcsCalcCount)+" (";
-    _gcsTxt[1]+=boost::lexical_cast<std::string>(_gcsCalcDuration)+" ms)";
 
     // Dynamics calculation:
     if (!App::ct->dynamicsContainer->getDynamicsEnabled())
@@ -257,19 +252,14 @@ float CCalculationInfo::getIkCalculationTime()
     return(float(_ikCalcDuration)*0.001f);
 }
 
-float CCalculationInfo::getGcsCalculationTime()
+float CCalculationInfo::getChildScriptExecutionTime()
 {
-    return(float(_gcsCalcDuration)*0.001f);
+    return(float(_regularScriptDuration+_threadedScriptDuration)*0.001f);
 }
 
 float CCalculationInfo::getDynamicsCalculationTime()
 {
     return(float(_dynamicsCalcDuration)*0.001f);
-}
-
-float CCalculationInfo::getMainScriptExecutionTime()
-{
-    return(float(VDateTime::getTimeDiffInMs(_mainScriptStartTime))*0.001f);
 }
 
 float CCalculationInfo::getSimulationPassExecutionTime()
@@ -282,34 +272,26 @@ float CCalculationInfo::getRenderingDuration()
     return(float(_renderingDuration)*0.001f);
 }
 
-void CCalculationInfo::scriptStart(bool threaded,bool mainScript)
+void CCalculationInfo::addChildScriptCalcTime(int duration,bool threaded)
 {
     if (!threaded)
-        _regularScriptCount++;
-    if (mainScript)
-        _mainScriptStartTime=VDateTime::getTimeInMs();
+        _regularScriptDuration+=duration;
+    else
+        _threadedScriptDuration+=duration;
 }
 
-void CCalculationInfo::mainScriptPaused(int pauseTimeInMs)
+void CCalculationInfo::addChildScriptExecCnt(int cnt,bool threaded)
 {
-    _mainScriptStartTime+=pauseTimeInMs;
+    if (!threaded)
+        _regularScriptCount+=cnt;
+    else
+        _threadedScriptCount+=cnt;
 }
 
-void CCalculationInfo::scriptEnd(bool threaded,bool mainScript)
+void CCalculationInfo::setMainScriptExecutionTime(int duration)
 {
-    if (mainScript)
-        _mainScriptDuration+=VDateTime::getTimeDiffInMs(_mainScriptStartTime);
-}
-
-void CCalculationInfo::runningThreadedScriptStart(int threadedScriptCount)
-{
-    _threadedScriptCount+=threadedScriptCount;
-    _threadedScriptStartTime=VDateTime::getTimeInMs();
-}
-
-void CCalculationInfo::runningThreadedScriptEnd()
-{
-    _threadedScriptDuration+=VDateTime::getTimeDiffInMs(_threadedScriptStartTime);
+    _mainScriptExecuted=true;
+    _mainScriptDuration=duration;
 }
 
 void CCalculationInfo::setMainScriptMessage(const char* msg)
@@ -413,17 +395,6 @@ void CCalculationInfo::dynamicsEnd(int calcPasses,bool dynamicContent)
     _dynamicsCalcPasses=calcPasses;
     _dynamicsCalcDuration+=VDateTime::getTimeDiffInMs(_dynamicsStartTime);
     _dynamicsContentAvailable=dynamicContent;
-}
-
-void CCalculationInfo::gcsStart()
-{
-    _gcsStartTime=VDateTime::getTimeInMs();
-}
-
-void CCalculationInfo::gcsEnd()
-{
-    _gcsCalcCount++;
-    _gcsCalcDuration+=VDateTime::getTimeDiffInMs(_gcsStartTime);
 }
 
 void CCalculationInfo::millSimulationStart()
@@ -652,9 +623,6 @@ void CCalculationInfo::printInformation()
             // IK calculation:
             App::ct->buttonBlockContainer->getInfoBoxButton(pos,0)->label=_ikTxt[0];
             App::ct->buttonBlockContainer->getInfoBoxButton(pos++,1)->label=_ikTxt[1];
-            // Geometric constraint solver calculation:
-            App::ct->buttonBlockContainer->getInfoBoxButton(pos,0)->label=_gcsTxt[0];
-            App::ct->buttonBlockContainer->getInfoBoxButton(pos++,1)->label=_gcsTxt[1];
             // Dynamics calculation:
             App::ct->buttonBlockContainer->getInfoBoxButton(pos,0)->label=_dynamicsTxt[0];
             App::ct->buttonBlockContainer->getInfoBoxButton(pos++,1)->label=_dynamicsTxt[1];

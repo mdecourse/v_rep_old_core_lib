@@ -79,13 +79,15 @@ SIMPLE_VTHREAD_RETURN_TYPE _workThread(SIMPLE_VTHREAD_ARGUMENT_TYPE lpData)
         // Handle customization script execution:
         if ( App::ct->simulation->isSimulationStopped()&&(App::getEditModeType()==NO_EDIT_MODE) )
         {
-            App::ct->luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_nonsimulation,NULL,NULL);
+            App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_nonsimulation,NULL,NULL,NULL);
             App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
+            App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_nonsimulation,NULL,NULL);
         }
         if (App::ct->simulation->isSimulationPaused())
         {
-            App::ct->luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_suspended,NULL,NULL);
+            App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_suspended,NULL,NULL,NULL);
             App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
+            App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_suspended,NULL,NULL);
         }
 
         // Handle the main loop (one pass):
@@ -95,7 +97,7 @@ SIMPLE_VTHREAD_RETURN_TYPE _workThread(SIMPLE_VTHREAD_ARGUMENT_TYPE lpData)
         App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_childscript);
         App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_jointctrlcallback);
 
-        // Handle add-on execution:
+        // Keep for backward compatibility:
         if (!App::ct->simulation->isSimulationRunning()) // when simulation is running, we handle the add-on scripts after the main script was called
             App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aos_run,NULL,NULL);
 

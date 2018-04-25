@@ -569,7 +569,7 @@ int C3DObject::getTreeDynamicProperty() // combination of sim_objdynprop_dynamic
     return(ret);
 }
 
-void C3DObject::getChildScriptsToRun(std::vector<int>& childScriptIDs)
+void C3DObject::getChildScriptsToRun_OLD(std::vector<int>& childScriptIDs)
 {
     CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(getID());
     if (it!=NULL)
@@ -577,7 +577,7 @@ void C3DObject::getChildScriptsToRun(std::vector<int>& childScriptIDs)
     else
     { // we have to explore the children:
         for (int i=0;i<int(childList.size());i++)
-            childList[i]->getChildScriptsToRun(childScriptIDs);
+            childList[i]->getChildScriptsToRun_OLD(childScriptIDs);
     }
 }
 
@@ -1572,6 +1572,84 @@ std::string C3DObject::getExtensionString() const
 void C3DObject::setExtensionString(const char* str)
 {
     _extensionString=str;
+}
+
+int C3DObject::getScriptExecutionOrder(int scriptType) const
+{
+    if (scriptType==sim_scripttype_customizationscript)
+    {
+        CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(_objectID);
+        if (it!=NULL)
+            return(it->getExecutionOrder());
+    }
+    else if ((scriptType&sim_scripttype_childscript)!=0)
+    {
+        CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(_objectID);
+        if (it!=NULL)
+        {
+            if ( it->getThreadedExecution()==((scriptType&sim_scripttype_threaded)!=0) )
+                return(it->getExecutionOrder());
+        }
+    }
+    return(sim_scriptexecorder_normal);
+}
+
+int C3DObject::getScriptsToExecute(int scriptType,int parentTraversalDirection,std::vector<CLuaScriptObject*>& scripts)
+{
+    int cnt=0;
+    CLuaScriptObject* attachedScript=NULL;
+    if (scriptType==sim_scripttype_customizationscript)
+        attachedScript=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(_objectID);
+    else if ((scriptType&sim_scripttype_childscript)!=0)
+    {
+        attachedScript=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(_objectID);
+        if (attachedScript!=NULL)
+        {
+            if ( attachedScript->getThreadedExecution()!=((scriptType&sim_scripttype_threaded)!=0) )
+                attachedScript=NULL;
+        }
+    }
+    int traversalDir=parentTraversalDirection;
+    if (attachedScript!=NULL)
+    {
+        int tdir=attachedScript->getTreeTraversalDirection();
+        if (tdir!=sim_scripttreetraversal_parent)
+            traversalDir=tdir;
+    }
+
+    if ((getCumulativeModelProperty()&sim_modelproperty_scripts_inactive)==0)
+    {
+        if ( (traversalDir==sim_scripttreetraversal_forward)&&(attachedScript!=NULL)&&(!attachedScript->getScriptIsDisabled()) )
+        {
+            cnt++;
+            scripts.push_back(attachedScript);
+        }
+
+        std::vector<C3DObject*> orderFirst;
+        std::vector<C3DObject*> orderNormal;
+        std::vector<C3DObject*> orderLast;
+        std::vector<std::vector<C3DObject*>* > toHandle;
+        toHandle.push_back(&orderFirst);
+        toHandle.push_back(&orderNormal);
+        toHandle.push_back(&orderLast);
+        for (size_t i=0;i<childList.size();i++)
+        {
+            C3DObject* it=childList[i];
+            toHandle[it->getScriptExecutionOrder(scriptType)]->push_back(it);
+        }
+        for (size_t i=0;i<toHandle.size();i++)
+        {
+            for (size_t j=0;j<toHandle[i]->size();j++)
+                cnt+=toHandle[i]->at(j)->getScriptsToExecute(scriptType,traversalDir,scripts);
+        }
+
+        if ( (traversalDir==sim_scripttreetraversal_reverse)&&(attachedScript!=NULL)&&(!attachedScript->getScriptIsDisabled()) )
+        {
+            cnt++;
+            scripts.push_back(attachedScript);
+        }
+    }
+    return(cnt);
 }
 
 void C3DObject::serialize(CSer& ar)

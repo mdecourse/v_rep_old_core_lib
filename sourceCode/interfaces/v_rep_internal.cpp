@@ -5105,9 +5105,15 @@ simInt simHandleMainScript_internal()
     delete[] (char*)returnVal;
 
     // Customization scripts:
-    bool cs=App::ct->luaScriptContainer->handleCustomizationScriptExecution_beforeMainScript();
+    int res=0;
+    CInterfaceStack outStack;
+    App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_beforemainscript,NULL,&outStack,&res);
+    bool cs=(res!=1);
 
-    if ( ( (rtVal[0]==-1)&&cs )||App::ct->simulation->didStopRequestCounterChangeSinceSimulationStart() )
+    // Add-on scripts:
+    bool as=App::ct->addOnScriptContainer->handleAddOnScriptExecution_beforeMainScript();
+
+    if ( ( (rtVal[0]==-1)&&cs&&as )||App::ct->simulation->didStopRequestCounterChangeSinceSimulationStart() )
     {
         CLuaScriptObject* it=App::ct->luaScriptContainer->getMainScript();
         if (it!=NULL)
@@ -6536,72 +6542,6 @@ simInt simPauseSimulation_internal()
             return(1);
         }
         return(0);
-    }
-    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
-    return(-1);
-}
-
-simInt simGetMechanismHandle_internal(const simChar* mechanismName)
-{
-    C_API_FUNCTION_DEBUG;
-
-    std::string mechanismNameAdjusted=getCNameSuffixAdjustedName(mechanismName);
-    enableCNameSuffixAdjustment();
-    if (!isSimulatorInitialized(__func__))
-    {
-        return(-1);
-    }
-
-    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
-    {
-        CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismNameAdjusted.c_str());
-        if (it==NULL)
-        {
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_MECHANISM_INEXISTANT);
-            return(-1);
-        }
-        int retVal=it->getObjectID();
-        return(retVal);
-    }
-    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
-    return(-1);
-}
-
-simInt simHandleMechanism_internal(simInt mechanismHandle)
-{
-    C_API_FUNCTION_DEBUG;
-
-    if (!isSimulatorInitialized(__func__))
-    {
-        return(-1);
-    }
-
-    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
-    {
-        if ( (mechanismHandle!=sim_handle_all)&&(mechanismHandle!=sim_handle_all_except_explicit) )
-        {
-            CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismHandle);
-            if (it==NULL)
-            {
-                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_MECHANISM_INEXISTANT);
-                return(-1);
-            }
-        }
-        int calcCnt=0;
-        if (mechanismHandle<0)
-            calcCnt=App::ct->constraintSolver->computeAllMechanisms(mechanismHandle==sim_handle_all_except_explicit);
-        else
-        { // explicit handling
-            CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismHandle);
-            if (!it->getExplicitHandling())
-            {
-                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_OBJECT_NOT_TAGGED_FOR_EXPLICIT_HANDLING);
-                return(-1);
-            }
-            if (it->computeGcs())
-                calcCnt++;
-        }
-        return(calcCnt);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
     return(-1);
@@ -15081,29 +15021,6 @@ simInt* simGetCollectionObjects_internal(simInt collectionHandle,simInt* objectC
     return(NULL);
 }
 
-simInt simHandleCustomizationScripts_internal(simInt callType)
-{
-    C_API_FUNCTION_DEBUG;
-
-    if (!isSimulatorInitialized(__func__))
-    {
-        return(-1);
-    }
-
-    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
-    {
-        int retVal=0;
-        if (App::getEditModeType()==NO_EDIT_MODE)
-        {
-            retVal=App::ct->luaScriptContainer->handleCustomizationScriptExecution(callType,NULL,NULL);
-            App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
-        }
-        return(retVal);
-    }
-    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
-    return(-1);
-}
-
 simInt simSetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,simFloat floatVal,simInt intOrBoolVal)
 {
     C_API_FUNCTION_DEBUG;
@@ -15163,9 +15080,7 @@ simInt simGetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,sim
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
@@ -19448,8 +19363,7 @@ simInt _simHandleCustomContact_internal(simInt objHandle1,simInt objHandle2,simI
     C_API_FUNCTION_DEBUG;
 
     // 1. We handle the new calling method:
-    int objectId=App::ct->luaScriptContainer->getObjectIdContactCallbackFunctionAvailable();
-    if ( (objectId>=0)&&((engine&1024)==0) ) // the engine flag 1024 means: the calling thread is not the simulation thread. We would have problems with the scripts
+    if ( ((engine&1024)==0)&&App::ct->luaScriptContainer->isContactCallbackFunctionAvailable() ) // the engine flag 1024 means: the calling thread is not the simulation thread. We would have problems with the scripts
     {
         CInterfaceStack inStack;
         inStack.pushTableOntoStack();
@@ -19463,69 +19377,60 @@ simInt _simHandleCustomContact_internal(simInt objHandle1,simInt objHandle2,simI
         inStack.pushNumberOntoStack(double(engine));
         inStack.insertDataIntoStackTable();
         CInterfaceStack outStack;
-        C3DObject* obj=App::ct->objCont->getObject(objectId);
-        if (obj!=NULL) // we could still run it in that situation, but is not desired, since the script itself will shortly be destroyed.. or is unattached!
-        {
-            CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objectId);
-            if (it->getContainsContactCallbackFunction())
-                it->runNonThreadedChildScript(sim_syscb_contactcallback,&inStack,&outStack);
-            else
-            {
-                it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objectId);
-                if (it->getContainsContactCallbackFunction())
-                    it->runCustomizationScript(sim_syscb_contactcallback,&inStack,&outStack);
-            }
+        int retInfo=0;
+        App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_childscript,sim_syscb_contactcallback,&inStack,&outStack,&retInfo);
+        if (retInfo>0)
+            App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_contactcallback,&inStack,&outStack,&retInfo);
 
-            bool ignoreContact;
-            if (outStack.getStackMapBoolValue("ignoreContact",ignoreContact))
+        bool ignoreContact;
+        if (outStack.getStackMapBoolValue("ignoreContact",ignoreContact))
+        {
+            dataInt[0]=0;
+            if (!ignoreContact)
             {
-                dataInt[0]=0;
-                if (!ignoreContact)
+                bool collisionResponse=false;
+                outStack.getStackMapBoolValue("collisionResponse",collisionResponse);
+                if (collisionResponse)
                 {
-                    bool collisionResponse=false;
-                    outStack.getStackMapBoolValue("collisionResponse",collisionResponse);
-                    if (collisionResponse)
+                    if (engine==sim_physics_ode)
                     {
-                        if (engine==sim_physics_ode)
-                        {
-                            outStack.getStackMapIntValue("ode.maxContacts",dataInt[1]);
-                            outStack.getStackMapIntValue("ode.contactMode",dataInt[2]);
-                        }
-                        if (engine==sim_physics_bullet)
-                        {
-                            outStack.getStackMapFloatValue("bullet.friction",dataFloat[0]);
-                            outStack.getStackMapFloatValue("bullet.restitution",dataFloat[1]);
-                        }
-                        if (engine==sim_physics_ode)
-                        {
-                            outStack.getStackMapFloatValue("ode.mu",dataFloat[0]);
-                            outStack.getStackMapFloatValue("ode.mu2",dataFloat[1]);
-                            outStack.getStackMapFloatValue("ode.bounce",dataFloat[2]);
-                            outStack.getStackMapFloatValue("ode.bounceVel",dataFloat[3]);
-                            outStack.getStackMapFloatValue("ode.softCfm",dataFloat[4]);
-                            outStack.getStackMapFloatValue("ode.softErp",dataFloat[5]);
-                            outStack.getStackMapFloatValue("ode.motion1",dataFloat[6]);
-                            outStack.getStackMapFloatValue("ode.motion2",dataFloat[7]);
-                            outStack.getStackMapFloatValue("ode.motionN",dataFloat[8]);
-                            outStack.getStackMapFloatValue("ode.slip1",dataFloat[9]);
-                            outStack.getStackMapFloatValue("ode.slip2",dataFloat[10]);
-                            outStack.getStackMapFloatArray("ode.fDir1",dataFloat+11,3);
-                        }
-                        if (engine==sim_physics_vortex)
-                        {
-                            //outStack.getStackMapFloatValue("vortex.xxxx",dataFloat[0]);
-                        }
-                        if (engine==sim_physics_newton)
-                        {
-                            outStack.getStackMapFloatValue("newton.staticFriction",dataFloat[0]);
-                            outStack.getStackMapFloatValue("newton.kineticFriction",dataFloat[1]);
-                            outStack.getStackMapFloatValue("newton.restitution",dataFloat[2]);
-                        }
-                        return(1); // collision
+                        outStack.getStackMapIntValue("ode.maxContacts",dataInt[1]);
+                        outStack.getStackMapIntValue("ode.contactMode",dataInt[2]);
                     }
-                    else
-                        return(0); // no collision
+                    if (engine==sim_physics_bullet)
+                    {
+                        outStack.getStackMapFloatValue("bullet.friction",dataFloat[0]);
+                        outStack.getStackMapFloatValue("bullet.restitution",dataFloat[1]);
+                    }
+                    if (engine==sim_physics_ode)
+                    {
+                        outStack.getStackMapFloatValue("ode.mu",dataFloat[0]);
+                        outStack.getStackMapFloatValue("ode.mu2",dataFloat[1]);
+                        outStack.getStackMapFloatValue("ode.bounce",dataFloat[2]);
+                        outStack.getStackMapFloatValue("ode.bounceVel",dataFloat[3]);
+                        outStack.getStackMapFloatValue("ode.softCfm",dataFloat[4]);
+                        outStack.getStackMapFloatValue("ode.softErp",dataFloat[5]);
+                        outStack.getStackMapFloatValue("ode.motion1",dataFloat[6]);
+                        outStack.getStackMapFloatValue("ode.motion2",dataFloat[7]);
+                        outStack.getStackMapFloatValue("ode.motionN",dataFloat[8]);
+                        outStack.getStackMapFloatValue("ode.slip1",dataFloat[9]);
+                        outStack.getStackMapFloatValue("ode.slip2",dataFloat[10]);
+                        outStack.getStackMapFloatArray("ode.fDir1",dataFloat+11,3);
+                    }
+                    if (engine==sim_physics_vortex)
+                    {
+                        //outStack.getStackMapFloatValue("vortex.xxxx",dataFloat[0]);
+                    }
+                    if (engine==sim_physics_newton)
+                    {
+                        outStack.getStackMapFloatValue("newton.staticFriction",dataFloat[0]);
+                        outStack.getStackMapFloatValue("newton.kineticFriction",dataFloat[1]);
+                        outStack.getStackMapFloatValue("newton.restitution",dataFloat[2]);
+                    }
+                    return(1); // collision
                 }
+                else
+                    return(0); // no collision
             }
         }
     }
@@ -19590,9 +19495,8 @@ simVoid _simDynCallback_internal(const simInt* intData,const simFloat* floatData
     C_API_FUNCTION_DEBUG;
 
     CInterfaceStack inStack;
-    const std::vector<int>* ids=App::ct->luaScriptContainer->getObjectIdsWhereDynCallbackFunctionsAvailable();
-    if (ids->size()>0)
-    {
+    if (App::ct->luaScriptContainer->isDynCallbackFunctionAvailable())
+    { // to make it a bit faster than blindly parsing the whole object hierarchy
         inStack.pushTableOntoStack();
         inStack.pushStringOntoStack("passCnt",0);
         inStack.pushNumberOntoStack(double(intData[1]));
@@ -19610,19 +19514,8 @@ simVoid _simDynCallback_internal(const simInt* intData,const simFloat* floatData
         inStack.pushBoolOntoStack(intData[3]!=0);
         inStack.insertDataIntoStackTable();
 
-        for (size_t i=0;i<ids->size();i++)
-        {
-            C3DObject* obj=App::ct->objCont->getObject(ids->at(i));
-            if (obj!=NULL) // we could still run it in that situation, but is not desired, since the script itself will shortly be destroyed.. or is unattached!
-            {
-                CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(obj->getID());
-                if ( (it!=NULL)&&it->getContainsDynCallbackFunction() )
-                    it->runNonThreadedChildScript(sim_syscb_dyncallback,&inStack,NULL);
-                it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(obj->getID());
-                if ( (it!=NULL)&&it->getContainsDynCallbackFunction() )
-                    it->runCustomizationScript(sim_syscb_dyncallback,&inStack,NULL);
-            }
-        }
+        App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_childscript,sim_syscb_dyncallback,&inStack,NULL,NULL);
+        App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_dyncallback,&inStack,NULL,NULL);
     }
 }
 
@@ -21783,5 +21676,88 @@ simInt simRegisterJointCtrlCallback_internal(simInt(*callBack)(simInt,simInt,sim
         return(1);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
+    return(-1);
+}
+
+simInt simGetMechanismHandle_internal(const simChar* mechanismName)
+{ // deprecated
+    C_API_FUNCTION_DEBUG;
+
+    std::string mechanismNameAdjusted=getCNameSuffixAdjustedName(mechanismName);
+    enableCNameSuffixAdjustment();
+    if (!isSimulatorInitialized(__func__))
+        return(-1);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismNameAdjusted.c_str());
+        if (it==NULL)
+        {
+            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_MECHANISM_INEXISTANT);
+            return(-1);
+        }
+        int retVal=it->getObjectID();
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+
+simInt simHandleMechanism_internal(simInt mechanismHandle)
+{ // deprecated
+    C_API_FUNCTION_DEBUG;
+
+    if (!isSimulatorInitialized(__func__))
+        return(-1);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        if ( (mechanismHandle!=sim_handle_all)&&(mechanismHandle!=sim_handle_all_except_explicit) )
+        {
+            CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismHandle);
+            if (it==NULL)
+            {
+                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_MECHANISM_INEXISTANT);
+                return(-1);
+            }
+        }
+        int calcCnt=0;
+        if (mechanismHandle<0)
+            calcCnt=App::ct->constraintSolver->computeAllMechanisms(mechanismHandle==sim_handle_all_except_explicit);
+        else
+        { // explicit handling
+            CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismHandle);
+            if (!it->getExplicitHandling())
+            {
+                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_OBJECT_NOT_TAGGED_FOR_EXPLICIT_HANDLING);
+                return(-1);
+            }
+            if (it->computeGcs())
+                calcCnt++;
+        }
+        return(calcCnt);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+
+simInt simHandleCustomizationScripts_internal(simInt callType)
+{ // deprecated
+    C_API_FUNCTION_DEBUG;
+
+    if (!isSimulatorInitialized(__func__))
+        return(-1);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        int retVal=0;
+        if (App::getEditModeType()==NO_EDIT_MODE)
+        {
+            retVal=App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,callType,NULL,NULL,NULL);
+            App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
+        }
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
     return(-1);
 }

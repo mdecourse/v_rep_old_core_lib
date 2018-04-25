@@ -14,11 +14,11 @@ public:
     void resetInfo();
     void formatInfo();
 
-    void scriptStart(bool threaded,bool mainScript);
-    void mainScriptPaused(int pauseTimeInMs);
-    void scriptEnd(bool threaded,bool mainScript);
-    void runningThreadedScriptStart(int threadedScriptCount);
-    void runningThreadedScriptEnd();
+    void addChildScriptCalcTime(int duration,bool threaded);
+    void addChildScriptExecCnt(int cnt,bool threaded);
+
+    void setMainScriptExecutionTime(int duration);
+
     void setMainScriptMessage(const char* msg);
 
     void collisionDetectionStart();
@@ -40,9 +40,6 @@ public:
     void renderingEnd();
     void clearRenderingTime();
 
-    void gcsStart();
-    void gcsEnd();
-
     void dynamicsStart();
     void dynamicsEnd(int calcPasses,bool dynamicContent);
 
@@ -57,8 +54,7 @@ public:
     float getProximitySensorCalculationTime();
     float getVisionSensorCalculationTime();
     float getIkCalculationTime();
-    float getGcsCalculationTime();
-    float getMainScriptExecutionTime();
+    float getChildScriptExecutionTime();
     float getMillingCalculationTime();
     float getDynamicsCalculationTime();
     float getSimulationPassExecutionTime();
@@ -69,13 +65,14 @@ public:
 #endif
 
 private:
+    bool _mainScriptExecuted;
+    int _mainScriptDuration;
     int _regularScriptCount;
     int _threadedScriptCount;
-    std::string _mainScriptMessage;
-    int _mainScriptStartTime;
-    int _mainScriptDuration;
-    int _threadedScriptStartTime;
+    int _regularScriptDuration;
     int _threadedScriptDuration;
+
+    std::string _mainScriptMessage;
 
     int _simulationPassStartTime;
     int _simulationPassDuration;
@@ -106,10 +103,6 @@ private:
     int _ikStartTime;
     int _ikCalcDuration;
 
-    int _gcsCalcCount;
-    int _gcsStartTime;
-    int _gcsCalcDuration;
-
     int _millCalcCount;
     float _millRemovedSurface;
     float _millRemovedVolume;
@@ -127,7 +120,6 @@ private:
     std::string _sensTxt[2];
     std::string _visionSensTxt[2];
     std::string _ikTxt[2];
-    std::string _gcsTxt[2];
     std::string _dynamicsTxt[2];
     std::string _millTxt[2];
 };

@@ -53,11 +53,15 @@ public:
     void setScriptText(const char* scriptTxt,const std::vector<int>* scriptFoldingInfo);
     const char* getScriptText(std::vector<int>* scriptFoldingInfo);
 
+    void setCalledInThisSimulationStep(bool c);
+    bool getCalledInThisSimulationStep() const;
+
     int runMainScript(int optionalCallType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
+    bool launchThreadedChildScript();
+    int resumeThreadedChildScriptIfLocationMatch(int resumeLocation);
     int runNonThreadedChildScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
-    int runThreadedChildScript();
-    bool runCustomizationScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
-    void runAddOn(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
+    int runCustomizationScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
+    int runAddOn(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
 
     int callScriptFunction(const char* functionName, SLuaCallBack* pdata);
     int callScriptFunctionEx(const char* functionName,CInterfaceStack* stack);
@@ -81,6 +85,8 @@ public:
     bool getThreadedExecutionIsUnderWay() const;
     void setExecutionOrder(int order);
     int getExecutionOrder() const;
+    void setTreeTraversalDirection(int dir);
+    int getTreeTraversalDirection() const;
     void flagForDestruction();
     bool getFlaggedForDestruction() const;
     void setAddOnScriptAutoRun();
@@ -163,8 +169,6 @@ public:
     bool checkAndSetWarning_simRMLVelocity_oldCompatibility_30_8_2014();
     bool checkAndSetWarning_simGetMpConfigForTipPose_oldCompatibility_21_1_2016();
     bool checkAndSetWarning_simFindIkPath_oldCompatibility_2_2_2016();
-    bool checkAndSetWarning_oldPathPlanningFunctionality_oldCompatibility_11_2_2016();
-    bool checkAndSetWarning_oldMotionPlanningFunctionality_oldCompatibility_11_2_2016();
 
     static bool canCallSystemCallback(int scriptType,bool threaded,int callType);
     static std::string getSystemCallbackString(int calltype,bool callTips);
@@ -178,9 +182,9 @@ protected:
     int _runMainScriptNow(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
     int _runNonThreadedChildScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
     int _runNonThreadedChildScriptNow(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
-    void _runThreadedChildScriptNow();
-    bool _runCustomizationScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
-    void _runAddOn(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
+    void _launchThreadedChildScriptNow();
+    int _runCustomizationScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
+    int _runAddOn(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
     int _runScriptOrCallScriptFunction(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack,std::string* errorMsg,bool* hasJointCallbackFunc,bool* hasContactCallbackFunc,bool* hasDynCallbackFunc);
 
     bool _prepareLuaStateAndCallScriptInitSectionIfNeeded();
@@ -197,9 +201,11 @@ protected:
     bool _mainScriptIsDefaultMainScript;
     bool _disableCustomizationScriptWithError;
     int _executionOrder;
+    int _treeTraversalDirection;
     int _objectIDAttachedTo_child;
     int _objectIDAttachedTo_callback;
     int _objectIDAttachedTo_customization;
+    bool _calledInThisSimulationStep;
 
     std::string _scriptText;
     std::string _scriptTextExec; // the one getting executed!
@@ -254,8 +260,6 @@ protected:
     bool _warning_simRMLVelocity_oldCompatibility_30_8_2014;
     bool _warning_simGetMpConfigForTipPose_oldCompatibility_21_1_2016;
     bool _warning_simFindIkPath_oldCompatibility_2_2_2016;
-    bool _warning_oldPathPlanningFunctionality_oldCompatibility_11_2_2016;
-    bool _warning_oldMotionPlanningFunctionality_oldCompatibility_11_2_2016;
     bool _automaticCascadingCallsDisabled_OLD; // reset to false at simulation start!
 
     static int _nextIdForExternalScriptEditor;

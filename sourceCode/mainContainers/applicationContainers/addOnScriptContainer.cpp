@@ -198,19 +198,41 @@ int CAddOnScriptContainer::prepareAddOnFunctionNames()
     return(addOnsCount);
 }
 
-void CAddOnScriptContainer::handleAddOnScriptExecution(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack)
-{
+bool CAddOnScriptContainer::handleAddOnScriptExecution_beforeMainScript()
+{ // return true: run main script, otherwise, do not run main script
+    bool retVal=true;
+
     for (size_t i=0;i<allAddOnScripts.size();i++)
     {
         CLuaScriptObject* it=allAddOnScripts[i];
         if (it->getScriptType()==sim_scripttype_addonscript)
-            it->runAddOn(callType,inStack,outStack);
+        {
+            CInterfaceStack outStack;
+            it->runAddOn(sim_syscb_beforemainscript,NULL,&outStack);
+            bool doNotRunMainScript;
+            if (outStack.getStackMapBoolValue("doNotRunMainScript",doNotRunMainScript))
+            {
+                if (doNotRunMainScript)
+                    retVal=false;
+            }
+        }
     }
+    return(retVal);
 }
 
-void CAddOnScriptContainer::callAddOnWithData(int callType,CInterfaceStack* inStack)
+int CAddOnScriptContainer::handleAddOnScriptExecution(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack)
 {
-    handleAddOnScriptExecution(callType,inStack,NULL);
+    int retVal=0;
+    for (size_t i=0;i<allAddOnScripts.size();i++)
+    {
+        CLuaScriptObject* it=allAddOnScripts[i];
+        if (it->getScriptType()==sim_scripttype_addonscript)
+        {
+            if (it->runAddOn(callType,inStack,outStack)==1)
+                retVal++;
+        }
+    }
+    return(retVal);
 }
 
 bool CAddOnScriptContainer::removeScript(int scriptID)

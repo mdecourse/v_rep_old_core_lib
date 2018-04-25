@@ -530,6 +530,11 @@ void CThreadPool::prepareAllThreadsForResume_calledBeforeMainScript()
 
 int CThreadPool::handleAllThreads_withResumeLocation(int location)
 {
+    return(handleThread_ifHasResumeLocation(0,true,location));
+}
+
+int CThreadPool::handleThread_ifHasResumeLocation(VTHREAD_ID_TYPE theThread,bool allThreadsWithResumeLocation,int location)
+{
     int retVal=0;
     _lock(8);
     bool doAll=false;
@@ -539,30 +544,32 @@ int CThreadPool::handleAllThreads_withResumeLocation(int location)
         doAll=true;
     }
     for (int j=3*location;j<3*location+3;j++)
-    {
+    { // first, normal and last (execution order). Handled elsewhere now (but keep for the legacy functionality)
         for (int i=1;i<int(_allThreadData.size());i++)
         {
-            if ((_allThreadData[i]->threadResumeLocationAndOrder==j)||doAll)
-            { // We first execute those with 0, then 1, then 2! (then 3 in the sensing phase!)
-                if ( (_allThreadData[i]->threadExecutionTime==-1)||(_allThreadData[i]->allowToExecuteAgainInThisSimulationStep&&(!doAll)) )
-                {
-                    _allThreadData[i]->allowToExecuteAgainInThisSimulationStep=false;
-                    // Following is a special condition to support free-running mode:
-                    if ( (!_allThreadData[i]->threadShouldRunFreely)&&(!_allThreadData[i]->threadSwitchShouldTriggerNoOtherThread) )
+            if ( allThreadsWithResumeLocation||(_allThreadData[i]->threadID==theThread) )
+            {
+                if ((_allThreadData[i]->threadResumeLocationAndOrder==j)||doAll)
+                { // We first execute those with 0, then 1, then 2! (then 3 in the sensing phase!)
+                    if ( (_allThreadData[i]->threadExecutionTime==-1)||(_allThreadData[i]->allowToExecuteAgainInThisSimulationStep&&(!doAll)) )
                     {
-                        if (_showThreadSwitches)
+                        _allThreadData[i]->allowToExecuteAgainInThisSimulationStep=false;
+                        // Following is a special condition to support free-running mode:
+                        if ( (!_allThreadData[i]->threadShouldRunFreely)&&(!_allThreadData[i]->threadSwitchShouldTriggerNoOtherThread) )
                         {
-                            std::string tmp("==. In fiber/thread handling routine (fiberID/threadID: ");
-                            tmp+=boost::lexical_cast<std::string>((unsigned long)_threadQueue[_threadQueue.size()-1]);
-                            tmp+=")\n";
-                            CDebugLogFile::addDebugText(false,tmp.c_str());
-//                          printf("In fiber/thread handling routine (fiberID/threadID: %lu)\n",(unsigned long)_threadQueue[_threadQueue.size()-1]);
+                            if (_showThreadSwitches)
+                            {
+                                std::string tmp("==. In fiber/thread handling routine (fiberID/threadID: ");
+                                tmp+=boost::lexical_cast<std::string>((unsigned long)_threadQueue[_threadQueue.size()-1]);
+                                tmp+=")\n";
+                                CDebugLogFile::addDebugText(false,tmp.c_str());
+                            }
+                            _unlock(8);
+                            switchToThread((VTHREAD_ID_TYPE)_allThreadData[i]->threadID);
+                            _lock(8);
+                            i=0; // We re-check from the beginning
+                            retVal++;
                         }
-                        _unlock(8);
-                        switchToThread((VTHREAD_ID_TYPE)_allThreadData[i]->threadID);
-                        _lock(8);
-                        i=0; // We re-check from the beginning
-                        retVal++;
                     }
                 }
             }

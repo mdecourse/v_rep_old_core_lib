@@ -58,12 +58,7 @@ void CQDlgMotionPlanning::refresh()
     int taskID=getSelectedObjectID();
     CMotionPlanningTask* task=App::ct->motionPlanning->getObject(taskID);
 
-    ui->qqMotionPlanningGroup->setEnabled(noEditModeNoSim&&App::userSettings->enableOldMotionPlanningGui);
-    ui->qqMotionPlanningGroup->setVisible(App::userSettings->enableOldMotionPlanningGui);
-    ui->qqNoFuncTxt1->setVisible(!App::userSettings->enableOldMotionPlanningGui);
-    ui->qqNoFuncTxt2->setVisible(!App::userSettings->enableOldMotionPlanningGui);
-    ui->qqNoFuncButton->setVisible(!App::userSettings->enableOldMotionPlanningGui);
-    ui->qqNoFuncButton->setEnabled((!App::userSettings->enableOldMotionPlanningGui)&&noEditModeNoSim);
+    ui->qqMotionPlanningGroup->setEnabled(noEditModeNoSim);
 
     if (!inListSelectionRoutine)
     {
@@ -754,11 +749,4 @@ void CQDlgMotionPlanning::on_showPhase1Nodes_clicked()
         App::appendSimulationThreadCommand(POST_SCENE_CHANGED_ANNOUNCEMENT_GUITRIGGEREDCMD);
         App::appendSimulationThreadCommand(FULLREFRESH_ALL_DIALOGS_GUITRIGGEREDCMD);
     }
-}
-
-void CQDlgMotionPlanning::on_qqNoFuncButton_clicked()
-{
-    App::appendSimulationThreadCommand(ENABLE_OLDMOTIONPLANNING_USERSETTINGSGUITRIGGEREDCMD);
-    App::appendSimulationThreadCommand(SAVE_USERSETTINGSGUITRIGGEREDCMD);
-    App::appendSimulationThreadCommand(FULLREFRESH_ALL_DIALOGS_GUITRIGGEREDCMD);
 }

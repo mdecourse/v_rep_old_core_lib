@@ -346,6 +346,11 @@
 #define IDSN_NORMAL "normal"
 #define IDSN_LAST "last"
 
+// Script tree traversal direction:
+#define IDSN_REVERSE_TRAVERSAL "reverse (default)"
+#define IDSN_FORWARD_TRAVERSAL "forward"
+#define IDSN_PARENT_TRAVERSAL "same as parent"
+
 // Help menu item
 #define IDS_ABOUT_V_REP         "About V-REP"
 
@@ -855,10 +860,9 @@
 #define IDS_JOINT_CTRL_CALLBACK_SCRIPT "Joint control callback script"
 #define IDS_CUSTOMIZATION_SCRIPT "Customization script"
 
-#define IDS_MAIN_AND_CHILD_SCRIPTS         "Main & child scripts"
-#define IDS_CALLBACK_SCRIPTS "Callback scripts"
+#define IDS_SIMULATION_SCRIPTS         "Simulation scripts"
 #define IDS_CUSTOMIZATION_SCRIPTS "Customization scripts"
-#define IDS_ADD_ON_SCRIPTs "Add-on scripts"
+#define IDS_CALLBACK_SCRIPTS "Callback scripts"
 
 
 #define IDS_PROVIDE_MORE_INFO_AND_VALID_EMAIL "Please provide more information and a valid email address."
@@ -1086,9 +1090,9 @@
 
 #define IDS_DUMMY_LINK_TYPE_DYNAMICS_LOOP_CLOSURE "Dynamics, overlap constraint"
 #define IDS_DUMMY_LINK_TYPE_DYNAMICS_FORCE_CONSTRAINT "Dynamics, force constraint"
-#define IDS_DUMMY_LINK_TYPE_GCS_LOOP_CLOSURE "GCS, overlap constraint"
-#define IDS_DUMMY_LINK_TYPE_GCS_TIP "GCS, tip"
-#define IDS_DUMMY_LINK_TYPE_GCS_TARGET "GCS, target"
+#define IDS_DUMMY_LINK_TYPE_GCS_LOOP_CLOSURE "GCS, overlap constraint (deprecated)"
+#define IDS_DUMMY_LINK_TYPE_GCS_TIP "GCS, tip (deprecated)"
+#define IDS_DUMMY_LINK_TYPE_GCS_TARGET "GCS, target (deprecated)"
 #define IDS_DUMMY_LINK_TYPE_IK_TIP_TARGET "IK, tip-target"
 #define IDS_WARNING_TIP_DUMMY_NOT_LINKED "tip dummy is not linked!"
 #define IDS_WARNING_WRONG_DUMMY_LINK_TYPE "wrong dummy link type!"
@@ -1246,8 +1250,8 @@
 #define IDS_IK_CALCULATION_TIME "Inverse kinematics: calculation time"
 #define IDS_IK_OVERALL_CALCULATION_TIME "Inverse kinematics: overall calculation time"
 
-#define IDS_GCS_CALCULATION_TIME "Constraint solver: calculation time"
-#define IDS_GCS_OVERALL_CALCULATION_TIME "Constraint solver: overall calculation time"
+#define IDS_GCS_CALCULATION_TIME "Constraint solver: calculation time (deprecated)"
+#define IDS_GCS_OVERALL_CALCULATION_TIME "Constraint solver: overall calculation time (deprecated)"
 
 #define IDS_MILL_CALCULATION_TIME "Mill: calculation time"
 #define IDS_MILL_OVERALL_CALCULATION_TIME "Mill: overall calculation time"
@@ -1260,6 +1264,6 @@
 
 #define IDS_SIMULATION__TIME    "Simulation: time"
 #define IDS_SIMULATION_PASS_EXECUTION_TIME "Simulation pass: execution time"
-#define IDS_MAIN_SCRIPT_EXECUTION_TIME "Main script: execution time"
+#define IDS_CHILD_SCRIPT_EXECUTION_TIME "Child scripts: execution time"
 #define IDS_VARIOUS__USER_DEFINED "Various: user-defined"
 // ***********************************************************************************************

@@ -153,7 +153,7 @@ void CQDlgDataStreamSelection::refresh()
         addElementToCombobox(ui->qqTypeCombo,GRAPH_NOOBJECT_DYNAMICS_OVERALL_CALCULATION_TIME);
         addElementToCombobox(ui->qqTypeCombo,GRAPH_NOOBJECT_WORK_THREADS_EXECUTION_TIME);
         addElementToCombobox(ui->qqTypeCombo,GRAPH_NOOBJECT_RENDERING_TIME);
-        addElementToCombobox(ui->qqTypeCombo,GRAPH_NOOBJECT_MAINSCRIPT_EXECUTION_TIME);
+        addElementToCombobox(ui->qqTypeCombo,GRAPH_NOOBJECT_CHILDSCRIPT_EXECUTION_TIME);
         addElementToCombobox(ui->qqTypeCombo,GRAPH_NOOBJECT_SIMULATIONPASS_EXECUTION_TIME);
         addElementToCombobox(ui->qqTypeCombo,GRAPH_NOOBJECT_TIME);
         addElementToCombobox(ui->qqTypeCombo,GRAPH_NOOBJECT_USER_DEFINED);

@@ -387,14 +387,6 @@ VREP_DLLEXPORT simInt simHandleDynamics(simFloat deltaTime)
 {
     return(simHandleDynamics_internal(deltaTime));
 }
-VREP_DLLEXPORT simInt simGetMechanismHandle(const simChar* mechanismName)
-{
-    return(simGetMechanismHandle_internal(mechanismName));
-}
-VREP_DLLEXPORT simInt simHandleMechanism(simInt mechanismHandle)
-{
-    return(simHandleMechanism_internal(mechanismHandle));
-}
 VREP_DLLEXPORT simInt simGetScriptHandle(const simChar* scriptName)
 {
     return(simGetScriptHandle_internal(scriptName));
@@ -1334,10 +1326,6 @@ VREP_DLLEXPORT simInt simGetShapeTextureId(simInt shapeHandle)
 VREP_DLLEXPORT simInt* simGetCollectionObjects(simInt collectionHandle,simInt* objectCount)
 {
     return(simGetCollectionObjects_internal(collectionHandle,objectCount));
-}
-VREP_DLLEXPORT simInt simHandleCustomizationScripts(simInt callType)
-{
-    return(simHandleCustomizationScripts_internal(callType));
 }
 VREP_DLLEXPORT simInt simSetScriptAttribute(simInt scriptHandle,simInt attributeID,simFloat floatVal,simInt intOrBoolVal)
 {
@@ -2352,6 +2340,18 @@ VREP_DLLEXPORT simInt simRegisterContactCallback(simInt(*callBack)(simInt,simInt
 VREP_DLLEXPORT simInt simRegisterJointCtrlCallback(simInt(*callBack)(simInt,simInt,simInt,const simInt*,const simFloat*,simFloat*))
 {
     return(simRegisterJointCtrlCallback_internal(callBack));
+}
+VREP_DLLEXPORT simInt simGetMechanismHandle(const simChar* mechanismName)
+{
+    return(simGetMechanismHandle_internal(mechanismName));
+}
+VREP_DLLEXPORT simInt simHandleMechanism(simInt mechanismHandle)
+{
+    return(simHandleMechanism_internal(mechanismHandle));
+}
+VREP_DLLEXPORT simInt simHandleCustomizationScripts(simInt callType)
+{
+    return(simHandleCustomizationScripts_internal(callType));
 }
 // Deprecated end
 

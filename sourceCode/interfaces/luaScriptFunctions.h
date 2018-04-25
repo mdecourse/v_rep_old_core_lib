@@ -117,8 +117,8 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar);
 void moduleCommonPart(luaWrap_lua_State* L,int action,std::string* errorString);
 
 
-int handleChildScriptsRoutine(int callType,CLuaScriptObject* it,CInterfaceStack& inputArguments);
-int launchThreadedChildScriptsRoutine(CLuaScriptObject* it);
+int handleChildScriptsRoutine_OLD(int callType,CLuaScriptObject* it,CInterfaceStack& inputArguments);
+int launchThreadedChildScriptsRoutine_OLD(CLuaScriptObject* it);
 
 void appendAllVrepFunctionNames_spaceSeparated(std::string& keywords,int scriptType,bool scriptIsThreaded);
 void appendAllVrepVariableNames_spaceSeparated(std::string& keywords);
@@ -136,7 +136,6 @@ const extern SLuaCommands simLuaCommandsOldApi[];
 const extern SLuaVariables simLuaVariables[];
 const extern SLuaVariables simLuaVariablesOldApi[];
 
-extern int _simHandleChildScript(luaWrap_lua_State* L);
 extern int _simHandleChildScripts(luaWrap_lua_State* L);
 extern int _simLaunchThreadedChildScripts(luaWrap_lua_State* L);
 extern int _simHandleSensingChildScripts(luaWrap_lua_State* L);
@@ -504,6 +503,7 @@ extern int _simSetShapeTexture(luaWrap_lua_State* L);
 extern int _simGetShapeTextureId(luaWrap_lua_State* L);
 extern int _simGetCollectionObjects(luaWrap_lua_State* L);
 extern int _simHandleCustomizationScripts(luaWrap_lua_State* L);
+extern int _simHandleAddOnScripts(luaWrap_lua_State* L);
 extern int _simSetScriptAttribute(luaWrap_lua_State* L);
 extern int _simGetScriptAttribute(luaWrap_lua_State* L);
 extern int _simReorientShapeBoundingBox(luaWrap_lua_State* L);
@@ -600,3 +600,7 @@ extern int _simLoadUI(luaWrap_lua_State* L);
 extern int _simSaveUI(luaWrap_lua_State* L);
 extern int _simRemoveUI(luaWrap_lua_State* L);
 extern int _simSetUIButtonColor(luaWrap_lua_State* L);
+extern int _simHandleChildScript(luaWrap_lua_State* L);
+extern int _simHandleChildScripts_legacy(luaWrap_lua_State* L);
+extern int _simLaunchThreadedChildScripts_legacy(luaWrap_lua_State* L);
+extern int _simResumeThreads_legacy(luaWrap_lua_State* L);

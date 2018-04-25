@@ -78,8 +78,6 @@ public:
 
     void on_showPhase1Nodes_clicked();
 
-    void on_qqNoFuncButton_clicked();
-
 private:
     Ui::CQDlgMotionPlanning *ui;
 };

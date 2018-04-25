@@ -55,12 +55,7 @@ void CQDlgPathPlanning::refresh()
 
     int taskID=getSelectedObjectID();
     CPathPlanningTask* task=App::ct->pathPlanning->getObject(taskID);
-    ui->qqPathPlanningGroup->setEnabled(App::userSettings->enableOldPathPlanningGui&&noEditModeNoSim);
-    ui->qqPathPlanningGroup->setVisible(App::userSettings->enableOldPathPlanningGui);
-    ui->qqNoFuncTxt1->setVisible(!App::userSettings->enableOldPathPlanningGui);
-    ui->qqNoFuncTxt2->setVisible(!App::userSettings->enableOldPathPlanningGui);
-    ui->qqNoFuncButton->setVisible(!App::userSettings->enableOldPathPlanningGui);
-    ui->qqNoFuncButton->setEnabled((!App::userSettings->enableOldPathPlanningGui)&&noEditModeNoSim);
+    ui->qqPathPlanningGroup->setEnabled(noEditModeNoSim);
 
     if (!inListSelectionRoutine)
     {
@@ -628,11 +623,4 @@ void CQDlgPathPlanning::on_qqComputePath_clicked()
         App::appendSimulationThreadCommand(POST_SCENE_CHANGED_ANNOUNCEMENT_GUITRIGGEREDCMD);
         App::appendSimulationThreadCommand(FULLREFRESH_ALL_DIALOGS_GUITRIGGEREDCMD);
     }
-}
-
-void CQDlgPathPlanning::on_qqNoFuncButton_clicked()
-{
-    App::appendSimulationThreadCommand(ENABLE_OLDPATHPLANNING_USERSETTINGSGUITRIGGEREDCMD);
-    App::appendSimulationThreadCommand(SAVE_USERSETTINGSGUITRIGGEREDCMD);
-    App::appendSimulationThreadCommand(FULLREFRESH_ALL_DIALOGS_GUITRIGGEREDCMD);
 }

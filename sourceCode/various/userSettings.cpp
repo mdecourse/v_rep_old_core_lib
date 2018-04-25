@@ -85,8 +85,7 @@
 #define _USR_NAVIGATION_BACKWARD_COMPATIBILITY_MODE "navigationBackwardCompatibility"
 #define _USR_COLOR_ADJUST_BACK_COMPATIBILITY "colorAdjust_backCompatibility"
 #define _USR_SPECIFIC_GPU_TWEAK "specificGpuTweak"
-#define _USR_ENABLE_OLD_PATH_PLANNING_GUI "enableOldPathPlanningGui"
-#define _USR_ENABLE_OLD_MOTION_PLANNING_GUI "enableOldMotionPlanningGui"
+#define _USR_ENABLE_OLD_CALC_MODULE_GUIS "enableOldCalcModuleGuis"
 #define _USR_USE_ALTERNATE_SERIAL_PORT_ROUTINES "useAlternateSerialPortRoutines"
 #define _USR_ENABLE_OPENGL_BASED_CUSTOM_UI_EDITOR "enableOpenGlBasedCustomUiEditor"
 #define _USR_CHANGE_SCRIPT_CODE_NEW_API_NOTATION "changeScriptCodeForNewApiNotation"
@@ -472,8 +471,7 @@ CUserSettings::CUserSettings()
     navigationBackwardCompatibility=false;
     colorAdjust_backCompatibility=1.0f; // default
     specificGpuTweak=false; // default
-    enableOldPathPlanningGui=false; // default
-    enableOldMotionPlanningGui=false; // default
+    enableOldCalcModuleGuis=false; // default
     useAlternateSerialPortRoutines=false;
     enableOpenGlBasedCustomUiEditor=false;
     changeScriptCodeForNewApiNotation=1;
@@ -927,8 +925,7 @@ void CUserSettings::saveUserSettings()
     c.addBoolean(_USR_NAVIGATION_BACKWARD_COMPATIBILITY_MODE,navigationBackwardCompatibility,"recommended to keep false.");
     c.addFloat(_USR_COLOR_ADJUST_BACK_COMPATIBILITY,colorAdjust_backCompatibility,"recommended to keep 1.0");
     c.addBoolean(_USR_SPECIFIC_GPU_TWEAK,specificGpuTweak,"");
-    c.addBoolean(_USR_ENABLE_OLD_PATH_PLANNING_GUI,enableOldPathPlanningGui,"");
-    c.addBoolean(_USR_ENABLE_OLD_MOTION_PLANNING_GUI,enableOldMotionPlanningGui,"");
+    c.addBoolean(_USR_ENABLE_OLD_CALC_MODULE_GUIS,enableOldCalcModuleGuis,"");
     c.addBoolean(_USR_USE_ALTERNATE_SERIAL_PORT_ROUTINES,useAlternateSerialPortRoutines,"");
     c.addBoolean(_USR_ENABLE_OPENGL_BASED_CUSTOM_UI_EDITOR,enableOpenGlBasedCustomUiEditor,"");
     c.addInteger(_USR_CHANGE_SCRIPT_CODE_NEW_API_NOTATION,changeScriptCodeForNewApiNotation,"1=enabled, 0=disabled.");
@@ -1273,8 +1270,7 @@ void CUserSettings::loadUserSettings()
     c.getBoolean(_USR_NAVIGATION_BACKWARD_COMPATIBILITY_MODE,navigationBackwardCompatibility);
     c.getFloat(_USR_COLOR_ADJUST_BACK_COMPATIBILITY,colorAdjust_backCompatibility);
     c.getBoolean(_USR_SPECIFIC_GPU_TWEAK,specificGpuTweak);
-    c.getBoolean(_USR_ENABLE_OLD_PATH_PLANNING_GUI,enableOldPathPlanningGui);
-    c.getBoolean(_USR_ENABLE_OLD_MOTION_PLANNING_GUI,enableOldMotionPlanningGui);
+    c.getBoolean(_USR_ENABLE_OLD_CALC_MODULE_GUIS,enableOldCalcModuleGuis);
     c.getBoolean(_USR_USE_ALTERNATE_SERIAL_PORT_ROUTINES,useAlternateSerialPortRoutines);
     c.getBoolean(_USR_ENABLE_OPENGL_BASED_CUSTOM_UI_EDITOR,enableOpenGlBasedCustomUiEditor);
     c.getInteger(_USR_CHANGE_SCRIPT_CODE_NEW_API_NOTATION,changeScriptCodeForNewApiNotation);

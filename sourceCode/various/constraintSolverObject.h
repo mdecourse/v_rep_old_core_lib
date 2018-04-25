@@ -61,7 +61,6 @@ private:
     float _maxLinearVariation;
     float _loopClosurePositionTolerance;
     float _loopClosureOrientationTolerance;
-    int _calcTimeInMs;
 
     bool _initialValuesInitialized;
     bool _initialExplicitHandling;

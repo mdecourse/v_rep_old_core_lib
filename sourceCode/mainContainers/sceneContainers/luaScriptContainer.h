@@ -32,20 +32,20 @@ public:
     void setInMainScriptNow(bool launched,int startTimeInMs);
     bool getInMainScriptNow() const;
     int getMainScriptExecTimeInMs() const;
-    void checkIfContactCallbackFunctionAvailable();
-    int getObjectIdContactCallbackFunctionAvailable() const;
-    void checkAvailableDynCallbackFunctions();
     const std::vector<int>* getObjectIdsWhereDynCallbackFunctionsAvailable() const;
 
     int removeDestroyedScripts(int scriptType);
+    void resetScriptFlagCalledInThisSimulationStep();
+    int getCalledScriptsCountInThisSimulationStep(int scriptType);
 
     void addCallbackStructureObjectToDestroyAtTheEndOfSimulation_new(SScriptCallBack* object);
     void addCallbackStructureObjectToDestroyAtTheEndOfSimulation_old(SLuaCallBack* object);
     bool addCommandToOutsideCommandQueues(int commandID,int auxVal1,int auxVal2,int auxVal3,int auxVal4,const float aux2Vals[8],int aux2Count);
 
-    int handleCustomizationScriptExecution(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack);
-    bool handleCustomizationScriptExecution_beforeMainScript();
-    void handleNonThreadedChildScript_specialCall(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack);
+    int handleCascadedScriptExecution(int scriptType,int callTypeOrResumeLocation,CInterfaceStack* inStack,CInterfaceStack* outStack,int* retInfo);
+    bool isContactCallbackFunctionAvailable();
+    bool isDynCallbackFunctionAvailable();
+
     void callAddOnMainChildCustomizationWithData(int callType,CInterfaceStack* inStack);
     void sceneOrModelAboutToBeSaved(int modelBase);
 
@@ -67,10 +67,10 @@ public:
     static void setSaveIncludeScriptFiles(bool save);
 
 protected:
+    int _getScriptsToExecute(int scriptType,std::vector<CLuaScriptObject*>& scripts) const;
+
     bool _inMainScriptNow;
     int _mainScriptStartTimeInMs;
-    int _objectIdContactCallbackFunctionAvailable;
-    std::vector<int> _objectIdsWhereDynCallbackFunctionsAvailable;
 
     std::vector<SScriptCallBack*> _callbackStructureToDestroyAtEndOfSimulation_new;
     std::vector<SLuaCallBack*> _callbackStructureToDestroyAtEndOfSimulation_old;

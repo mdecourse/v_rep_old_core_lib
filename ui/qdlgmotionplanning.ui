@@ -914,53 +914,6 @@
     </widget>
    </widget>
   </widget>
-  <widget class="QLabel" name="qqNoFuncTxt1">
-   <property name="geometry">
-    <rect>
-     <x>60</x>
-     <y>140</y>
-     <width>261</width>
-     <height>131</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>We highly recommend you to use the path/motion planning functionality offered via the OMPL plugin for V-REP. That functionality is very powerful and flexible, and can be fully set-up and configured via scripts.
-
-The old functionality remains however functional and you may still edit its properties if you wish:</string>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="qqNoFuncButton">
-   <property name="geometry">
-    <rect>
-     <x>240</x>
-     <y>270</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Edit</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="qqNoFuncTxt2">
-   <property name="geometry">
-    <rect>
-     <x>60</x>
-     <y>300</y>
-     <width>261</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>(you can also enable/disable this dialog by editing the file sysem/usrset.txt)</string>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
-  </widget>
  </widget>
  <tabstops>
   <tabstop>qqAddNew</tabstop>

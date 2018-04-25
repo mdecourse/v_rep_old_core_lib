@@ -18,6 +18,8 @@ struct SCustomRefs
 class CShape;
 class CCustomData;
 class CViewableBase;
+class CLuaScriptObject;
+class CInterfaceStack;
 
 class C3DObject  
 {
@@ -99,6 +101,10 @@ public:
     bool getRestoreToDefaultLights() const;
     
     // Various functions
+    void getChildScriptsToRun_OLD(std::vector<int>& childScriptIDs);
+    int getScriptExecutionOrder(int scriptType) const;
+    int getScriptsToExecute(int scriptType,int parentTraversalDirection,std::vector<CLuaScriptObject*>& scripts);
+
     void scalePosition(float scalingFactor);
     void getAllShapeObjectsRecursive(std::vector<CShape*>* shapeList,bool baseIncluded=true,bool start=true) const;
     void getAllObjectsRecursive(std::vector<C3DObject*>* objectList,bool baseIncluded=true,bool start=true) const;
@@ -131,7 +137,6 @@ public:
     void setModelBase(bool m);
     bool getModelBase() const;
 
-    void getChildScriptsToRun(std::vector<int>& childScriptIDs);
     void setObjectManipulationModePermissions(int p);
     int getObjectManipulationModePermissions() const;
     void setObjectTranslationDisabledDuringSimulation(bool d);

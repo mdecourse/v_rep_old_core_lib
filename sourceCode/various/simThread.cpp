@@ -3933,7 +3933,13 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
             if (it!=NULL)
                 it->setExecutionOrder(cmd.intParams[1]);
         }
-
+        if (cmd.cmdId==SET_TREETRAVERSALDIR_SCRIPTGUITRIGGEREDCMD)
+        {
+            int scriptID=cmd.intParams[0];
+            CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(scriptID);
+            if (it!=NULL)
+                it->setTreeTraversalDirection(cmd.intParams[1]);
+        }
 
 
         if (cmd.cmdId==SET_ALL_SCRIPTSIMULPARAMETERGUITRIGGEREDCMD)
@@ -5714,12 +5720,6 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
             }
         }
 
-
-
-        if (cmd.cmdId==ENABLE_OLDMOTIONPLANNING_USERSETTINGSGUITRIGGEREDCMD)
-            App::userSettings->enableOldMotionPlanningGui=true;
-        if (cmd.cmdId==ENABLE_OLDPATHPLANNING_USERSETTINGSGUITRIGGEREDCMD)
-            App::userSettings->enableOldPathPlanningGui=true;
         if (cmd.cmdId==SAVE_USERSETTINGSGUITRIGGEREDCMD)
             App::userSettings->saveUserSettings();
         if (cmd.cmdId==SET_TRANSLATIONSTEPSIZE_USERSETTINGSGUITRIGGEREDCMD)
@@ -5874,8 +5874,8 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
                 stack.pushStringOntoStack("brCallIndex",0);
                 stack.pushNumberOntoStack(int(executeBrCallIndex));
                 stack.insertDataIntoStackTable();
+                App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_br,&stack,NULL,NULL);
                 App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_br,&stack,NULL);
-                App::ct->luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_br,&stack,NULL);
             }
         }
 

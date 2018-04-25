@@ -49,6 +49,8 @@ private slots:
 
     void on_qqDisableWithError_clicked();
 
+    void on_qqTreeTraversalDirection_currentIndexChanged(int index);
+
 private:
     Ui::CQDlgScripts *ui;
 };

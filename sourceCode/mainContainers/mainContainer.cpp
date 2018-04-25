@@ -84,8 +84,8 @@ void CMainContainer::simulationAboutToStart()
     App::uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
 #endif
 
+    luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_beforesimulation,NULL,NULL,NULL);
     addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_beforesimulation,NULL,NULL);
-    luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_beforesimulation,NULL,NULL);
 
     _initialObjectUniqueIdentifiersForRemovingNewObjects.clear();
     for (int i=0;i<int(objCont->objectList.size());i++)
@@ -175,7 +175,6 @@ void CMainContainer::simulationAboutToStart()
 
 void CMainContainer::simulationPaused()
 {
-    addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_suspend,NULL,NULL);
     CLuaScriptObject* mainScript=luaScriptContainer->getMainScript();
     if (mainScript!=NULL)
         mainScript->runMainScript(sim_syscb_suspend,NULL,NULL);
@@ -186,17 +185,9 @@ void CMainContainer::simulationPaused()
 
 void CMainContainer::simulationAboutToResume()
 {
-    addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_resume,NULL,NULL);
     CLuaScriptObject* mainScript=luaScriptContainer->getMainScript();
     if (mainScript!=NULL)
         mainScript->runMainScript(sim_syscb_resume,NULL,NULL);
-
-    /*
-#ifdef SIM_WITH_GUI
-    if (App::mainWindow!=NULL)
-        App::mainWindow->scintillaEditorContainer->applyChanges(false);
-#endif
-*/
     App::setToolbarRefreshFlag();
     App::setFullDialogRefreshFlag();
     App::addStatusbarMessage(IDSNS_SIMULATION_RESUMED);
@@ -302,8 +293,8 @@ void CMainContainer::simulationEnded(bool removeNewObjects)
     }
     _initialObjectUniqueIdentifiersForRemovingNewObjects.clear();
     POST_SCENE_CHANGED_ANNOUNCEMENT(""); // keeps this (additional objects were removed, and object positions were reset)
+    luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_aftersimulation,NULL,NULL,NULL);
     addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aftersimulation,NULL,NULL);
-    luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_aftersimulation,NULL,NULL);
 }
 
 void CMainContainer::setModificationFlag(int bitMask)
@@ -347,9 +338,9 @@ int CMainContainer::createNewInstance()
 {
     FUNCTION_DEBUG;
 
-    addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_beforeinstanceswitch,NULL,NULL);
     if (luaScriptContainer!=NULL)
-        luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_beforeinstanceswitch,NULL,NULL);
+        luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_beforeinstanceswitch,NULL,NULL,NULL);
+    addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_beforeinstanceswitch,NULL,NULL);
 
     if (simulation!=NULL)
         simulation->setOnlineMode(false); // disable online mode before switching
@@ -776,9 +767,9 @@ bool CMainContainer::makeInstanceCurrentFromIndex(int instanceIndex)
 
 
 
-    addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_beforeinstanceswitch,NULL,NULL);
     if (luaScriptContainer!=NULL)
-        luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_beforeinstanceswitch,NULL,NULL);
+        luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_beforeinstanceswitch,NULL,NULL,NULL);
+    addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_beforeinstanceswitch,NULL,NULL);
 
     if (simulation!=NULL)
         simulation->setOnlineMode(false); // disable online mode before switching
@@ -834,9 +825,9 @@ bool CMainContainer::makeInstanceCurrentFromIndex(int instanceIndex)
     ikGroups=_ikGroupList[currentInstanceIndex];
     objCont=_objContList[currentInstanceIndex];
 
-    addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_afterinstanceswitch,NULL,NULL);
     if (luaScriptContainer!=NULL)
-        luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_afterinstanceswitch,NULL,NULL);
+        luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_afterinstanceswitch,NULL,NULL,NULL);
+    addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_afterinstanceswitch,NULL,NULL);
 
     pluginData[0]=currentInstanceIndex;
     pluginData[1]=environment->getSceneUniqueID();
