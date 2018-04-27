@@ -1218,7 +1218,7 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
                 else
                 {
                     it->setLocalObjectProperty(p|sim_objectproperty_canupdatedna);
-                    it->generateUniqueUpdatableString();
+                    it->generateDnaString();
                 }
             }
         }
@@ -4088,18 +4088,6 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
             CGraph* it=App::ct->objCont->getGraph(cmd.intParams[0]);
             if (it!=NULL)
                 it->xYZPlanesDisplay=!it->xYZPlanesDisplay;
-        }
-        if (cmd.cmdId==TOGGLE_SHOWGRIDS_GRAPHGUITRIGGEREDCMD)
-        {
-            CGraph* it=App::ct->objCont->getGraph(cmd.intParams[0]);
-            if (it!=NULL)
-                it->graphGrid=!it->graphGrid;
-        }
-        if (cmd.cmdId==TOGGLE_SHOWGRIDVALUES_GRAPHGUITRIGGEREDCMD)
-        {
-            CGraph* it=App::ct->objCont->getGraph(cmd.intParams[0]);
-            if (it!=NULL)
-                it->graphValues=!it->graphValues;
         }
         if (cmd.cmdId==TOGGLE_TIMEGRAPHVISIBLE_GRAPHGUITRIGGEREDCMD)
         {

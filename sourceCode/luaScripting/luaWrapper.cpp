@@ -30,6 +30,7 @@ typedef void (__cdecl *pluaLib_lua_createtable)(luaWrap_lua_State* L,int narr, i
 typedef int (__cdecl *pluaLib_lua_tointeger)(luaWrap_lua_State* L,int idx);
 typedef luaWrap_lua_Number (__cdecl *pluaLib_lua_tonumber)(luaWrap_lua_State* L,int idx);
 typedef int (__cdecl *pluaLib_lua_toboolean)(luaWrap_lua_State* L,int idx);
+typedef const void* (__cdecl *pluaLib_lua_topointer)(luaWrap_lua_State* L,int idx);
 typedef const char* (__cdecl *pluaLib_lua_tostring)(luaWrap_lua_State* L,int idx);
 typedef const char* (__cdecl *pluaLib_lua_tolstring)(luaWrap_lua_State* L,int idx,size_t* len);
 typedef int (__cdecl *pluaLib_lua_isnumber)(luaWrap_lua_State* L,int idx);
@@ -87,6 +88,7 @@ pluaLib_lua_createtable luaLib_lua_createtable;
 pluaLib_lua_tointeger luaLib_lua_tointeger;
 pluaLib_lua_tonumber luaLib_lua_tonumber;
 pluaLib_lua_toboolean luaLib_lua_toboolean;
+pluaLib_lua_topointer luaLib_lua_topointer;
 pluaLib_lua_tostring luaLib_lua_tostring;
 pluaLib_lua_tolstring luaLib_lua_tolstring;
 pluaLib_lua_isnumber luaLib_lua_isnumber;
@@ -152,6 +154,7 @@ bool _getLibProcAddresses()
     luaLib_lua_tointeger=(pluaLib_lua_tointeger)(_getProcAddress("luaLib_lua_tointeger"));
     luaLib_lua_tonumber=(pluaLib_lua_tonumber)(_getProcAddress("luaLib_lua_tonumber"));
     luaLib_lua_toboolean=(pluaLib_lua_toboolean)(_getProcAddress("luaLib_lua_toboolean"));
+    luaLib_lua_topointer=(pluaLib_lua_topointer)(_getProcAddress("luaLib_lua_topointer"));
     luaLib_lua_tostring=(pluaLib_lua_tostring)(_getProcAddress("luaLib_lua_tostring"));
     luaLib_lua_tolstring=(pluaLib_lua_tolstring)(_getProcAddress("luaLib_lua_tolstring"));
     luaLib_lua_isnumber=(pluaLib_lua_isnumber)(_getProcAddress("luaLib_lua_isnumber"));
@@ -209,6 +212,7 @@ bool _getLibProcAddresses()
     if (luaLib_lua_tointeger==NULL) return false;
     if (luaLib_lua_tonumber==NULL) return false;
     if (luaLib_lua_toboolean==NULL) return false;
+    if (luaLib_lua_topointer==NULL) return false;
     if (luaLib_lua_tostring==NULL) return false;
     if (luaLib_lua_tolstring==NULL) return false;
     if (luaLib_lua_isnumber==NULL) return false;
@@ -475,6 +479,13 @@ int luaWrap_lua_toboolean(luaWrap_lua_State* L,int idx)
     if (lib!=NULL)
         return(luaLib_lua_toboolean(L,idx));
     return(lua_toboolean((lua_State*)L,idx));
+}
+
+const void* luaWrap_lua_topointer(luaWrap_lua_State* L,int idx)
+{
+    if (lib!=NULL)
+        return(luaLib_lua_topointer(L,idx));
+    return(lua_topointer((lua_State*)L,idx));
 }
 
 const char* luaWrap_lua_tostring(luaWrap_lua_State* L,int idx)

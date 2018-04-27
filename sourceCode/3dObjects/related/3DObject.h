@@ -242,8 +242,9 @@ public:
     C7Vector getCumulativeTransformationPart1_forDisplay(bool guiIsRendering) const;
     C7Vector getLocalTransformationPart1_forDisplay(bool guiIsRendering) const;
 
-    void generateUniqueUpdatableString();
-    std::string getUniqueUpdatableString() const;
+    void generateDnaString();
+    std::string getDnaString() const;
+    std::string getUniqueIdString() const;
 
     std::string getExtensionString() const;
     void setExtensionString(const char* str);
@@ -315,7 +316,8 @@ protected:
 
     std::vector<std::string> _assemblyMatchValuesChild;
     std::vector<std::string> _assemblyMatchValuesParent;
-    std::string _uniqueUpdatableString;
+    std::string _dnaString;
+    std::string _uniqueIdString;
 
     C7Vector _transformation; // Quaternion and position
     int _objectID;

@@ -66,9 +66,9 @@ public:
     void printContent(int cIndex) const;
 
 protected:
-    CInterfaceStackObject* _generateObjectFromLuaStack(luaWrap_lua_State* L,int index);
-    CInterfaceStackTable* _generateTableArrayFromLuaStack(luaWrap_lua_State* L,int index);
-    CInterfaceStackTable* _generateTableMapFromLuaStack(luaWrap_lua_State* L,int index);
+    CInterfaceStackObject* _generateObjectFromLuaStack(luaWrap_lua_State* L,int index,std::map<void*,bool>& visitedTables);
+    CInterfaceStackTable* _generateTableArrayFromLuaStack(luaWrap_lua_State* L,int index,std::map<void*,bool>& visitedTables);
+    CInterfaceStackTable* _generateTableMapFromLuaStack(luaWrap_lua_State* L,int index,std::map<void*,bool>& visitedTables);
     int _countLuaStackTableEntries(luaWrap_lua_State* L,int index);
 
     void _pushOntoLuaStack(luaWrap_lua_State* L,CInterfaceStackObject* obj) const;

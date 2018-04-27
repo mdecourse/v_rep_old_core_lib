@@ -345,13 +345,18 @@ std::string CTTUtil::generateUniqueString()
 
 std::string CTTUtil::generateUniqueReadableString()
 {
+    static bool seeded=false;
+    if (!seeded)
+    {
+        srand((suint64)VDateTime::getTimeInMs()+VDateTime::getSecondsSince1970());
+        seeded=true;
+    }
     std::string str;
-    srand((suint64)VDateTime::getTimeInMs()+VDateTime::getSecondsSince1970());
-    char num[3];
+    char num[4];
     for (size_t i=0;i<8;i++)
     {
         unsigned char nb=(unsigned char)(SIM_RAND_FLOAT*255.1f);
-        snprintf(num,2,"%x",nb);
+        snprintf(num,3,"%x",nb);
         if (strlen(num)==1)
             str+=std::string("0")+num;
         else

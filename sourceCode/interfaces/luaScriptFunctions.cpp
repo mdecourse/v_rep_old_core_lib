@@ -451,6 +451,7 @@ const SLuaCommands simLuaCommands[]=
     {"sim.setReferencedHandles",_simSetReferencedHandles,        "number result=sim.setReferencedHandles(number objectHandle,table referencedHandles)",true},
     {"sim.getReferencedHandles",_simGetReferencedHandles,        "table referencedHandles=sim.getReferencedHandles(number objectHandle)",true},
     {"sim.getGraphCurve",_simGetGraphCurve,                      "string label,number curveType,table curveColor,table xData,table yData,table zData,table minMax=\nsim.getGraphCurve(number graphHandle,number graphType,number curveIndex)",true},
+    {"sim.getGraphInfo",_simGetGraphInfo,                        "number bitCoded,table_3 bgColor,table_3 fgColor=sim.getGraphInfo(number graphHandle)",true},
     {"sim.getShapeViz",_simGetShapeViz,                          "map data=sim.getShapeViz(number shapeHandle,number itemIndex)",true},
     {"sim.executeScriptString",_simExecuteScriptString,          "number result,executionResult=sim.executeScriptString(string stringAtScriptName,number scriptHandleOrType)",true},
     {"sim.getApiFunc",_simGetApiFunc,                            "table funcsAndVars=sim.getApiFunc(number scriptHandleOrType,string apiWord)",true},
@@ -1577,6 +1578,8 @@ const SLuaVariables simLuaVariables[]=
     {"sim.objintparam_manipulation_permissions",sim_objintparam_manipulation_permissions,true},
     {"sim.objintparam_illumination_handle",sim_objintparam_illumination_handle,true},
     {"sim.objstringparam_dna",sim_objstringparam_dna,true},
+    {"sim.objstringparam_unique_id",sim_objstringparam_unique_id,true},
+
     // vision_sensors
     {"sim.visionfloatparam_near_clipping",sim_visionfloatparam_near_clipping,true},
     {"sim.visionfloatparam_far_clipping",sim_visionfloatparam_far_clipping,true},
@@ -17268,6 +17271,30 @@ int _simGetGraphCurve(luaWrap_lua_State* L)
             else
             { // this should not generate an error!
             }
+        }
+        else
+            errorString=SIM_ERROR_OBJECT_NOT_GRAPH;
+    }
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
+}
+
+int _simGetGraphInfo(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.getGraphInfo");
+
+    if (checkInputArguments(L,&errorString,lua_arg_number,0))
+    {
+        int graphHandle=(luaWrap_lua_tointeger(L,1));
+        CGraph* graph=App::ct->objCont->getGraph(graphHandle);
+        if (graph!=NULL)
+        {
+            int bitCoded=0;
+            luaWrap_lua_pushnumber(L,bitCoded);
+            pushFloatTableOntoStack(L,3,graph->backgroundColor);
+            pushFloatTableOntoStack(L,3,graph->textColor);
+            LUA_END(3);
         }
         else
             errorString=SIM_ERROR_OBJECT_NOT_GRAPH;

@@ -2129,7 +2129,26 @@ int CLuaScriptObject::callScriptFunctionEx(const char* functionName,CInterfaceSt
     luaWrap_luaL_dostring(L,tmp.c_str());
 
     // Push the function name onto the stack (will be automatically popped from stack after _luaPCall):
-    luaWrap_lua_getglobal(L,functionName);
+    std::string func(functionName);
+    size_t ppos=func.find('.');
+    if (ppos==std::string::npos)
+        luaWrap_lua_getglobal(L,func.c_str()); // in case we have a global function:
+    else
+    { // in case we have a function that is not global
+        std::string globalVar(func.begin(),func.begin()+ppos);
+        luaWrap_lua_getglobal(L,globalVar.c_str());
+        func.assign(func.begin()+ppos+1,func.end());
+        size_t ppos=func.find('.');
+        while (ppos!=std::string::npos)
+        {
+            std::string var(func.begin(),func.begin()+ppos);
+            luaWrap_lua_getfield(L,-1,var.c_str());
+            func.erase(func.begin(),func.begin()+ppos+1);
+            ppos=func.find('.');
+        }
+        luaWrap_lua_getfield(L,-1,func.c_str());
+    }
+
     if (luaWrap_lua_isfunction(L,-1))
     {
         retVal=-1;
@@ -2168,8 +2187,7 @@ int CLuaScriptObject::callScriptFunctionEx(const char* functionName,CInterfaceSt
             retVal=0;
         }
     }
-    else
-        luaWrap_lua_pop(L,-1); // pop the function name
+
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
     if (setAndResetScriptExecStartTime)

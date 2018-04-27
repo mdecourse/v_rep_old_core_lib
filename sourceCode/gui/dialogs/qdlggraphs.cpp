@@ -76,8 +76,6 @@ void CQDlgGraphs::refresh()
     ui->qqShowXYZPlanes->setEnabled(sel&&noEditModeAndNoSim);
     ui->qqRemoveAllStatics->setEnabled(sel&&noEditModeAndNoSim);
 
-    ui->qqDisplayGrids->setEnabled(sel&&noEditModeAndNoSim);
-    ui->qqDisplayGridValues->setEnabled(sel&&noEditModeAndNoSim);
     ui->qqAdjustBackgroundColor->setEnabled(sel&&noEditModeAndNoSim);
     ui->qqAdjustGridColor->setEnabled(sel&&noEditModeAndNoSim);
 
@@ -102,9 +100,6 @@ void CQDlgGraphs::refresh()
     ui->qqExplicitHandling->setChecked(sel&&it->getExplicitHandling());
     ui->qqBufferIsCyclic->setChecked(sel&&it->getCyclic());
     ui->qqShowXYZPlanes->setChecked(sel&&it->xYZPlanesDisplay);
-
-    ui->qqDisplayGrids->setChecked(sel&&it->graphGrid);
-    ui->qqDisplayGridValues->setChecked(sel&&it->graphValues);
 
     ui->qqTimeGraphVisible->setChecked(sel&&(graphData!=NULL)&&graphData->getVisible());
     ui->qqShowLabel->setChecked(sel&&(graphData!=NULL)&&graphData->getLabel());
@@ -364,26 +359,6 @@ void CQDlgGraphs::on_qqRemoveAllStatics_clicked()
     IF_UI_EVENT_CAN_READ_DATA
     {
         App::appendSimulationThreadCommand(REMOVE_ALLSTATICCURVES_GRAPHGUITRIGGEREDCMD,App::ct->objCont->getLastSelectionID());
-        App::appendSimulationThreadCommand(POST_SCENE_CHANGED_ANNOUNCEMENT_GUITRIGGEREDCMD);
-        App::appendSimulationThreadCommand(FULLREFRESH_ALL_DIALOGS_GUITRIGGEREDCMD);
-    }
-}
-
-void CQDlgGraphs::on_qqDisplayGrids_clicked()
-{
-    IF_UI_EVENT_CAN_READ_DATA
-    {
-        App::appendSimulationThreadCommand(TOGGLE_SHOWGRIDS_GRAPHGUITRIGGEREDCMD,App::ct->objCont->getLastSelectionID());
-        App::appendSimulationThreadCommand(POST_SCENE_CHANGED_ANNOUNCEMENT_GUITRIGGEREDCMD);
-        App::appendSimulationThreadCommand(FULLREFRESH_ALL_DIALOGS_GUITRIGGEREDCMD);
-    }
-}
-
-void CQDlgGraphs::on_qqDisplayGridValues_clicked()
-{
-    IF_UI_EVENT_CAN_READ_DATA
-    {
-        App::appendSimulationThreadCommand(TOGGLE_SHOWGRIDVALUES_GRAPHGUITRIGGEREDCMD,App::ct->objCont->getLastSelectionID());
         App::appendSimulationThreadCommand(POST_SCENE_CHANGED_ANNOUNCEMENT_GUITRIGGEREDCMD);
         App::appendSimulationThreadCommand(FULLREFRESH_ALL_DIALOGS_GUITRIGGEREDCMD);
     }

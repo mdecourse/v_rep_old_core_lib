@@ -35,8 +35,7 @@ C3DObject::C3DObject()
     _parentID=-1;
     _objectID=0;
     _transformation.setIdentity();
-    generateUniqueUpdatableString();
-//    _uniqueUpdatableString.clear();
+    generateDnaString();
     _assemblingLocalTransformation.setIdentity();
     _assemblingLocalTransformationIsUsed=false;
 
@@ -88,7 +87,8 @@ C3DObject::C3DObject()
 
     _dynamicSimulationIconCode=sim_dynamicsimicon_none;
 
-    _uniqueID=_uniqueIDCounter++;
+    _uniqueID=_uniqueIDCounter++; // not persistent
+    _uniqueIdString=CTTUtil::generateUniqueReadableString(); // persistent
     _modelAcknowledgement="";
 
     _specificLight=-1; // default, i.e. all lights
@@ -1048,7 +1048,7 @@ C3DObject* C3DObject::copyYourselfMain()
     theNewObject->_extensionString=_extensionString;
 
     if (_localObjectProperty&sim_objectproperty_canupdatedna)
-        theNewObject->_uniqueUpdatableString=_uniqueUpdatableString;
+        theNewObject->_dnaString=_dnaString;
 
     theNewObject->_assemblingLocalTransformation=_assemblingLocalTransformation;
     theNewObject->_assemblingLocalTransformationIsUsed=_assemblingLocalTransformationIsUsed;
@@ -1554,14 +1554,19 @@ int C3DObject::getAllChildrenThatMayBecomeAssemblyParent(const std::vector<std::
     return(int(objects.size()));
 }
 
-void C3DObject::generateUniqueUpdatableString()
+void C3DObject::generateDnaString()
 {
-    _uniqueUpdatableString=CTTUtil::generateUniqueString();
+    _dnaString=CTTUtil::generateUniqueString();
 }
 
-std::string C3DObject::getUniqueUpdatableString() const
+std::string C3DObject::getDnaString() const
 {
-    return(_uniqueUpdatableString);
+    return(_dnaString);
+}
+
+std::string C3DObject::getUniqueIdString() const
+{
+    return(_uniqueIdString);
 }
 
 std::string C3DObject::getExtensionString() const
@@ -1799,7 +1804,11 @@ void C3DObject::serializeMain(CSer& ar)
         ar.flush();
 
         ar.storeDataName("Ups");
-        ar << _uniqueUpdatableString;
+        ar << _dnaString;
+        ar.flush();
+
+        ar.storeDataName("Uis");
+        ar << _uniqueIdString;
         ar.flush();
 
         ar.storeDataName("Tdo");
@@ -2073,9 +2082,15 @@ void C3DObject::serializeMain(CSer& ar)
                 {
                     noHit=false;
                     ar >> byteQuantity;
-                    ar >> _uniqueUpdatableString;
-                    if (_uniqueUpdatableString.size()==0)
-                        generateUniqueUpdatableString();
+                    ar >> _dnaString;
+                    if (_dnaString.size()==0)
+                        generateDnaString();
+                }
+                if (theName.compare("Uis")==0)
+                {
+                    noHit=false;
+                    ar >> byteQuantity;
+                    ar >> _uniqueIdString;
                 }
                 if (theName.compare("Tdo")==0)
                 {
@@ -2117,7 +2132,7 @@ void C3DObject::serializeMain(CSer& ar)
         {
             _localObjectProperty|=sim_objectproperty_canupdatedna;
             // We now create a "unique" id, that is always the same for the same file:
-            _uniqueUpdatableString="1234567890123456";
+            _dnaString="1234567890123456";
             std::string a(_objectName);
             while (a.length()<16)
                 a=a+"*";
@@ -2129,8 +2144,8 @@ void C3DObject::serializeMain(CSer& ar)
             b[5]=((unsigned char*)&fbp)[3];
             for (int i=0;i<16;i++)
             {
-                _uniqueUpdatableString[i]+=a[i];
-                _uniqueUpdatableString[i]+=b[i];
+                _dnaString[i]+=a[i];
+                _dnaString[i]+=b[i];
             }
         }
         //*************************************************************

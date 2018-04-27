@@ -54,10 +54,6 @@ private slots:
 
     void on_qqRemoveAllStatics_clicked();
 
-    void on_qqDisplayGrids_clicked();
-
-    void on_qqDisplayGridValues_clicked();
-
     void on_qqAdjustBackgroundColor_clicked();
 
     void on_qqAdjustGridColor_clicked();

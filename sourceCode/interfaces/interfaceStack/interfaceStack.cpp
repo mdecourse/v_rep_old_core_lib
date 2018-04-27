@@ -173,7 +173,7 @@ int CInterfaceStack::_countLuaStackTableEntries(luaWrap_lua_State* L,int index)
     return(cnt);
 }
 
-CInterfaceStackTable* CInterfaceStack::_generateTableMapFromLuaStack(luaWrap_lua_State* L,int index)
+CInterfaceStackTable* CInterfaceStack::_generateTableMapFromLuaStack(luaWrap_lua_State* L,int index,std::map<void*,bool>& visitedTables)
 { // there must be a table at the given index.
     CInterfaceStackTable* table=new CInterfaceStackTable();
     luaWrap_lua_pushvalue(L,index); // copy of the table to the top
@@ -186,13 +186,13 @@ CInterfaceStackTable* CInterfaceStack::_generateTableMapFromLuaStack(luaWrap_lua
         if (luaWrap_lua_stype(L,-1)==STACK_OBJECT_NUMBER)
         { // the key is a number
             double key=luaWrap_lua_tonumber(L,-1);
-            CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-2);
+            CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-2,visitedTables);
             table->appendMapObject(obj,key);
         }
         else
         { // the key is a string
             const char* key=luaWrap_lua_tostring(L,-1);
-            CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-2);
+            CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-2,visitedTables);
             table->appendMapObject(obj,key);
         }
         luaWrap_lua_pop(L,2); // pop 2 values (key+value)
@@ -203,7 +203,7 @@ CInterfaceStackTable* CInterfaceStack::_generateTableMapFromLuaStack(luaWrap_lua
     return(table);
 }
 
-CInterfaceStackTable* CInterfaceStack::_generateTableArrayFromLuaStack(luaWrap_lua_State* L,int index)
+CInterfaceStackTable* CInterfaceStack::_generateTableArrayFromLuaStack(luaWrap_lua_State* L,int index,std::map<void*,bool>& visitedTables)
 { // there must be a table at the given index.
     CInterfaceStackTable* table=new CInterfaceStackTable();
     int arraySize=int(luaWrap_lua_objlen(L,index));
@@ -211,14 +211,14 @@ CInterfaceStackTable* CInterfaceStack::_generateTableArrayFromLuaStack(luaWrap_l
     {
         // Push the element i+1 of the table to the top of Lua's stack:
         luaWrap_lua_rawgeti(L,index,i+1);
-        CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-1);
+        CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-1,visitedTables);
         luaWrap_lua_pop(L,1); // we pop one element from the stack;
         table->appendArrayObject(obj);
     }
     return(table);
 }
 
-CInterfaceStackObject* CInterfaceStack::_generateObjectFromLuaStack(luaWrap_lua_State* L,int index)
+CInterfaceStackObject* CInterfaceStack::_generateObjectFromLuaStack(luaWrap_lua_State* L,int index,std::map<void*,bool>& visitedTables)
 { // generates just one object at the given index
     int t=luaWrap_lua_stype(L,index);
     if (t==STACK_OBJECT_NULL)
@@ -235,16 +235,23 @@ CInterfaceStackObject* CInterfaceStack::_generateObjectFromLuaStack(luaWrap_lua_
     }
     else if (t==STACK_OBJECT_TABLE)
     { // this part is more tricky:
+        // Following to avoid getting trapped in circular references:
+        void* p=(void*)luaWrap_lua_topointer(L,index);
+        std::map<void*,bool>::iterator it=visitedTables.find(p);
+        if (it!=visitedTables.end())
+            return(new CInterfaceStackString("<TABLE> (already visited)",0));
+        visitedTables[p]=true;
+
         int tableValueCnt=_countLuaStackTableEntries(L,index);
         int arraySize=int(luaWrap_lua_objlen(L,index));
         if (tableValueCnt==arraySize)
         { // we have an array (or keys that go from "1" to arraySize):
-            CInterfaceStackTable* table=_generateTableArrayFromLuaStack(L,index);
+            CInterfaceStackTable* table=_generateTableArrayFromLuaStack(L,index,visitedTables);
             return(table);
         }
         else
         { // we have a more complex table, a map, where the keys are specific:
-            CInterfaceStackTable* table=_generateTableMapFromLuaStack(L,index);
+            CInterfaceStackTable* table=_generateTableMapFromLuaStack(L,index,visitedTables);
             return(table);
         }
     }
@@ -276,7 +283,8 @@ void CInterfaceStack::buildFromLuaStack(luaWrap_lua_State* L,int fromPos,int cnt
         numberOfArguments=SIM_MIN(numberOfArguments,cnt);
     for (int i=fromPos;i<fromPos+numberOfArguments;i++)
     {
-        CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,i);
+        std::map<void*,bool> visitedTables;
+        CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,i,visitedTables);
         _stackObjects.push_back(obj);
     }
 }

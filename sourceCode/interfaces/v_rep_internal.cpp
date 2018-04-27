@@ -12145,7 +12145,16 @@ simChar* simGetObjectStringParameter_internal(simInt objectHandle,simInt paramet
         CShape* shape=App::ct->objCont->getShape(objectHandle);
         if (parameterID==sim_objstringparam_dna)
         {
-            std::string s(object->getUniqueUpdatableString());
+            std::string s(object->getDnaString());
+            retVal=new char[s.length()+1];
+            for (size_t i=0;i<s.length();i++)
+                retVal[i]=s[i];
+            retVal[s.length()]=0;
+            parameterLength[0]=(int)s.length();
+        }
+        if (parameterID==sim_objstringparam_unique_id)
+        {
+            std::string s(object->getUniqueIdString());
             retVal=new char[s.length()+1];
             for (size_t i=0;i<s.length();i++)
                 retVal[i]=s[i];

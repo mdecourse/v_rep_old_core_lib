@@ -47,6 +47,7 @@ void luaWrap_lua_createtable(luaWrap_lua_State* L,int narr, int nrec);
 int luaWrap_lua_tointeger(luaWrap_lua_State* L,int idx);
 luaWrap_lua_Number luaWrap_lua_tonumber(luaWrap_lua_State* L,int idx);
 int luaWrap_lua_toboolean(luaWrap_lua_State* L,int idx);
+const void* luaWrap_lua_topointer(luaWrap_lua_State* L,int idx);
 const char* luaWrap_lua_tostring(luaWrap_lua_State* L,int idx);
 const char* luaWrap_lua_tolstring(luaWrap_lua_State* L,int idx,size_t* len);
 int luaWrap_lua_isnumber(luaWrap_lua_State* L,int idx);
