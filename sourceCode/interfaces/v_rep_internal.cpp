@@ -20477,7 +20477,7 @@ simInt simClearScriptVariable_internal(const simChar* reservedSetToNull,simInt s
 
     if (script!=NULL)
     {
-        int retVal=script->clearVariable(variableName.c_str());
+        int retVal=script->clearScriptVariable(variableName.c_str());
         if (retVal==-1)
             CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_OPERATION_FAILED);
         return(retVal);

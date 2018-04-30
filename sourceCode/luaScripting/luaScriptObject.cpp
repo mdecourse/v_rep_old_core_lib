@@ -1987,7 +1987,25 @@ int CLuaScriptObject::callScriptFunction(const char* functionName,SLuaCallBack* 
     luaWrap_luaL_dostring(L,tmp.c_str());
 
     // Push the function name onto the stack (will be automatically popped from stack after _luaPCall):
-    luaWrap_lua_getglobal(L,functionName);
+    std::string func(functionName);
+    size_t ppos=func.find('.');
+    if (ppos==std::string::npos)
+        luaWrap_lua_getglobal(L,func.c_str()); // in case we have a global function:
+    else
+    { // in case we have a function that is not global
+        std::string globalVar(func.begin(),func.begin()+ppos);
+        luaWrap_lua_getglobal(L,globalVar.c_str());
+        func.assign(func.begin()+ppos+1,func.end());
+        size_t ppos=func.find('.');
+        while (ppos!=std::string::npos)
+        {
+            std::string var(func.begin(),func.begin()+ppos);
+            luaWrap_lua_getfield(L,-1,var.c_str());
+            func.erase(func.begin(),func.begin()+ppos+1);
+            ppos=func.find('.');
+        }
+        luaWrap_lua_getfield(L,-1,func.c_str());
+    }
 
     // Push the arguments onto the stack (will be automatically popped from stack after _luaPCall):
     int inputArgs=pdata->inputArgCount;
@@ -2202,18 +2220,43 @@ int CLuaScriptObject::setScriptVariable(const char* variableName,CInterfaceStack
 
     int oldTop=luaWrap_lua_gettop(L);   // We store lua's stack
 
-    if (stack!=NULL)
-        stack->buildOntoLuaStack(L,true);
+
+    std::string var(variableName);
+    size_t ppos=var.find('.');
+    if (ppos==std::string::npos)
+    { // in case we have a global variable
+        if (stack!=NULL)
+            stack->buildOntoLuaStack(L,true);
+        else
+            luaWrap_lua_pushnil(L);
+        luaWrap_lua_setglobal(L,variableName);
+    }
     else
-        luaWrap_lua_pushnil(L);
-    luaWrap_lua_setglobal(L,variableName);
+    { // in case we have a variable that is not global
+        std::string globalVar(var.begin(),var.begin()+ppos);
+        luaWrap_lua_getglobal(L,globalVar.c_str());
+        var.assign(var.begin()+ppos+1,var.end());
+        size_t ppos=var.find('.');
+        while (ppos!=std::string::npos)
+        {
+            std::string vvar(var.begin(),var.begin()+ppos);
+            luaWrap_lua_getfield(L,-1,vvar.c_str());
+            var.erase(var.begin(),var.begin()+ppos+1);
+            ppos=var.find('.');
+        }
+        if (stack!=NULL)
+            stack->buildOntoLuaStack(L,true);
+        else
+            luaWrap_lua_pushnil(L);
+        luaWrap_lua_setfield(L,-2,var.c_str());
+    }
 
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     return(0);
 }
 
-int CLuaScriptObject::clearVariable(const char* variableName)
-{
+int CLuaScriptObject::clearScriptVariable(const char* variableName)
+{ // deprecated
     if (L==NULL)
         return(-1);
 
@@ -2229,8 +2272,29 @@ int CLuaScriptObject::clearVariable(const char* variableName)
 
     int oldTop=luaWrap_lua_gettop(L);   // We store lua's stack
 
-    luaWrap_lua_pushnil(L);
-    luaWrap_lua_setglobal(L,variableName);
+    std::string var(variableName);
+    size_t ppos=var.find('.');
+    if (ppos==std::string::npos)
+    { // in case we have a global variable
+        luaWrap_lua_pushnil(L);
+        luaWrap_lua_setglobal(L,variableName);
+    }
+    else
+    { // in case we have a variable that is not global
+        std::string globalVar(var.begin(),var.begin()+ppos);
+        luaWrap_lua_getglobal(L,globalVar.c_str());
+        var.assign(var.begin()+ppos+1,var.end());
+        size_t ppos=var.find('.');
+        while (ppos!=std::string::npos)
+        {
+            std::string vvar(var.begin(),var.begin()+ppos);
+            luaWrap_lua_getfield(L,-1,vvar.c_str());
+            var.erase(var.begin(),var.begin()+ppos+1);
+            ppos=var.find('.');
+        }
+        luaWrap_lua_pushnil(L);
+        luaWrap_lua_setfield(L,-2,var.c_str());
+    }
 
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     return(0);

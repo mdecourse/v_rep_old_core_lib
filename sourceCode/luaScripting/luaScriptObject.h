@@ -66,7 +66,7 @@ public:
     int callScriptFunction(const char* functionName, SLuaCallBack* pdata);
     int callScriptFunctionEx(const char* functionName,CInterfaceStack* stack);
     int setScriptVariable(const char* variableName,CInterfaceStack* stack);
-    int clearVariable(const char* variableName);
+    int clearScriptVariable(const char* variableName); // deprecated
     int executeScriptString(const char* scriptString,CInterfaceStack* stack);
     int appendTableEntry(const char* arrayName,const char* keyName,const char* data,const int what[2]); // deprecated
 

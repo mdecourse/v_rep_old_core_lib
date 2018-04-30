@@ -8443,6 +8443,7 @@ int _simTest(luaWrap_lua_State* L)
 {
     LUA_API_FUNCTION_DEBUG;
     LUA_START("sim.test");
+
     LUA_END(0);
 }
 
