@@ -244,16 +244,18 @@ CInterfaceStackObject* CInterfaceStack::_generateObjectFromLuaStack(luaWrap_lua_
 
         int tableValueCnt=_countLuaStackTableEntries(L,index);
         int arraySize=int(luaWrap_lua_objlen(L,index));
+        CInterfaceStackTable* table=NULL;
         if (tableValueCnt==arraySize)
         { // we have an array (or keys that go from "1" to arraySize):
-            CInterfaceStackTable* table=_generateTableArrayFromLuaStack(L,index,visitedTables);
-            return(table);
+            table=_generateTableArrayFromLuaStack(L,index,visitedTables);
         }
         else
         { // we have a more complex table, a map, where the keys are specific:
-            CInterfaceStackTable* table=_generateTableMapFromLuaStack(L,index,visitedTables);
-            return(table);
+            table=_generateTableMapFromLuaStack(L,index,visitedTables);
         }
+        it=visitedTables.find(p);
+        visitedTables.erase(it);
+        return(table);
     }
     else if (t==STACK_OBJECT_USERDAT)
     { // only supported as "USERDATA" string

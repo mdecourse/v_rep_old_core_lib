@@ -1353,6 +1353,7 @@ const SLuaVariables simLuaVariables[]=
     {"sim.intparam_motionplanning_seed",sim_intparam_motionplanning_seed,true},
     {"sim.intparam_speedmodifier",sim_intparam_speedmodifier,true},
     {"sim.intparam_dynamic_iteration_count",sim_intparam_dynamic_iteration_count,true},
+    {"sim.intparam_job_count",sim_intparam_job_count,true},
     // Float parameters:
     {"sim.floatparam_rand",sim_floatparam_rand,true},
     {"sim.floatparam_simulation_time_step",sim_floatparam_simulation_time_step,true},

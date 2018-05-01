@@ -3822,6 +3822,13 @@ simInt simGetInt32Parameter_internal(simInt parameter,simInt* intState)
             intState[0]=App::ct->dynamicsContainer->getCurrentIterationCount();
             return(1);
         }
+        if (parameter==sim_intparam_job_count)
+        {
+            if (App::ct->environment==NULL)
+                return(-1);
+            intState[0]=App::ct->environment->getJobCount();
+            return(1);
+        }
         if (parameter==sim_intparam_scene_index)
         {
             intState[0]=App::ct->getCurrentInstanceIndex();
@@ -4048,7 +4055,7 @@ simChar* simGetStringParameter_internal(simInt parameter)
         {
             if (App::ct->environment==NULL)
                 return(NULL);
-            std::string tmp(App::ct->environment->getSceneUniqueUpdatableString());
+            std::string tmp(App::ct->environment->getUniquePersistentIdString());
             tmp=CTTUtil::encode64(tmp);
             char* retVal=new char[tmp.length()+1];
             for (int i=0;i<int(tmp.length());i++)
@@ -12154,7 +12161,7 @@ simChar* simGetObjectStringParameter_internal(simInt objectHandle,simInt paramet
         }
         if (parameterID==sim_objstringparam_unique_id)
         {
-            std::string s(object->getUniqueIdString());
+            std::string s(object->getUniquePersistentIdString());
             retVal=new char[s.length()+1];
             for (size_t i=0;i<s.length();i++)
                 retVal[i]=s[i];

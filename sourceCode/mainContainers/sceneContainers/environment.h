@@ -88,12 +88,13 @@ public:
     void deactivateFog();
     void temporarilyDeactivateFog();
     void reactivateFogThatWasTemporarilyDisabled();
-    void generateSceneUniqueUpdatableString();
-    std::string getSceneUniqueUpdatableString() const;
+    void generateNewUniquePersistentIdString();
+    std::string getUniquePersistentIdString() const;
     bool getSceneIsClosingFlag() const;
     void setSceneIsClosingFlag(bool closing);
 
     std::string getCurrentJob();
+    int getJobCount();
     int getJobIndex(const std::string& name);
     std::string getJobAtIndex(int index);
     bool createNewJob(std::string newName);
@@ -133,7 +134,7 @@ protected:
     int fogType; // 0=linear, 1=exp, 2=exp2
 
     std::string _acknowledgement;
-    std::string _sceneUniqueUpdatableString;
+    std::string _sceneUniquePersistentIdString;
     bool _visualizeWirelessEmitters;
     bool _visualizeWirelessReceivers;
     bool _requestFinalSave;

@@ -2468,7 +2468,7 @@ bool CFileOperations::saveScene(const char* pathAndFilename,bool displayMessages
             App::ct->luaScriptContainer->sceneOrModelAboutToBeSaved(-1);
 
             if (changeSceneUniqueId)
-                App::ct->environment->generateSceneUniqueUpdatableString();
+                App::ct->environment->generateNewUniquePersistentIdString();
 
             if (setCurrentDir)
                 App::directories->sceneDirectory=App::ct->mainSettings->getScenePath();

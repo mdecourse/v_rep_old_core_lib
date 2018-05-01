@@ -244,7 +244,7 @@ public:
 
     void generateDnaString();
     std::string getDnaString() const;
-    std::string getUniqueIdString() const;
+    std::string getUniquePersistentIdString() const;
 
     std::string getExtensionString() const;
     void setExtensionString(const char* str);
@@ -317,7 +317,7 @@ protected:
     std::vector<std::string> _assemblyMatchValuesChild;
     std::vector<std::string> _assemblyMatchValuesParent;
     std::string _dnaString;
-    std::string _uniqueIdString;
+    std::string _uniquePersistentIdString;
 
     C7Vector _transformation; // Quaternion and position
     int _objectID;

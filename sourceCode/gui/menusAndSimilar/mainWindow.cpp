@@ -212,7 +212,7 @@ CMainWindow::CMainWindow() : QMainWindow()
     statusBar=new CStatusBar();
     statusBar->setReadOnly(true);
     statusBar->setLineWrapMode(QPlainTextEdit::WidgetWidth);
-    statusBar->setMaximumBlockCount(500);
+    statusBar->setMaximumBlockCount(5000);
     statusBar->moveCursor(QTextCursor::End);
     statusBar->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     statusBar->setMinimumHeight(50);

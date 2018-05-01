@@ -88,7 +88,7 @@ C3DObject::C3DObject()
     _dynamicSimulationIconCode=sim_dynamicsimicon_none;
 
     _uniqueID=_uniqueIDCounter++; // not persistent
-    _uniqueIdString=CTTUtil::generateUniqueReadableString(); // persistent
+    _uniquePersistentIdString=CTTUtil::generateUniqueReadableString(); // persistent
     _modelAcknowledgement="";
 
     _specificLight=-1; // default, i.e. all lights
@@ -1564,9 +1564,9 @@ std::string C3DObject::getDnaString() const
     return(_dnaString);
 }
 
-std::string C3DObject::getUniqueIdString() const
+std::string C3DObject::getUniquePersistentIdString() const
 {
-    return(_uniqueIdString);
+    return(_uniquePersistentIdString);
 }
 
 std::string C3DObject::getExtensionString() const
@@ -1808,7 +1808,7 @@ void C3DObject::serializeMain(CSer& ar)
         ar.flush();
 
         ar.storeDataName("Uis");
-        ar << _uniqueIdString;
+        ar << _uniquePersistentIdString;
         ar.flush();
 
         ar.storeDataName("Tdo");
@@ -2090,7 +2090,7 @@ void C3DObject::serializeMain(CSer& ar)
                 {
                     noHit=false;
                     ar >> byteQuantity;
-                    ar >> _uniqueIdString;
+                    ar >> _uniquePersistentIdString;
                 }
                 if (theName.compare("Tdo")==0)
                 {
