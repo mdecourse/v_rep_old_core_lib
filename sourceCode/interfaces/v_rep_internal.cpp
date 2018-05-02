@@ -3409,7 +3409,6 @@ simInt simSetInt32Parameter_internal(simInt parameter,simInt intState)
         CApiErrors::setApiCallErrorReportMode(intState);
         return(1);
     }
-
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         if (parameter==sim_intparam_server_port_next)
@@ -3518,7 +3517,8 @@ simInt simSetInt32Parameter_internal(simInt parameter,simInt intState)
             if (App::ct->simulation==NULL)
                 return(-1);
             App::ct->simulation->setDisableWarningsFlags(intState);
-        }
+            return(1);
+       }
 
         if ( (parameter==sim_intparam_prox_sensor_select_down)||(parameter==sim_intparam_prox_sensor_select_up) )
         {
