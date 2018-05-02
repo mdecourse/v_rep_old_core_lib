@@ -10,6 +10,7 @@ CInterfaceStackTable::CInterfaceStackTable()
 {
     _objectType=STACK_OBJECT_TABLE;
     _isTableArray=true;
+    _isCircularRef=false;
 }
 
 CInterfaceStackTable::~CInterfaceStackTable()
@@ -35,6 +36,16 @@ int CInterfaceStackTable::getMapEntryCount() const
     if (_isTableArray)
         return(0);
     return((int)_tableObjects.size()/2);
+}
+
+bool CInterfaceStackTable::isCircularRef() const
+{
+    return(_isCircularRef);
+}
+
+void CInterfaceStackTable::setCircularRef()
+{
+    _isCircularRef=true;
 }
 
 
@@ -296,6 +307,7 @@ CInterfaceStackObject* CInterfaceStackTable::copyYourself() const
     for (size_t i=0;i<_tableObjects.size();i++)
         retVal->_tableObjects.push_back(_tableObjects[i]->copyYourself());
     retVal->_isTableArray=_isTableArray;
+    retVal->_isCircularRef=_isCircularRef;
     return(retVal);
 }
 
@@ -343,6 +355,8 @@ int CInterfaceStackTable::getTableInfo(int infoType) const
 {
     if (infoType==0)
     { // array size or table type (array/map)
+        if (_isCircularRef)
+            return(sim_stack_table_circular_ref);
         if (_isTableArray)
             return(getArraySize());
         return(sim_stack_table_map);
@@ -388,21 +402,26 @@ void CInterfaceStackTable::printContent(int spaces) const
 {
     for (int i=0;i<spaces;i++)
         printf(" ");
-    if (_tableObjects.size()==0)
-        printf("TABLE: <empty>\n");
+    if (_isCircularRef)
+        printf("TABLE: <circular reference>\n");
     else
     {
-        if (_isTableArray)
-        {
-            printf("ARRAY TABLE (%i items, keys are omitted):\n",(int)_tableObjects.size()*2);
-            for (size_t i=0;i<_tableObjects.size();i++)
-                _tableObjects[i]->printContent(spaces+4);
-        }
+        if (_tableObjects.size()==0)
+            printf("TABLE: <empty>\n");
         else
         {
-            printf("MAP TABLE (%i items, key and value):\n",(int)_tableObjects.size());
-            for (size_t i=0;i<_tableObjects.size();i++)
-                _tableObjects[i]->printContent(spaces+4);
+            if (_isTableArray)
+            {
+                printf("ARRAY TABLE (%i items, keys are omitted):\n",(int)_tableObjects.size()*2);
+                for (size_t i=0;i<_tableObjects.size();i++)
+                    _tableObjects[i]->printContent(spaces+4);
+            }
+            else
+            {
+                printf("MAP TABLE (%i items, key and value):\n",(int)_tableObjects.size());
+                for (size_t i=0;i<_tableObjects.size();i++)
+                    _tableObjects[i]->printContent(spaces+4);
+            }
         }
     }
 }
@@ -411,10 +430,15 @@ std::string CInterfaceStackTable::getObjectData() const
 {
     std::string retVal;
 
-    if (_isTableArray)
-        retVal=char(1);
+    if (_isCircularRef)
+        retVal=char(2);
     else
-        retVal=char(0);
+    {
+        if (_isTableArray)
+            retVal=char(1);
+        else
+            retVal=char(0);
+    }
     unsigned int l=(unsigned int)_tableObjects.size();
     char* tmp=(char*)(&l);
     for (size_t i=0;i<sizeof(l);i++)
@@ -430,7 +454,8 @@ std::string CInterfaceStackTable::getObjectData() const
 unsigned int CInterfaceStackTable::createFromData(const char* data)
 {
     unsigned int retVal=0;
-    _isTableArray=(data[retVal]!=0);
+    _isTableArray=((data[retVal]&1)!=0);
+    _isCircularRef=((data[retVal]&2)!=0);
     retVal++;
     unsigned int l;
     char* tmp=(char*)(&l);

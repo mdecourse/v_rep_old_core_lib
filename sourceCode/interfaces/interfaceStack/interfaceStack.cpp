@@ -238,23 +238,28 @@ CInterfaceStackObject* CInterfaceStack::_generateObjectFromLuaStack(luaWrap_lua_
         // Following to avoid getting trapped in circular references:
         void* p=(void*)luaWrap_lua_topointer(L,index);
         std::map<void*,bool>::iterator it=visitedTables.find(p);
-        if (it!=visitedTables.end())
-            return(new CInterfaceStackString("<TABLE> (already visited)",0));
-        visitedTables[p]=true;
-
-        int tableValueCnt=_countLuaStackTableEntries(L,index);
-        int arraySize=int(luaWrap_lua_objlen(L,index));
         CInterfaceStackTable* table=NULL;
-        if (tableValueCnt==arraySize)
-        { // we have an array (or keys that go from "1" to arraySize):
-            table=_generateTableArrayFromLuaStack(L,index,visitedTables);
+        if (it!=visitedTables.end())
+        { // we have a circular reference!
+            table=new CInterfaceStackTable();
+            table->setCircularRef();
         }
         else
-        { // we have a more complex table, a map, where the keys are specific:
-            table=_generateTableMapFromLuaStack(L,index,visitedTables);
+        {
+            visitedTables[p]=true;
+            int tableValueCnt=_countLuaStackTableEntries(L,index);
+            int arraySize=int(luaWrap_lua_objlen(L,index));
+            if (tableValueCnt==arraySize)
+            { // we have an array (or keys that go from "1" to arraySize):
+                table=_generateTableArrayFromLuaStack(L,index,visitedTables);
+            }
+            else
+            { // we have a more complex table, a map, where the keys are specific:
+                table=_generateTableMapFromLuaStack(L,index,visitedTables);
+            }
+            it=visitedTables.find(p);
+            visitedTables.erase(it);
         }
-        it=visitedTables.find(p);
-        visitedTables.erase(it);
         return(table);
     }
     else if (t==STACK_OBJECT_USERDAT)

@@ -19,6 +19,8 @@ public:
     bool isTableArray() const;
     int getArraySize() const;
     int getMapEntryCount() const;
+    bool isCircularRef() const;
+    void setCircularRef();
 
     CInterfaceStackObject* getArrayItemAtIndex(int ind) const;
     CInterfaceStackObject* getMapItemAtIndex(int ind,std::string& stringKey,double& numberKey,bool& isStringKey) const;
@@ -49,4 +51,5 @@ protected:
 
     std::vector<CInterfaceStackObject*> _tableObjects;
     bool _isTableArray;
+    bool _isCircularRef;
 };
