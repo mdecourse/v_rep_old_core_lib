@@ -3333,6 +3333,8 @@ luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString)
     tmp+="'";
     luaWrap_luaL_dostring(L,tmp.c_str());
 
+    luaWrap_luaL_dostring(L,"_mG()"); // needed to allow retrieving user global variables with getUserGlobals()
+
     luaWrap_lua_sethook(L,luaHookFunction,luaWrapGet_LUA_MASKCOUNT(),100); // This instruction gets also called in luaHookFunction!!!!
 
     return(L);
