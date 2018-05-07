@@ -3940,8 +3940,13 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
             if (it!=NULL)
                 it->setTreeTraversalDirection(cmd.intParams[1]);
         }
-
-
+        if (cmd.cmdId==SET_DEBUGMODE_SCRIPTGUITRIGGEREDCMD)
+        {
+            int scriptID=cmd.intParams[0];
+            CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(scriptID);
+            if (it!=NULL)
+                it->setDebugLevel(cmd.intParams[1]);
+        }
         if (cmd.cmdId==SET_ALL_SCRIPTSIMULPARAMETERGUITRIGGEREDCMD)
         {
             int scriptID=cmd.intParams[0];

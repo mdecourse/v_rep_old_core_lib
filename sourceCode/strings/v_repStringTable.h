@@ -7,13 +7,9 @@
 #include "v_repStringTableBase.h"
 
 #define IDSN_DEBUG_MENU_ITEM "Debug"
-#define IDSN_SHOW_GUI_SIM_THREAD_SYNC_ACTIVITY_DEBUG_MENU_ITEM "Debug GUI and SIM thread synchronization activity (will slow down V-REP)"
-#define IDSN_SHOW_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY_DEBUG_MENU_ITEM "Debug GUI and SIM thread synchronization lock fail activity"
 #define IDSN_SHOW_INTERNAL_FUNCTION_ACCESS_DEBUG_MENU_ITEM "Debug internal function access (will heavily slow down V-REP)"
 #define IDSN_SHOW_C_API_ACCESS_DEBUG_MENU_ITEM "Debug C API access (will drastically slow down V-REP)"
 #define IDSN_SHOW_LUA_API_ACCESS_DEBUG_MENU_ITEM "Debug Lua API access (will slow down V-REP)"
-#define IDSN_SHOW_EASYLOCK_ACTIVITY_DEBUG_MENU_ITEM "Debug easylock activity (will slow down V-REP)"
-#define IDSN_SHOW_THREAD_SWITCHES_DEBUG_MENU_ITEM "Debug threadpool thread switches (will slow down V-REP)"
 #define IDSN_SEND_DEBUG_INFO_TO_FILE_MENU_ITEM "Send debug info to file (debugLog.txt)"
 #define IDSN_DISABLE_FRUSTUM_CULLING_DEBUG_MENU_ITEM "Disable frustum culling"
 #define IDSN_DISABLE_DISTANCE_CACHING_DEBUG_MENU_ITEM "Disable distance caching"
@@ -350,6 +346,13 @@
 #define IDSN_REVERSE_TRAVERSAL "reverse (default)"
 #define IDSN_FORWARD_TRAVERSAL "forward"
 #define IDSN_PARENT_TRAVERSAL "same as parent"
+
+// Script debug modes:
+#define IDSN_SCRIPTDEBUG_NONE "none"
+#define IDSN_SCRIPTDEBUG_SYSCALLS "watch system calls"
+#define IDSN_SCRIPTDEBUG_ALLCALLS "watch all calls"
+#define IDSN_SCRIPTDEBUG_VARS "watch variables"
+#define IDSN_SCRIPTDEBUG_FULL "watch calls and variables"
 
 // Help menu item
 #define IDS_ABOUT_V_REP         "About V-REP"

@@ -44,7 +44,7 @@ void CLuaCustomFuncAndVarContainer::announcePluginWasKilled(const char* pluginNa
 {
     for (size_t i=0;i<allCustomFunctions.size();i++)
     {
-        if (allCustomFunctions[i]->isFunctionNameSame(pluginName))
+        if (allCustomFunctions[i]->isPluginNameSame(pluginName))
         { // we have to remove this one
             delete allCustomFunctions[i];
             allCustomFunctions.erase(allCustomFunctions.begin()+i);
@@ -54,7 +54,7 @@ void CLuaCustomFuncAndVarContainer::announcePluginWasKilled(const char* pluginNa
 
     for (size_t i=0;i<allCustomVariables.size();i++)
     {
-        if (allCustomVariables[i]->isVariableNameSame(pluginName))
+        if (allCustomVariables[i]->isPluginNameSame(pluginName))
         { // we have to remove this one
             delete allCustomVariables[i];
             allCustomVariables.erase(allCustomVariables.begin()+i);
@@ -164,20 +164,29 @@ bool CLuaCustomFuncAndVarContainer::insertCustomVariable(const char* fullVariabl
         return(true);
     }
     else
-    { // register a stack variable
-        CInterfaceStack* stack=App::ct->interfaceStackContainer->getStack(stackHandle);
-        if (stack==NULL)
-            return(false);
-        if (stack->getStackSize()<1)
-            return(false);
-        while (stack->getStackSize()>1)
-        { // keep one item in the stack (the top item)
-            stack->moveStackItemToTop(0);
-            stack->popStackValue(1);
+    {
+        if (stackHandle==0)
+        { // we only register a variable name for auto-completion (variable has no value!)
+            removeCustomVariable(fullVariableName);
+            CLuaCustomVariable* v=new CLuaCustomVariable(fullVariableName,NULL,0);
+            allCustomVariables.push_back(v);
         }
-        removeCustomVariable(fullVariableName);
-        CLuaCustomVariable* v=new CLuaCustomVariable(fullVariableName,NULL,stackHandle);
-        allCustomVariables.push_back(v);
+        else
+        { // register a stack variable
+            CInterfaceStack* stack=App::ct->interfaceStackContainer->getStack(stackHandle);
+            if (stack==NULL)
+                return(false);
+            if (stack->getStackSize()<1)
+                return(false);
+            while (stack->getStackSize()>1)
+            { // keep one item in the stack (the top item)
+                stack->moveStackItemToTop(0);
+                stack->popStackValue(1);
+            }
+            removeCustomVariable(fullVariableName);
+            CLuaCustomVariable* v=new CLuaCustomVariable(fullVariableName,NULL,stackHandle);
+            allCustomVariables.push_back(v);
+        }
         return(true);
     }
 }

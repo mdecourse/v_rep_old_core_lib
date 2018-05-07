@@ -30,7 +30,7 @@ struct SLuaVariables
 };
 
 
-luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString);
+luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString,int debugLevel);
 void registerTableFunction(luaWrap_lua_State* L,char const* const tableName,char const* const functionName,luaWrap_lua_CFunction functionCallback);
 void registerNewLuaFunctions(luaWrap_lua_State* L);
 void prepareNewLuaVariables_onlyRequire(luaWrap_lua_State* L);
@@ -556,6 +556,8 @@ extern int _simExecuteScriptString(luaWrap_lua_State* L);
 extern int _simGetApiFunc(luaWrap_lua_State* L);
 extern int _simGetApiInfo(luaWrap_lua_State* L);
 extern int _simGetModuleInfo(luaWrap_lua_State* L);
+extern int _simRegisterScriptFunction(luaWrap_lua_State* L);
+extern int _simRegisterScriptVariable(luaWrap_lua_State* L);
 extern int _simTest(luaWrap_lua_State* L);
 
 // DEPRECATED

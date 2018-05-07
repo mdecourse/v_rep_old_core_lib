@@ -97,6 +97,11 @@ bool CLuaCustomFunction::isFunctionNameSame(const char* fullName)
     return(functionName.compare(funcName)==0);
 }
 
+bool CLuaCustomFunction::isPluginNameSame(const char* plugName)
+{
+    return(pluginName.compare(plugName)==0);
+}
+
 std::string CLuaCustomFunction::getFunctionName()
 {
     return(functionName);

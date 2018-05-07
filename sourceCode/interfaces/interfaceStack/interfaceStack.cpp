@@ -262,21 +262,25 @@ CInterfaceStackObject* CInterfaceStack::_generateObjectFromLuaStack(luaWrap_lua_
         }
         return(table);
     }
-    else if (t==STACK_OBJECT_USERDAT)
-    { // only supported as "USERDATA" string
-        return(new CInterfaceStackString("<USERDATA>",0));
-    }
-    else if (t==STACK_OBJECT_FUNC)
-    { // only supported as "FUNCTION" string
-        return(new CInterfaceStackString("<FUNCTION>",0));
-    }
-    else if (t==STACK_OBJECT_THREAD)
-    { // only supported as "THREAD" string
-        return(new CInterfaceStackString("<THREAD>",0));
-    }
     else
-    { // this is light user data. Not supported here
-        return(new CInterfaceStackNull());
+    { // following types translate to strings (i.e. can't be handled outside of the Lua state)
+        void* p=(void*)luaWrap_lua_topointer(L,index);
+        char num[21];
+        snprintf(num,20,"%p",p);
+        std::string str;
+        if (t==STACK_OBJECT_USERDAT)
+            str="<USERDATA ";
+        else if (t==STACK_OBJECT_FUNC)
+            str="<FUNCTION ";
+        else if (t==STACK_OBJECT_THREAD)
+            str="<THREAD ";
+        else if (t==STACK_OBJECT_LIGHTUSERDAT)
+            str="<LIGHTUSERDATA ";
+        else
+            str="<UNKNOWNTYPE ";
+        str+=num;
+        str+=">";
+        return(new CInterfaceStackString(str.c_str(),0));
     }
 }
 

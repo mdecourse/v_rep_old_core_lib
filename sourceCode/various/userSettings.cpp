@@ -62,13 +62,9 @@
 #define _USR_IDLE_FPS "idleFps"
 #define _USR_UNDO_REDO_MAX_BUFFER_SIZE "undoRedoMaxBufferSize"
 #define _USR_ALWAYS_SHOW_CONSOLE "alwaysShowConsole"
-#define _USR_DEBUG_GUI_SIM_THREAD_SYNC_ACTIVITY "debugGuiThreadAndSimThreadSynchronizationActivity"
-#define _USR_DEBUG_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY "debugGuiThreadAndSimThreadSynchronizationLockFailActivity"
 #define _USR_DEBUG_INTERNAL_FUNCTION_ACCESS "debugInternalFunctionAccess"
 #define _USR_DEBUG_C_API_ACCESS "debugCApiAccess"
 #define _USR_DEBUG_LUA_API_ACCESS "debugLuaApiAccess"
-#define _USR_DEBUG_THREAD_SWITCHES "debugThreadSwitches"
-#define _USR_DEBUG_EASYLOCK_ACTIVITY "debugEasylockActivity"
 #define _USR_DEBUG_TO_FILE "sendDebugInformationToFile"
 #define _USR_FORCE_BUG_FIX_REL_30002 "forceBugFix_rel30002"
 #define _USR_ALLOW_TRANSPARENT_DIALOGS  "allowTransparentDialogs"
@@ -679,18 +675,9 @@ void CUserSettings::saveUserSettings()
     c.addRandomLine("// Debugging");
     c.addRandomLine("// =================================================");
     c.addBoolean(_USR_ALWAYS_SHOW_CONSOLE,alwaysShowConsole,"");
-#ifdef SIM_WITHOUT_QT_AT_ALL
-    c.addBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_ACTIVITY,false,"will also slow down V-REP");
-    c.addBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY,false,"");
-#else
-    c.addBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_ACTIVITY,CSimAndUiThreadSync::getShowActivityInConsole(),"will also slow down V-REP");
-    c.addBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY,CSimAndUiThreadSync::getShowLockFailsActivityInConsole(),"");
-#endif
     c.addBoolean(_USR_DEBUG_INTERNAL_FUNCTION_ACCESS,(CFuncDebug::getDebugMask()&1)!=0,"will also heavily slow down V-REP");
     c.addBoolean(_USR_DEBUG_C_API_ACCESS,(CFuncDebug::getDebugMask()&2)!=0,"will also drastically slow down V-REP");
     c.addBoolean(_USR_DEBUG_LUA_API_ACCESS,(CFuncDebug::getDebugMask()&4)!=0,"will also slow down V-REP");
-    c.addBoolean(_USR_DEBUG_THREAD_SWITCHES,CEasyLock::getShowActivity(),"will also slow down V-REP");
-    c.addBoolean(_USR_DEBUG_EASYLOCK_ACTIVITY,CThreadPool::getShowThreadSwitches(),"will also slow down V-REP");
     c.addBoolean(_USR_DEBUG_TO_FILE,CDebugLogFile::getDebugToFile(),"if true, debug info is sent to debugLog.txt");
     c.addRandomLine("");
     c.addRandomLine("");
@@ -1025,12 +1012,6 @@ void CUserSettings::loadUserSettings()
     // *****************************
     c.getBoolean(_USR_ALWAYS_SHOW_CONSOLE,alwaysShowConsole);
     bool dummyBool=false;
-#ifndef SIM_WITHOUT_QT_AT_ALL
-    if (c.getBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_ACTIVITY,dummyBool))
-        CSimAndUiThreadSync::setShowActivityInConsole(dummyBool);
-    if (c.getBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY,dummyBool))
-        CSimAndUiThreadSync::setShowLockFailsActivityInConsole(dummyBool);
-#endif
     int dummyInt=0;
     if (c.getBoolean(_USR_DEBUG_INTERNAL_FUNCTION_ACCESS,dummyBool))
     {
@@ -1048,10 +1029,6 @@ void CUserSettings::loadUserSettings()
             dummyInt+=4;
     }
     CFuncDebug::setDebugMask(dummyInt);
-    if (c.getBoolean(_USR_DEBUG_THREAD_SWITCHES,dummyBool))
-        CThreadPool::setShowThreadSwitches(dummyBool);
-    if (c.getBoolean(_USR_DEBUG_EASYLOCK_ACTIVITY,dummyBool))
-        CEasyLock::setShowActivity(dummyBool);
     if (c.getBoolean(_USR_DEBUG_TO_FILE,dummyBool))
         CDebugLogFile::setDebugToFile(dummyBool);
 

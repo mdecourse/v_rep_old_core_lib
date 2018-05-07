@@ -63,6 +63,8 @@ public:
     int runCustomizationScript(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
     int runAddOn(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
 
+    void handleDebug(const char* funcName,const char* funcType,bool inCall,bool sysCall);
+
     int callScriptFunction(const char* functionName, SLuaCallBack* pdata);
     int callScriptFunctionEx(const char* functionName,CInterfaceStack* stack);
     int setScriptVariable(const char* variableName,CInterfaceStack* stack);
@@ -85,6 +87,8 @@ public:
     bool getThreadedExecutionIsUnderWay() const;
     void setExecutionOrder(int order);
     int getExecutionOrder() const;
+    void setDebugLevel(int l);
+    int getDebugLevel() const;
     void setTreeTraversalDirection(int dir);
     int getTreeTraversalDirection() const;
     void flagForDestruction();
@@ -176,7 +180,7 @@ public:
 
 protected:
     bool _luaLoadBuffer(luaWrap_lua_State* luaState,const char* buff,size_t sz,const char* name);
-    int _luaPCall(luaWrap_lua_State* luaState,int nargs,int nresult,int errfunc);
+    int _luaPCall(luaWrap_lua_State* luaState,int nargs,int nresult,int errfunc,const char* funcName);
 
     int _runMainScript(int optionalCallType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
     int _runMainScriptNow(int callType,const CInterfaceStack* inStack,CInterfaceStack* outStack);
@@ -201,6 +205,8 @@ protected:
     bool _mainScriptIsDefaultMainScript;
     bool _disableCustomizationScriptWithError;
     int _executionOrder;
+    int _debugLevel;
+    bool _inDebug;
     int _treeTraversalDirection;
     int _objectIDAttachedTo_child;
     int _objectIDAttachedTo_callback;

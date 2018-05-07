@@ -56,6 +56,7 @@ public:
     static bool setThreadResumeLocation(int location,int order);
     static bool switchBackToPreviousThread();
     static void switchBackToPreviousThreadIfNeeded();
+    static bool isSwitchBackToPreviousThreadNeeded();
 
     static void prepareAllThreadsForResume_calledBeforeMainScript();
     static int handleAllThreads_withResumeLocation(int location);

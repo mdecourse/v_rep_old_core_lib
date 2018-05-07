@@ -4143,9 +4143,7 @@ simFloat simGetSimulationTime_internal()
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1.0f);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
@@ -6087,21 +6085,19 @@ simInt simRegisterScriptCallbackFunction_internal(const simChar* funcNameAtPlugi
     return(-1);
 }
 
-simInt simRegisterScriptVariable_internal(const simChar* varName,const simChar* varValue,simInt stackHandle)
+simInt simRegisterScriptVariable_internal(const simChar* varNameAtPluginName,const simChar* varValue,simInt stackHandle)
 {
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         bool retVal=1;
-        if (App::ct->luaCustomFuncAndVarContainer->removeCustomVariable(varName))
+        if (App::ct->luaCustomFuncAndVarContainer->removeCustomVariable(varNameAtPluginName))
             retVal=0;// that variable already existed. We remove it and replace it!
-        if (!App::ct->luaCustomFuncAndVarContainer->insertCustomVariable(varName,varValue,stackHandle))
+        if (!App::ct->luaCustomFuncAndVarContainer->insertCustomVariable(varNameAtPluginName,varValue,stackHandle))
         {
             CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_CUSTOM_LUA_VAR_COULD_NOT_BE_REGISTERED);
             return(-1);
@@ -15083,6 +15079,11 @@ simInt simSetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,sim
             it->setScriptIsDisabled(intOrBoolVal==0);
             retVal=1;
         }
+        if (attributeID==sim_scriptattribute_debuglevel)
+        {
+            it->setDebugLevel(intOrBoolVal);
+            retVal=1;
+        }
 
 
         return(retVal);
@@ -15139,6 +15140,11 @@ simInt simGetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,sim
         if (attributeID==sim_scriptattribute_executioncount)
         {
             intOrBoolVal[0]=it->getNumberOfPasses();
+            retVal=1;
+        }
+        if (attributeID==sim_scriptattribute_debuglevel)
+        {
+            intOrBoolVal[0]=it->getDebugLevel();
             retVal=1;
         }
         return(retVal);

@@ -51,11 +51,14 @@ void CLuaCustomVariable::pushVariableOntoLuaStack(luaWrap_lua_State* L,bool hand
     }
     else
     { // stack variable
-        if (!handleOnlyRequireAssignments)
+        if (_variableStackValue!=0)
         {
-            CInterfaceStack* stack=App::ct->interfaceStackContainer->getStack(_variableStackValue);
-            stack->buildOntoLuaStack(L,true);
-            luaWrap_lua_setglobal(L,_variableName.c_str());
+            if (!handleOnlyRequireAssignments)
+            {
+                CInterfaceStack* stack=App::ct->interfaceStackContainer->getStack(_variableStackValue);
+                stack->buildOntoLuaStack(L,true);
+                luaWrap_lua_setglobal(L,_variableName.c_str());
+            }
         }
     }
 }
@@ -64,6 +67,11 @@ bool CLuaCustomVariable::isVariableNameSame(const char* fullName)
 {
     std::string varName(_getVariableNameFromFull(fullName));
     return(_variableName.compare(varName)==0);
+}
+
+bool CLuaCustomVariable::isPluginNameSame(const char* plugName)
+{
+    return(_pluginName.compare(plugName)==0);
 }
 
 bool CLuaCustomVariable::shouldBeDestroyed(const char* pluginName)

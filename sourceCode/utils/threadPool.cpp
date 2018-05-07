@@ -406,6 +406,35 @@ bool CThreadPool::switchBackToPreviousThread()
     return(false);
 }
 
+bool CThreadPool::isSwitchBackToPreviousThreadNeeded()
+{
+    if (_inInterceptRoutine>0)
+        return(false);
+    _lock(5);
+    int fql=int(_threadQueue.size());
+    if (fql>1)
+    { // Switch back only if not main thread
+        int totalTimeInMs=VDateTime::getTimeDiffInMs(_threadStartTime[fql-1]);
+        for (int i=0;i<int(_allThreadData.size());i++)
+        {
+            if (VThread::areThreadIDsSame(_allThreadData[i]->threadID,_threadQueue[fql-1]))
+            {
+                if (_allThreadData[i]->threadDesiredTiming<=totalTimeInMs)
+                {
+                    if ((!_allThreadData[i]->threadShouldNotSwitch)||_threadShouldNotSwitch_override)
+                    {
+                        _unlock(5);
+                        return(true);
+                    }
+                }
+                break;
+            }
+        }
+    }
+    _unlock(5);
+    return(false);
+}
+
 void CThreadPool::switchBackToPreviousThreadIfNeeded()
 {
     if (_inInterceptRoutine>0)

@@ -179,7 +179,7 @@ VREP_DLLEXPORT simInt simGetDialogResult(simInt genericDialogHandle);
 VREP_DLLEXPORT simChar* simGetDialogInput(simInt genericDialogHandle);
 VREP_DLLEXPORT simInt simEndDialog(simInt genericDialogHandle);
 VREP_DLLEXPORT simInt simRegisterScriptCallbackFunction(const simChar* funcNameAtPluginName,const simChar* callTips,simVoid(*callBack)(struct SScriptCallBack* cb));
-VREP_DLLEXPORT simInt simRegisterScriptVariable(const simChar* varName,const simChar* varValue,simInt stackHandle);
+VREP_DLLEXPORT simInt simRegisterScriptVariable(const simChar* varNameAtPluginName,const simChar* varValue,simInt stackHandle);
 VREP_DLLEXPORT simInt simSetJointTargetVelocity(simInt objectHandle,simFloat targetVelocity);
 VREP_DLLEXPORT simInt simGetJointTargetVelocity(simInt objectHandle,simFloat* targetVelocity);
 VREP_DLLEXPORT simInt simSetPathTargetNominalVelocity(simInt objectHandle,simFloat targetNominalVelocity);

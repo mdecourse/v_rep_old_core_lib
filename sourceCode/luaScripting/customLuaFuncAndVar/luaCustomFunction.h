@@ -18,6 +18,7 @@ public:
     bool getUsesStackToExchangeData();
     std::string getFunctionName();
     bool isFunctionNameSame(const char* fullName);
+    bool isPluginNameSame(const char* plugName);
     std::string getPluginName();
     std::string getCallTips();
     int getFunctionID();

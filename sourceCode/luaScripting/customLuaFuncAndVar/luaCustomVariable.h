@@ -14,6 +14,7 @@ public:
     void pushVariableOntoLuaStack(luaWrap_lua_State* L,bool handleOnlyRequireAssignments);
     bool shouldBeDestroyed(const char* pluginName);
     bool isVariableNameSame(const char* fullName);
+    bool isPluginNameSame(const char* plugName);
     bool getNoAutoCompletion();
     std::string getVariableName();
 

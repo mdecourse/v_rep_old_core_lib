@@ -651,9 +651,9 @@ VREP_DLLEXPORT simInt simRegisterScriptCallbackFunction(const simChar* funcNameA
 {
     return(simRegisterScriptCallbackFunction_internal(funcNameAtPluginName,callTips,callBack));
 }
-VREP_DLLEXPORT simInt simRegisterScriptVariable(const simChar* varName,const simChar* varValue,simInt stackHandle)
+VREP_DLLEXPORT simInt simRegisterScriptVariable(const simChar* varNameAtPluginName,const simChar* varValue,simInt stackHandle)
 {
-    return(simRegisterScriptVariable_internal(varName,varValue,stackHandle));
+    return(simRegisterScriptVariable_internal(varNameAtPluginName,varValue,stackHandle));
 }
 VREP_DLLEXPORT simInt simSetJointTargetVelocity(simInt objectHandle,simFloat targetVelocity)
 {

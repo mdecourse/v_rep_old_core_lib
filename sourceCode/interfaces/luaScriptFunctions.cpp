@@ -457,6 +457,8 @@ const SLuaCommands simLuaCommands[]=
     {"sim.getApiFunc",_simGetApiFunc,                            "table funcsAndVars=sim.getApiFunc(number scriptHandleOrType,string apiWord)",true},
     {"sim.getApiInfo",_simGetApiInfo,                            "string info=sim.getApiInfo(number scriptHandleOrType,string apiWord)",true},
     {"sim.getModuleInfo",_simGetModuleInfo,                      "string/number info=sim.getModuleInfo(string moduleName,number infoType)",true},
+    {"sim.registerScriptFunction",_simRegisterScriptFunction,    "number result=sim.registerScriptFunction(string funcNameAtPluginName,string callTips)",true},
+    {"sim.registerScriptVariable",_simRegisterScriptVariable,    "number result=sim.registerScriptVariable(string varNameAtPluginName)",true},
 
     {"sim.test",_simTest,                                        "test function - shouldn't be used",true},
     // Add new commands here!
@@ -1158,10 +1160,17 @@ const SLuaVariables simLuaVariables[]=
     {"sim.childscriptattribute_enabled",sim_childscriptattribute_enabled,true},
     {"sim.scriptattribute_enabled",sim_scriptattribute_enabled,true},
     {"sim.customizationscriptattribute_cleanupbeforesave",sim_customizationscriptattribute_cleanupbeforesave,true},
+    {"sim.scriptattribute_debuglevel",sim_scriptattribute_debuglevel,true,},
     // script execution order:
     {"sim.scriptexecorder_first",sim_scriptexecorder_first,true},
     {"sim.scriptexecorder_normal",sim_scriptexecorder_normal,true},
     {"sim.scriptexecorder_last",sim_scriptexecorder_last,true},
+    // script debug level:
+    {"sim.scriptdebug_none",sim_scriptdebug_none,true},
+    {"sim.scriptdebug_syscalls",sim_scriptdebug_syscalls,true},
+    {"sim.scriptdebug_allcalls",sim_scriptdebug_allcalls,true},
+    {"sim.scriptdebug_vars",sim_scriptdebug_vars,true},
+    {"sim.scriptdebug_callsandvars",sim_scriptdebug_callsandvars,true},
     // threaded script resume location:
     {"sim.scriptthreadresume_allnotyetresumed",sim_scriptthreadresume_allnotyetresumed,true},
     {"sim.scriptthreadresume_default",sim_scriptthreadresume_default,true},
@@ -3271,7 +3280,7 @@ void getScriptChain(luaWrap_lua_State* L,bool selfIncluded,bool mainIncluded,std
     }
 }
 
-luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString)
+luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString,int debugLevel)
 {
     luaWrap_lua_State* L=luaWrap_luaL_newstate();
     luaWrap_luaL_openlibs(L);
@@ -3335,7 +3344,10 @@ luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString)
 
     luaWrap_luaL_dostring(L,"_mG()"); // needed to allow retrieving user global variables with getUserGlobals()
 
-    luaWrap_lua_sethook(L,luaHookFunction,luaWrapGet_LUA_MASKCOUNT(),100); // This instruction gets also called in luaHookFunction!!!!
+    int hookMask=luaWrapGet_LUA_MASKCOUNT();
+    if (debugLevel>sim_scriptdebug_syscalls)
+        hookMask|=luaWrapGet_LUA_MASKCALL()|luaWrapGet_LUA_MASKRET();
+    luaWrap_lua_sethook(L,luaHookFunction,hookMask,100); // This instruction gets also called in luaHookFunction!!!!
 
     return(L);
 }
@@ -3391,72 +3403,108 @@ void registerNewLuaFunctions(luaWrap_lua_State* L)
 void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
 {
     FUNCTION_DEBUG;
-    // Following 2 instructions are important: it can happen that the user locks/unlocks automatic thread switch in a loop,
-    // and that the hook function by malchance only gets called when the thread switches are not allowed (due to the loop
-    // timing and hook call timing overlap) --> this thread doesn't switch and stays in a lua loop forever.
-    // To avoid this we add some random component to the hook timing:
-    int randComponent=rand()/(RAND_MAX/10);
-    luaWrap_lua_sethook(L,luaHookFunction,luaWrapGet_LUA_MASKCOUNT(),95+randComponent);
-    // Also remember: the hook gets also called when calling luaWrap_luaL_doString from c++!!
-
     CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(getCurrentScriptID(L));
-    int scriptType=it->getScriptType();
-    if ( (scriptType==sim_scripttype_mainscript)||(scriptType==sim_scripttype_childscript)||(scriptType==sim_scripttype_jointctrlcallback)||(scriptType==sim_scripttype_contactcallback) ) //||(scriptType==sim_scripttype_generalcallback) )
-    {
-#ifdef SIM_WITH_GUI
-        if (App::userSettings->abortScriptExecutionButton!=0)
-        {
-            bool doIt=( (App::ct->luaScriptContainer->getMainScriptExecTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000))&&App::ct->luaScriptContainer->getInMainScriptNow() );
-            if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
-            { // Otherwise can get very slow somehow
-                App::ct->simulation->showAndHandleEmergencyStopButton(doIt,it->getShortDescriptiveName().c_str());
-            }
-        }
+    if (it==NULL)
+        return; // the script ID was not yet set
+    int debugLevel=it->getDebugLevel();
 
-        if ( CThreadPool::getSimulationEmergencyStop() ) // No automatic yield when flagged for destruction!! ||it->getFlaggedForDestruction() )
-        { // This is the only way a non-threaded script can yield. But threaded child scripts can also yield here
-            luaWrap_lua_yield(L,0);
-            return;
+    if ( (ar->event==luaWrapGet_LUA_HOOKCALL())||(ar->event==luaWrapGet_LUA_HOOKRET()) )
+    { // Debug call and return hooks
+        if (debugLevel>sim_scriptdebug_syscalls)
+        { // debugging (further down also several occurences (auto thread switches and script end force)
+            bool callIn=(ar->event==luaWrapGet_LUA_HOOKCALL());
+            luaWrap_lua_getinfo(L, "nS", ar);
+            it->handleDebug(ar->name,ar->what,callIn,false);
         }
-        else
+    }
+
+    if (ar->event!=luaWrapGet_LUA_HOOKCALL())
+    { // Return and Count hook (return somehow needed here too when debug is on)
+        // Following 6 instructions are important: it can happen that the user locks/unlocks automatic thread switch in a loop,
+        // and that the hook function by malchance only gets called when the thread switches are not allowed (due to the loop
+        // timing and hook call timing overlap) --> this thread doesn't switch and stays in a lua loop forever.
+        // To avoid this we add some random component to the hook timing:
+        int randComponent=rand()/(RAND_MAX/10);
+        int hookMask=luaWrapGet_LUA_MASKCOUNT();
+        if (debugLevel>sim_scriptdebug_syscalls)
+            hookMask|=luaWrapGet_LUA_MASKCALL()|luaWrapGet_LUA_MASKRET();
+        luaWrap_lua_sethook(L,luaHookFunction,hookMask,95+randComponent);
+        // Also remember: the hook gets also called when calling luaWrap_luaL_doString from c++ and similar!!
+
+        int scriptType=it->getScriptType();
+        if ( (scriptType==sim_scripttype_mainscript)||(scriptType==sim_scripttype_childscript)||(scriptType==sim_scripttype_jointctrlcallback)||(scriptType==sim_scripttype_contactcallback) ) //||(scriptType==sim_scripttype_generalcallback) )
         {
-            if (CThreadPool::getSimulationStopRequestedAndActivated())
-            { // returns true only after 1-2 seconds after the request arrived
-                if (!VThread::isCurrentThreadTheMainSimulationThread())
-                { // Here only threaded scripts can yield!
-                    luaWrap_lua_yield(L,0);
-                    return;
+#ifdef SIM_WITH_GUI
+            if (App::userSettings->abortScriptExecutionButton!=0)
+            {
+                bool doIt=( (App::ct->luaScriptContainer->getMainScriptExecTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000))&&App::ct->luaScriptContainer->getInMainScriptNow() );
+                if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
+                { // Otherwise can get very slow somehow
+                    App::ct->simulation->showAndHandleEmergencyStopButton(doIt,it->getShortDescriptiveName().c_str());
                 }
             }
-        }
-#endif
-        CThreadPool::switchBackToPreviousThreadIfNeeded();
-    }
-    else
-    { // non-simulation scripts (i.e. add-ons and customization scripts)
-#ifdef SIM_WITH_GUI
-        if (App::userSettings->abortScriptExecutionButton!=0)
-        {
-            if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
-            { // Otherwise can get very slow somehow
-                if ( it->getScriptExecutionTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000) )
-                {
-                    App::ct->simulation->showAndHandleEmergencyStopButton(true,it->getShortDescriptiveName().c_str());
-                    if (CLuaScriptObject::emergencyStopButtonPressed)
-                    {
-                        CLuaScriptObject::emergencyStopButtonPressed=false;
-                        if (it->getScriptType()==sim_scripttype_customizationscript)
-                            it->setCustomizationScriptIsTemporarilyDisabled(true); // stop it
-                        if (it->getScriptType()==sim_scripttype_addonscript)
-                            it->flagForDestruction(); // stop it
+
+            if ( CThreadPool::getSimulationEmergencyStop() ) // No automatic yield when flagged for destruction!! ||it->getFlaggedForDestruction() )
+            { // This is the only way a non-threaded script can yield. But threaded child scripts can also yield here
+                if (debugLevel>=sim_scriptdebug_syscalls)
+                    it->handleDebug("force_script_stop","C",true,true);
+                luaWrap_lua_yield(L,0);
+                return;
+            }
+            else
+            {
+                if (CThreadPool::getSimulationStopRequestedAndActivated())
+                { // returns true only after 1-2 seconds after the request arrived
+                    if (!VThread::isCurrentThreadTheMainSimulationThread())
+                    { // Here only threaded scripts can yield!
+                        if (debugLevel>=sim_scriptdebug_syscalls)
+                            it->handleDebug("force_script_stop","C",true,true);
                         luaWrap_lua_yield(L,0);
+                        return;
                     }
                 }
-                else
-                    App::ct->simulation->showAndHandleEmergencyStopButton(false,"");
+            }
+#endif
+            if (!VThread::isCurrentThreadTheMainSimulationThread())
+            {
+                if (CThreadPool::isSwitchBackToPreviousThreadNeeded())
+                {
+                    if (debugLevel>=sim_scriptdebug_syscalls)
+                        it->handleDebug("thread_automatic_switch","C",true,true);
+                    CThreadPool::switchBackToPreviousThreadIfNeeded();
+                    if (debugLevel>=sim_scriptdebug_syscalls)
+                        it->handleDebug("thread_automatic_switch","C",false,true);
+                }
             }
         }
+        else
+        { // non-simulation scripts (i.e. add-ons and customization scripts)
+#ifdef SIM_WITH_GUI
+            if (App::userSettings->abortScriptExecutionButton!=0)
+            {
+                if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
+                { // Otherwise can get very slow somehow
+                    if ( it->getScriptExecutionTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000) )
+                    {
+                        App::ct->simulation->showAndHandleEmergencyStopButton(true,it->getShortDescriptiveName().c_str());
+                        if (CLuaScriptObject::emergencyStopButtonPressed)
+                        {
+                            CLuaScriptObject::emergencyStopButtonPressed=false;
+                            if (it->getScriptType()==sim_scripttype_customizationscript)
+                                it->setCustomizationScriptIsTemporarilyDisabled(true); // stop it
+                            if (it->getScriptType()==sim_scripttype_addonscript)
+                                it->flagForDestruction(); // stop it
+                            if (debugLevel>=sim_scriptdebug_syscalls)
+                                it->handleDebug("force_script_stop","C",true,true);
+                            luaWrap_lua_yield(L,0);
+                        }
+                    }
+                    else
+                        App::ct->simulation->showAndHandleEmergencyStopButton(false,"");
+                }
+            }
 #endif
+        }
     }
 }
 
@@ -16030,14 +16078,14 @@ int _simSetScriptAttribute(luaWrap_lua_State* L)
             thirdArgType=lua_arg_bool;
 
 
-        if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount) )
+        if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount)||(attribID==sim_scriptattribute_debuglevel) )
             thirdArgType=lua_arg_number;
         int res=checkOneGeneralInputArgument(L,3,thirdArgType,0,false,false,&errorString);
         if (res==2)
         {
             if ( (attribID==sim_customizationscriptattribute_activeduringsimulation)||(attribID==sim_childscriptattribute_automaticcascadingcalls)||(attribID==sim_scriptattribute_enabled)||(attribID==sim_customizationscriptattribute_cleanupbeforesave) )
                 retVal=simSetScriptAttribute_internal(scriptID,attribID,0.0f,luaToBool(L,3));
-            if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount) )
+            if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount)||(attribID==sim_scriptattribute_debuglevel) )
                 retVal=simSetScriptAttribute_internal(scriptID,attribID,0.0f,luaToInt(L,3));
         }
     }
@@ -17495,6 +17543,40 @@ int _simGetModuleInfo(luaWrap_lua_State* L)
     LUA_END(0);
 }
 
+int _simRegisterScriptFunction(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.registerScriptFunction");
+
+    int retVal=-1;
+    if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0))
+    {
+        const char* funcNameAtPluginName=luaWrap_lua_tostring(L,1);
+        const char* callTips=luaWrap_lua_tostring(L,2);
+        retVal=simRegisterScriptCallbackFunction_internal(funcNameAtPluginName,callTips,NULL);
+    }
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
+
+int _simRegisterScriptVariable(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.registerScriptVariable");
+
+    int retVal=-1;
+    if (checkInputArguments(L,&errorString,lua_arg_string,0))
+    {
+        const char* varNameAtPluginName=luaWrap_lua_tostring(L,1);
+        retVal=simRegisterScriptVariable_internal(varNameAtPluginName,NULL,0);
+    }
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
 
 
 //****************************************************
