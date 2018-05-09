@@ -605,5 +605,6 @@ extern int _simRemoveUI(luaWrap_lua_State* L);
 extern int _simSetUIButtonColor(luaWrap_lua_State* L);
 extern int _simHandleChildScript(luaWrap_lua_State* L);
 extern int _simHandleChildScripts_legacy(luaWrap_lua_State* L);
+extern int _simHandleChildScripts2_legacy(luaWrap_lua_State* L,std::string &functionName, std::string& errorString);
 extern int _simLaunchThreadedChildScripts_legacy(luaWrap_lua_State* L);
 extern int _simResumeThreads_legacy(luaWrap_lua_State* L);

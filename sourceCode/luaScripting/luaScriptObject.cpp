@@ -59,7 +59,7 @@ CLuaScriptObject::CLuaScriptObject(int scriptTypeOrMinusOneForSerialization)
     _warning_simRMLVelocity_oldCompatibility_30_8_2014=false;
     _warning_simGetMpConfigForTipPose_oldCompatibility_21_1_2016=false;
     _warning_simFindIkPath_oldCompatibility_2_2_2016=false;
-    _scriptExecStartTime=-1;
+    _timeOfPcallStart=-1;
 
     _customObjectData=NULL;
     _customObjectData_tempData=NULL;
@@ -576,9 +576,9 @@ void CLuaScriptObject::setLastErrorString(const char* txt)
 
 int CLuaScriptObject::getScriptExecutionTimeInMs() const
 {
-    if (_scriptExecStartTime<0) // happens sometimes when calling luaWrap_luaL_doString
+    if (_timeOfPcallStart<0) // happens sometimes when calling luaWrap_luaL_doString
         return(0);
-    return(VDateTime::getTimeDiffInMs(_scriptExecStartTime));
+    return(VDateTime::getTimeDiffInMs(_timeOfPcallStart));
 }
 
 void CLuaScriptObject::setObjectCustomData(int header,const char* data,int dataLength)
@@ -1554,8 +1554,6 @@ bool CLuaScriptObject::launchThreadedChildScript()
 void CLuaScriptObject::_launchThreadedChildScriptNow()
 {
     FUNCTION_DEBUG;
-    _scriptExecStartTime=VDateTime::getTimeInMs();
-//    CApiErrors::pushLocation(scriptID); // for correct error handling (i.e. assignement to the correct script and output)
     if (L==NULL)
     {
         _errorReportMode=sim_api_error_output|sim_api_warning_output;
@@ -1648,9 +1646,7 @@ void CLuaScriptObject::_launchThreadedChildScriptNow()
         App::ct->simulation->pauseOnErrorRequested();
     }
     _numberOfPasses++;
-    _scriptExecStartTime=-1; // means: not initialized yet
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
-//    CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
 }
 
 int CLuaScriptObject::resumeThreadedChildScriptIfLocationMatch(int resumeLocation)
@@ -1716,7 +1712,6 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
     int retVal;
     if (errorMsg!=NULL)
         errorMsg->clear();
-    _scriptExecStartTime=VDateTime::getTimeInMs();
     CApiErrors::pushLocation(scriptID); // for correct error handling (i.e. assignement to the correct script and output)
     if (_scriptTextExec.size()==0)
         _scriptTextExec.assign(_scriptText.begin(),_scriptText.end());
@@ -1871,7 +1866,6 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
     }
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
-    _scriptExecStartTime=-1; // means: not initialized yet
     return(retVal);
 }
 
@@ -1988,9 +1982,6 @@ int CLuaScriptObject::callScriptFunction(const char* functionName,SLuaCallBack* 
     if (!_prepareLuaStateAndCallScriptInitSectionIfNeeded())
         return(retVal);
 
-    bool setAndResetScriptExecStartTime=(_scriptExecStartTime==-1);
-    if (setAndResetScriptExecStartTime)
-        _scriptExecStartTime=VDateTime::getTimeInMs();
     CApiErrors::pushLocation(scriptID); // for correct error handling (i.e. assignement to the correct script and output)
     int oldTop=luaWrap_lua_gettop(L);   // We store lua's stack
 
@@ -2136,8 +2127,6 @@ int CLuaScriptObject::callScriptFunction(const char* functionName,SLuaCallBack* 
     }
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
-    if (setAndResetScriptExecStartTime)
-        _scriptExecStartTime=-1; // means: not initialized yet
     return(retVal);
 }
 
@@ -2149,9 +2138,6 @@ int CLuaScriptObject::callScriptFunctionEx(const char* functionName,CInterfaceSt
         return(retVal);
     retVal=-2;
 
-    bool setAndResetScriptExecStartTime=(_scriptExecStartTime==-1);
-    if (setAndResetScriptExecStartTime)
-        _scriptExecStartTime=VDateTime::getTimeInMs();
     CApiErrors::pushLocation(scriptID); // for correct error handling (i.e. assignement to the correct script and output)
     int oldTop=luaWrap_lua_gettop(L);   // We store lua's stack
 
@@ -2222,8 +2208,6 @@ int CLuaScriptObject::callScriptFunctionEx(const char* functionName,CInterfaceSt
 
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
-    if (setAndResetScriptExecStartTime)
-        _scriptExecStartTime=-1; // means: not initialized yet
     return(retVal);
 }
 
@@ -2329,6 +2313,9 @@ int CLuaScriptObject::executeScriptString(const char* scriptString,CInterfaceSta
 
     std::string theString("return ");
     theString+=scriptString;
+    bool firstCall=_timeOfPcallStart==-1;
+    if (firstCall)
+        _timeOfPcallStart=VDateTime::getTimeInMs();
     if (0!=luaWrap_luaL_dostring(L,theString.c_str()))
     { // 'return theStringToExecute' failed to execute. Let's simply execute 'theStringToExecute'
         int intermediateTop=luaWrap_lua_gettop(L);
@@ -2353,6 +2340,8 @@ int CLuaScriptObject::executeScriptString(const char* scriptString,CInterfaceSta
         }
         retVal=0;
     }
+    if (firstCall)
+        _timeOfPcallStart=-1;
 
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
@@ -3086,7 +3075,12 @@ void CLuaScriptObject::handleDebug(const char* funcName,const char* funcType,boo
         // Temp. disable the hook:
         luaWrap_lua_sethook(L,luaHookFunction,0,0);
 
-        luaWrap_lua_getglobal(L,"__DEBUG__");
+        luaWrap_lua_getglobal(L,"__HIDDEN__");
+        luaWrap_lua_getfield(L,-1,"debug");
+        luaWrap_lua_remove(L,-2);
+        luaWrap_lua_getfield(L,-1,"entryFunc");
+        luaWrap_lua_remove(L,-2);
+
         if (luaWrap_lua_isfunction(L,-1))
         { // function name will be automatically popped after luaWrap_lua_pcall
             luaWrap_lua_newtable(L);
@@ -3122,7 +3116,7 @@ void CLuaScriptObject::handleDebug(const char* funcName,const char* funcType,boo
         // Re-enable the hook:
         int randComponent=rand()/(RAND_MAX/10);
         int hookMask=luaWrapGet_LUA_MASKCOUNT();
-        if (_debugLevel>sim_scriptdebug_syscalls)
+        if (_debugLevel>=sim_scriptdebug_allcalls)
             hookMask|=luaWrapGet_LUA_MASKCALL()|luaWrapGet_LUA_MASKRET();
         luaWrap_lua_sethook(L,luaHookFunction,hookMask,95+randComponent);
 
@@ -3131,12 +3125,17 @@ void CLuaScriptObject::handleDebug(const char* funcName,const char* funcType,boo
 }
 
 int CLuaScriptObject::_luaPCall(luaWrap_lua_State* luaState,int nargs,int nresult,int errfunc,const char* funcName)
-{
+{ // do not forget, routine is often re-entered!
+    bool firstCall=_timeOfPcallStart==-1;
+    if (firstCall)
+        _timeOfPcallStart=VDateTime::getTimeInMs();
     _inExecutionNow=true;
     handleDebug(funcName,"Lua",true,true);
     int retVal=luaWrap_lua_pcall(luaState,nargs,nresult,errfunc);
     handleDebug(funcName,"Lua",false,true);
     _inExecutionNow=false;
+    if (firstCall)
+        _timeOfPcallStart=-1;
     return(retVal);
 }
 
@@ -3192,7 +3191,6 @@ void CLuaScriptObject::_runJointCtrlCallback_OLD(int callType,const std::vector<
     if (_scriptTextExec.size()==0)
         _scriptTextExec.assign(_scriptText.begin(),_scriptText.end());
 
-    _scriptExecStartTime=VDateTime::getTimeInMs();
     CApiErrors::pushLocation(scriptID); // for correct error handling (i.e. assignement to the correct script and output)
 
     if (L==NULL)
@@ -3396,7 +3394,6 @@ void CLuaScriptObject::_runJointCtrlCallback_OLD(int callType,const std::vector<
     }
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
-    _scriptExecStartTime=-1; // means: not initialized yet
 }
 
 int CLuaScriptObject::runContactCallback_OLD(const int inDataInt[3],int outDataInt[3],float outDataFloat[14])
@@ -3405,7 +3402,6 @@ int CLuaScriptObject::runContactCallback_OLD(const int inDataInt[3],int outDataI
     if (_scriptTextExec.size()==0)
         _scriptTextExec.assign(_scriptText.begin(),_scriptText.end());
 
-    _scriptExecStartTime=VDateTime::getTimeInMs();
     CApiErrors::pushLocation(scriptID); // for correct error handling (i.e. assignement to the correct script and output)
 
     if (L==NULL)
@@ -3474,7 +3470,6 @@ int CLuaScriptObject::runContactCallback_OLD(const int inDataInt[3],int outDataI
     _numberOfPasses++;
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
-    _scriptExecStartTime=-1; // means: not initialized yet
     return(retVal);
 }
 
@@ -3484,7 +3479,6 @@ int CLuaScriptObject::runGeneralCallback_OLD(int callbackId,int callbackTag,void
     if (_scriptTextExec.size()==0)
         _scriptTextExec.assign(_scriptText.begin(),_scriptText.end());
 
-    _scriptExecStartTime=VDateTime::getTimeInMs();
     CApiErrors::pushLocation(scriptID); // for correct error handling (i.e. assignement to the correct script and output)
 
     if (L==NULL)
@@ -3543,7 +3537,6 @@ int CLuaScriptObject::runGeneralCallback_OLD(int callbackId,int callbackTag,void
     _numberOfPasses++;
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
     CApiErrors::popLocation(); // for correct error handling (i.e. assignement to the correct script and output)
-    _scriptExecStartTime=-1; // means: not initialized yet
     return(retVal);
 }
 

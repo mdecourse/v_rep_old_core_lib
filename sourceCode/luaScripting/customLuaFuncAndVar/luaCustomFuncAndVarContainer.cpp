@@ -215,7 +215,9 @@ void CLuaCustomFuncAndVarContainer::pushAllFunctionNamesThatStartSame_autoComple
     bool hasDot=(ttxt.find('.')!=std::string::npos);
     for (size_t i=0;i<allCustomFunctions.size();i++)
     {
-        if (allCustomFunctions[i]->hasCallback())
+        // if (allCustomFunctions[i]->hasCallback())
+        // We can register a function without callback when for instance lua provides the func definition
+
         {
             std::string n(allCustomFunctions[i]->getFunctionName());
             if ((n.size()>=txt.size())&&(n.compare(0,txt.size(),txt)==0))

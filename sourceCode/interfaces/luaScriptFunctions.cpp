@@ -1168,6 +1168,7 @@ const SLuaVariables simLuaVariables[]=
     // script debug level:
     {"sim.scriptdebug_none",sim_scriptdebug_none,true},
     {"sim.scriptdebug_syscalls",sim_scriptdebug_syscalls,true},
+    {"sim.scriptdebug_vars_interval",sim_scriptdebug_vars_interval,true},
     {"sim.scriptdebug_allcalls",sim_scriptdebug_allcalls,true},
     {"sim.scriptdebug_vars",sim_scriptdebug_vars,true},
     {"sim.scriptdebug_callsandvars",sim_scriptdebug_callsandvars,true},
@@ -3342,10 +3343,10 @@ luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString,in
     tmp+="'";
     luaWrap_luaL_dostring(L,tmp.c_str());
 
-    luaWrap_luaL_dostring(L,"_mG()"); // needed to allow retrieving user global variables with getUserGlobals()
+    luaWrap_luaL_dostring(L,"__HIDDEN__.executeAfterLuaStateInit()"); // needed for various
 
     int hookMask=luaWrapGet_LUA_MASKCOUNT();
-    if (debugLevel>sim_scriptdebug_syscalls)
+    if (debugLevel>=sim_scriptdebug_allcalls)
         hookMask|=luaWrapGet_LUA_MASKCALL()|luaWrapGet_LUA_MASKRET();
     luaWrap_lua_sethook(L,luaHookFunction,hookMask,100); // This instruction gets also called in luaHookFunction!!!!
 
@@ -3410,7 +3411,7 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
 
     if ( (ar->event==luaWrapGet_LUA_HOOKCALL())||(ar->event==luaWrapGet_LUA_HOOKRET()) )
     { // Debug call and return hooks
-        if (debugLevel>sim_scriptdebug_syscalls)
+        if (debugLevel>=sim_scriptdebug_allcalls)
         { // debugging (further down also several occurences (auto thread switches and script end force)
             bool callIn=(ar->event==luaWrapGet_LUA_HOOKCALL());
             luaWrap_lua_getinfo(L, "nS", ar);
@@ -3426,7 +3427,7 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
         // To avoid this we add some random component to the hook timing:
         int randComponent=rand()/(RAND_MAX/10);
         int hookMask=luaWrapGet_LUA_MASKCOUNT();
-        if (debugLevel>sim_scriptdebug_syscalls)
+        if (debugLevel>=sim_scriptdebug_allcalls)
             hookMask|=luaWrapGet_LUA_MASKCALL()|luaWrapGet_LUA_MASKRET();
         luaWrap_lua_sethook(L,luaHookFunction,hookMask,95+randComponent);
         // Also remember: the hook gets also called when calling luaWrap_luaL_doString from c++ and similar!!
@@ -3446,7 +3447,7 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
 
             if ( CThreadPool::getSimulationEmergencyStop() ) // No automatic yield when flagged for destruction!! ||it->getFlaggedForDestruction() )
             { // This is the only way a non-threaded script can yield. But threaded child scripts can also yield here
-                if (debugLevel>=sim_scriptdebug_syscalls)
+                if (debugLevel!=sim_scriptdebug_none)
                     it->handleDebug("force_script_stop","C",true,true);
                 luaWrap_lua_yield(L,0);
                 return;
@@ -3457,7 +3458,7 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
                 { // returns true only after 1-2 seconds after the request arrived
                     if (!VThread::isCurrentThreadTheMainSimulationThread())
                     { // Here only threaded scripts can yield!
-                        if (debugLevel>=sim_scriptdebug_syscalls)
+                        if (debugLevel!=sim_scriptdebug_none)
                             it->handleDebug("force_script_stop","C",true,true);
                         luaWrap_lua_yield(L,0);
                         return;
@@ -3469,10 +3470,10 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
             {
                 if (CThreadPool::isSwitchBackToPreviousThreadNeeded())
                 {
-                    if (debugLevel>=sim_scriptdebug_syscalls)
+                    if (debugLevel!=sim_scriptdebug_none)
                         it->handleDebug("thread_automatic_switch","C",true,true);
                     CThreadPool::switchBackToPreviousThreadIfNeeded();
-                    if (debugLevel>=sim_scriptdebug_syscalls)
+                    if (debugLevel!=sim_scriptdebug_none)
                         it->handleDebug("thread_automatic_switch","C",false,true);
                 }
             }
@@ -3494,7 +3495,7 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
                                 it->setCustomizationScriptIsTemporarilyDisabled(true); // stop it
                             if (it->getScriptType()==sim_scripttype_addonscript)
                                 it->flagForDestruction(); // stop it
-                            if (debugLevel>=sim_scriptdebug_syscalls)
+                            if (debugLevel!=sim_scriptdebug_none)
                                 it->handleDebug("force_script_stop","C",true,true);
                             luaWrap_lua_yield(L,0);
                         }
@@ -4720,7 +4721,10 @@ int _simHandleChildScripts(luaWrap_lua_State* L)
                     App::ct->calcInfo->addChildScriptExecCnt(App::ct->luaScriptContainer->getCalledScriptsCountInThisSimulationStep(sim_scripttype_childscript),false);
             }
             else
-                errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_MAIN_SCRIPT;
+            { // normally: errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_MAIN_SCRIPT
+                // But to support very old scenes that might call simHandleChildScripts from a child script:
+                retVal=_simHandleChildScripts2_legacy(L,functionName,errorString);
+            }
         }
     }
 
@@ -20110,41 +20114,47 @@ int _simHandleChildScripts_legacy(luaWrap_lua_State* L)
 
     int retVal=-1; // means error
     if (checkInputArguments(L,&errorString,lua_arg_number,0))
-    {
-        int callType=luaWrap_lua_tointeger(L,1);
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(currentScriptID);
-        if (it!=NULL)
-        {
-            if ( (it->getScriptType()==sim_scripttype_mainscript)||(it->getScriptType()==sim_scripttype_childscript) )
-            { // only main and child scripts can call this function
-                if ( (it->getScriptType()==sim_scripttype_mainscript)||((it->getScriptType()==sim_scripttype_childscript)&&(!it->getThreadedExecution())) )
-                { // Threaded scripts cannot call this function
-                    if ( it->getAutomaticCascadingCallsDisabled_OLD()||(it->getScriptType()==sim_scripttype_mainscript) )
-                    {
-                        // We read the function input arguments:
-                        CInterfaceStack inputArguments;
-                        inputArguments.buildFromLuaStack(L,2);
-                        int startTime=VDateTime::getTimeInMs();
-                        retVal=handleChildScriptsRoutine_OLD(callType,it,inputArguments);
-                        App::ct->calcInfo->addChildScriptCalcTime(VDateTime::getTimeInMs()-startTime,false);
-                        if (callType==sim_syscb_actuation)
-                            App::ct->calcInfo->addChildScriptExecCnt(retVal,false);
-                    }
-                    else
-                        errorString=SIM_ERROR_AUTOMATIC_CASCADING_CALLS_NOT_DISABLED;
-                }
-                else
-                    errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_NON_THREADED_CHILD_SCRIPTS;
-            }
-            else
-                errorString=SIM_ERROR_NOT_MAIN_NOR_CHILD_SCRIPT;
-        }
-    }
+        retVal=_simHandleChildScripts2_legacy(L,functionName,errorString);
 
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
     luaWrap_lua_pushnumber(L,retVal);
     LUA_END(1);
+}
+
+int _simHandleChildScripts2_legacy(luaWrap_lua_State* L,std::string& functionName,std::string& errorString)
+{ // DEPRECATED
+    functionName="sim.handleChildScripts_legacy";
+    int retVal=-1;
+    int callType=luaWrap_lua_tointeger(L,1);
+    int currentScriptID=getCurrentScriptID(L);
+    CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(currentScriptID);
+    if (it!=NULL)
+    {
+        if ( (it->getScriptType()==sim_scripttype_mainscript)||(it->getScriptType()==sim_scripttype_childscript) )
+        { // only main and child scripts can call this function
+            if ( (it->getScriptType()==sim_scripttype_mainscript)||((it->getScriptType()==sim_scripttype_childscript)&&(!it->getThreadedExecution())) )
+            { // Threaded scripts cannot call this function
+                if ( it->getAutomaticCascadingCallsDisabled_OLD()||(it->getScriptType()==sim_scripttype_mainscript) )
+                {
+                    // We read the function input arguments:
+                    CInterfaceStack inputArguments;
+                    inputArguments.buildFromLuaStack(L,2);
+                    int startTime=VDateTime::getTimeInMs();
+                    retVal=handleChildScriptsRoutine_OLD(callType,it,inputArguments);
+                    App::ct->calcInfo->addChildScriptCalcTime(VDateTime::getTimeInMs()-startTime,false);
+                    if (callType==sim_syscb_actuation)
+                        App::ct->calcInfo->addChildScriptExecCnt(retVal,false);
+                }
+                else
+                    errorString=SIM_ERROR_AUTOMATIC_CASCADING_CALLS_NOT_DISABLED;
+            }
+            else
+                errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_NON_THREADED_CHILD_SCRIPTS;
+        }
+        else
+            errorString=SIM_ERROR_NOT_MAIN_NOR_CHILD_SCRIPT;
+    }
+    return(retVal);
 }
 
 int handleChildScriptsRoutine_OLD(int callType,CLuaScriptObject* it,CInterfaceStack& inputArguments)

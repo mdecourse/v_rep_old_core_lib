@@ -94,6 +94,7 @@ void CQDlgScripts::refresh()
 
             ui->qqDebugMode->addItem(strTranslate(IDSN_SCRIPTDEBUG_NONE),QVariant(sim_scriptdebug_none));
             ui->qqDebugMode->addItem(strTranslate(IDSN_SCRIPTDEBUG_SYSCALLS),QVariant(sim_scriptdebug_syscalls));
+            ui->qqDebugMode->addItem(strTranslate(IDSN_SCRIPTDEBUG_VARS_1SEC),QVariant(sim_scriptdebug_vars_interval));
             ui->qqDebugMode->addItem(strTranslate(IDSN_SCRIPTDEBUG_ALLCALLS),QVariant(sim_scriptdebug_allcalls));
             ui->qqDebugMode->addItem(strTranslate(IDSN_SCRIPTDEBUG_VARS),QVariant(sim_scriptdebug_vars));
             ui->qqDebugMode->addItem(strTranslate(IDSN_SCRIPTDEBUG_FULL),QVariant(sim_scriptdebug_callsandvars));

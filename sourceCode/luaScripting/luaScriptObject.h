@@ -237,7 +237,7 @@ protected:
     bool _customizationScriptIsTemporarilyDisabled;
     bool _custScriptDisabledDSim_compatibilityMode;
     bool _customizationScriptCleanupBeforeSave;
-    int _scriptExecStartTime;
+    int _timeOfPcallStart;
     int _errorReportMode;
     std::string _lastErrorString;
     bool _compatibilityModeOrFirstTimeCall_sysCallbacks;
