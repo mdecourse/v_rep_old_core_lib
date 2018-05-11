@@ -5175,9 +5175,7 @@ simInt simSetScriptText_internal(simInt scriptHandle,const simChar* scriptText)
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
@@ -5376,9 +5374,7 @@ simInt simGetScriptProperty_internal(simInt scriptHandle,simInt* scriptProperty,
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
@@ -5403,46 +5399,51 @@ simInt simAssociateScriptWithObject_internal(simInt scriptHandle,simInt associat
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
+        int retVal=-1;
         CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(scriptHandle);
-        if (it==NULL)
+        if (it!=NULL)
         {
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_INEXISTANT);
-            return(-1);
-        }
-        if (it->getScriptType()!=sim_scripttype_childscript)
-        {
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_NOT_CHILD_SCRIPT);
-            return(-1);
-        }
-        if (associatedObjectHandle!=-1)
-        {
-            if (!doesObjectExist(__func__,associatedObjectHandle))
+            if ( (it->getScriptType()==sim_scripttype_childscript)||(it->getScriptType()==sim_scripttype_customizationscript) )
             {
-                return(-1);
+                if (associatedObjectHandle==-1)
+                { // remove association
+                    if (it->getScriptType()==sim_scripttype_childscript)
+                        it->setObjectIDThatScriptIsAttachedTo_child(-1);
+                    if (it->getScriptType()==sim_scripttype_customizationscript)
+                        it->setObjectIDThatScriptIsAttachedTo_customization(-1);
+                    App::setLightDialogRefreshFlag();
+                    retVal=1;
+                }
+                else
+                { // set association
+                    if (doesObjectExist(__func__,associatedObjectHandle))
+                    { // object does exist
+                        if ( (it->getObjectIDThatScriptIsAttachedTo_child()==-1)&&(it->getObjectIDThatScriptIsAttachedTo_customization()==-1) )
+                        { // script not yet associated
+                            if ( ((it->getScriptType()==sim_scripttype_childscript)&&(App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(associatedObjectHandle)==NULL))||
+                                 ((it->getScriptType()==sim_scripttype_customizationscript)&&(App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(associatedObjectHandle)==NULL)) )
+                            { // object has no child/customization script yet
+                                if (it->getScriptType()==sim_scripttype_childscript)
+                                    it->setObjectIDThatScriptIsAttachedTo_child(associatedObjectHandle);
+                                if (it->getScriptType()==sim_scripttype_customizationscript)
+                                    it->setObjectIDThatScriptIsAttachedTo_customization(associatedObjectHandle);
+                                App::setLightDialogRefreshFlag();
+                                retVal=1;
+                            }
+                        }
+                    }
+                }
             }
-            if (App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(associatedObjectHandle)!=NULL)
-            { // object has already a script attached!
-                return(-1);
-            }
+            else
+                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_NOT_CHILD_OR_CUSTOMIZATION_SCRIPT);
         }
-        if ((it->getObjectIDThatScriptIsAttachedTo_child()!=-1)&&(associatedObjectHandle!=-1))
-            return(-1); // script already associated
-
-
-//      if (!App::ct->simulation->isSimulationStopped())
-//      {
-//          CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SIMULATION_NOT_STOPPED);
-//          return(-1);
-//      }
-        it->setObjectIDThatScriptIsAttachedTo_child(associatedObjectHandle);
-        App::setLightDialogRefreshFlag();
-        return(1);
+        else
+            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_INEXISTANT);
+        return(retVal);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
     return(-1);
@@ -5454,9 +5455,7 @@ simInt simAddScript_internal(simInt scriptProperty)
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
@@ -15923,21 +15922,19 @@ simInt simGetConfigForTipPose_internal(simInt ikGroupHandle,simInt jointCnt,cons
         }
         if ( (!err)&&(collisionPairCnt>0)&&(collisionPairs!=NULL) )
         {
+            bool e=false;
             for (int i=0;i<collisionPairCnt;i++)
             {
-                if (collisionPairs[2*i+0]!=-1)
-                {
-                    if (!doesCollectionExist(__func__,collisionPairs[2*i+0]))
-                        err=true;
-                    else
-                    {
-                        if (collisionPairs[2*i+1]!=sim_handle_all)
-                        {
-                            if (!doesCollectionExist(__func__,collisionPairs[2*i+1]))
-                                err=true;
-                        }
-                    }
-                }
+                C3DObject* eo1=App::ct->objCont->getObject(collisionPairs[2*i+0]);
+                CRegCollection* ec1=App::ct->collections->getCollection(collisionPairs[2*i+0]);
+                C3DObject* eo2=App::ct->objCont->getObject(collisionPairs[2*i+1]);
+                CRegCollection* ec2=App::ct->collections->getCollection(collisionPairs[2*i+1]);
+                e|=( ((eo1==NULL)&&(ec1==NULL)) || ((eo2==NULL)&&(ec2==NULL)&&(collisionPairs[2*i+1]!=sim_handle_all)) );
+            }
+            if (e)
+            {
+                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_COLLISION_PAIRS);
+                err=e;
             }
         }
         if (!err)
