@@ -5186,19 +5186,24 @@ simInt simSetScriptText_internal(simInt scriptHandle,const simChar* scriptText)
             return(-1);
         }
 
-#ifdef SIM_WITH_GUI
-        if (App::mainWindow!=NULL)
+        if ( (it->getScriptType()!=sim_scripttype_childscript)||(!it->getThreadedExecution())||App::ct->simulation->isSimulationStopped() )
         {
-            bool wasOpen=App::mainWindow->scintillaEditorContainer->closeEditor(scriptHandle);
-            it->setScriptText(scriptText,NULL);
-            if (wasOpen)
-                App::mainWindow->scintillaEditorContainer->openEditorForScript(scriptHandle);
+#ifdef SIM_WITH_GUI
+            if (App::mainWindow!=NULL)
+            {
+                bool wasOpen=App::mainWindow->scintillaEditorContainer->closeEditor(scriptHandle);
+                it->setScriptText(scriptText,NULL);
+                if (wasOpen)
+                    App::mainWindow->scintillaEditorContainer->openEditorForScript(scriptHandle);
+            }
+            else
+#endif
+                it->setScriptText(scriptText,NULL);
+            it->killLuaState();
+            return(1);
         }
         else
-#endif
-            it->setScriptText(scriptText,NULL);
-
-        return(1);
+            return(0);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
     return(-1);
@@ -18428,7 +18433,7 @@ simInt simExecuteScriptString_internal(simInt scriptHandleOrType,const simChar* 
         if (scriptHandleOrType>=SIM_IDSTART_LUASCRIPT)
         { // script is identified by its ID
             std::string strAtScriptName(stringAtScriptName);
-            size_t p=strAtScriptName.find('@');
+            size_t p=strAtScriptName.rfind('@');
             if (p!=std::string::npos)
                 stringToExecute.assign(strAtScriptName.begin(),strAtScriptName.begin()+p);
             else
@@ -18439,7 +18444,7 @@ simInt simExecuteScriptString_internal(simInt scriptHandleOrType,const simChar* 
         {
             std::string scriptName;
             std::string strAtScriptName(stringAtScriptName);
-            size_t p=strAtScriptName.find('@');
+            size_t p=strAtScriptName.rfind('@');
             if (p!=std::string::npos)
             {
                 scriptName.assign(strAtScriptName.begin()+p+1,strAtScriptName.end());

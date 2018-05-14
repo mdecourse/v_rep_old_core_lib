@@ -6372,9 +6372,9 @@ void CSimThread::_handleAutoSaveSceneCommand(SSimulationThreadCommand cmd)
                     testScene+=".";
                     testScene+=VREP_SCENE_EXTENSION;
                     CFileOperations::saveScene(testScene.c_str(),false,false,false,false);
-                    std::string info=IDSNS_AUTO_SAVED_SCENE;
-                    info+=" ("+testScene+")";
-                    App::addStatusbarMessage(info.c_str());
+                    //std::string info=IDSNS_AUTO_SAVED_SCENE;
+                    //info+=" ("+testScene+")";
+                    //App::addStatusbarMessage(info.c_str());
                     App::ct->mainSettings->setScenePathAndName(savedLoc.c_str());
                     App::ct->environment->autoSaveLastSaveTimeInSecondsSince1970=VDateTime::getSecondsSince1970();
                 }

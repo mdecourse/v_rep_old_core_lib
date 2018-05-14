@@ -704,19 +704,42 @@ void App::addStatusbarMessage(const std::string& txt)
     else
     {
         #ifdef SIM_WITH_GUI
+            std::string str(txt);
+            size_t p=txt.rfind("@html");
+            bool html=false;
+            if ( (p!=std::string::npos)&&(p==strlen(txt.c_str())-5) )
+            {
+                html=true;
+                str.assign(txt.begin(),txt.end()-5);
+            }
+
             if (mainWindow!=NULL)
             {
                 if ((operationalUIParts&sim_gui_statusbar)&&(mainWindow->statusBar!=NULL) )
                 {
-                    mainWindow->statusBar->appendPlainText(txt.c_str());
+                    if (html)
+                    {
+                        str+="<font color='black'> </font>"; // color is otherwise not reset
+                        mainWindow->statusBar->appendHtml(str.c_str());
+                    }
+                    else
+                        mainWindow->statusBar->appendPlainText(str.c_str());
                     mainWindow->statusBar->moveCursor(QTextCursor::End);
-        //            mainWindow->statusBar->moveCursor(QTextCursor::PreviousBlock);
                     mainWindow->statusBar->verticalScrollBar()->setValue(mainWindow->statusBar->verticalScrollBar()->maximum());
                     mainWindow->statusBar->ensureCursorVisible();
                 }
             }
             if ( ((mainWindow==NULL)&&userSettings->redirectStatusbarMsgToConsoleInHeadlessMode)||CMiscBase::handleVerSpec_statusbarMsgToConsole() )
-                printf("[statusbar]: %s\n",txt.c_str());
+            {
+                if (html)
+                {
+                    QTextDocument text;
+                    text.setHtml(str.c_str());
+                    printf("[statusbar]: %s\n",text.toPlainText().toStdString().c_str());
+                }
+                else
+                    printf("[statusbar]: %s\n",str.c_str());
+            }
         #endif
     }
 }
