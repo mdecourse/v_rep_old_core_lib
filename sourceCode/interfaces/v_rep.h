@@ -364,7 +364,6 @@ VREP_DLLEXPORT simInt simTransformImage(simUChar* image,const simInt* resolution
 VREP_DLLEXPORT simInt simGetQHull(const simFloat* inVertices,simInt inVerticesL,simFloat** verticesOut,simInt* verticesOutL,simInt** indicesOut,simInt* indicesOutL,simInt reserved1,const simFloat* reserved2);
 VREP_DLLEXPORT simInt simGetDecimatedMesh(const simFloat* inVertices,simInt inVerticesL,const simInt* inIndices,simInt inIndicesL,simFloat** verticesOut,simInt* verticesOutL,simInt** indicesOut,simInt* indicesOutL,simFloat decimationPercent,simInt reserved1,const simFloat* reserved2);
 VREP_DLLEXPORT simInt simExportIk(const simChar* pathAndFilename,simInt reserved1,simVoid* reserved2);
-VREP_DLLEXPORT simInt simCallScriptFunction(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull);
 VREP_DLLEXPORT simInt simCallScriptFunctionEx(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId);
 VREP_DLLEXPORT simInt simComputeJacobian(simInt ikGroupHandle,simInt options,simVoid* reserved);
 VREP_DLLEXPORT simInt simGetConfigForTipPose(simInt ikGroupHandle,simInt jointCnt,const simInt* jointHandles,simFloat thresholdDist,simInt maxTimeInMs,simFloat* retConfig,const simFloat* metric,simInt collisionPairCnt,const simInt* collisionPairs,const simInt* jointOptions,const simFloat* lowLimits,const simFloat* ranges,simVoid* reserved);
@@ -607,6 +606,7 @@ VREP_DLLEXPORT simInt simRegisterJointCtrlCallback(simInt(*callBack)(simInt,simI
 VREP_DLLEXPORT simInt simGetMechanismHandle(const simChar* mechanismName);
 VREP_DLLEXPORT simInt simHandleMechanism(simInt mechanismHandle);
 VREP_DLLEXPORT simInt simHandleCustomizationScripts(simInt callType);
+VREP_DLLEXPORT simInt simCallScriptFunction(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull);
 // Deprecated end
 
 #endif // !defined(V_REP_INCLUDED_)

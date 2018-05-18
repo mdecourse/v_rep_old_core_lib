@@ -1394,10 +1394,6 @@ VREP_DLLEXPORT simInt simExportIk(const simChar* pathAndFilename,simInt reserved
 {
     return(simExportIk_internal(pathAndFilename,reserved1,reserved2));
 }
-VREP_DLLEXPORT simInt simCallScriptFunction(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull)
-{
-    return(simCallScriptFunction_internal(scriptHandleOrType,functionNameAtScriptName,data,reservedSetToNull));
-}
 VREP_DLLEXPORT simInt simCallScriptFunctionEx(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId)
 {
     return(simCallScriptFunctionEx_internal(scriptHandleOrType,functionNameAtScriptName,stackId));
@@ -2352,6 +2348,10 @@ VREP_DLLEXPORT simInt simHandleMechanism(simInt mechanismHandle)
 VREP_DLLEXPORT simInt simHandleCustomizationScripts(simInt callType)
 {
     return(simHandleCustomizationScripts_internal(callType));
+}
+VREP_DLLEXPORT simInt simCallScriptFunction(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull)
+{
+    return(simCallScriptFunction_internal(scriptHandleOrType,functionNameAtScriptName,data,reservedSetToNull));
 }
 // Deprecated end
 

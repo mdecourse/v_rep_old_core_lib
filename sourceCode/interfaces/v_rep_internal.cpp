@@ -15151,6 +15151,13 @@ simInt simGetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,sim
             intOrBoolVal[0]=it->getDebugLevel();
             retVal=1;
         }
+        if (attributeID==sim_scriptattribute_scripttype)
+        {
+            intOrBoolVal[0]=it->getScriptType();
+            if (it->getThreadedExecution())
+                intOrBoolVal[0]|=sim_scripttype_threaded;
+            retVal=1;
+        }
         return(retVal);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
@@ -15611,119 +15618,6 @@ simInt simExportIk_internal(const simChar* pathAndFilename,simInt reserved1,simV
     return(-1);
 }
 
-simInt simCallScriptFunction_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull)
-{
-    C_API_FUNCTION_DEBUG;
-    CLuaScriptObject* script=NULL;
-
-    std::string funcName;
-    if (scriptHandleOrType>=SIM_IDSTART_LUASCRIPT)
-    { // script is identified by its ID
-        std::string funcNameAtScriptName(functionNameAtScriptName);
-        size_t p=funcNameAtScriptName.find('@');
-        if (p!=std::string::npos)
-            funcName.assign(funcNameAtScriptName.begin(),funcNameAtScriptName.begin()+p);
-        else
-            funcName=funcNameAtScriptName;
-        script=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(scriptHandleOrType);
-    }
-    else
-    { // script is identified by a script type and sometimes also a script name
-        if (reservedSetToNull==NULL)
-        {
-            std::string scriptName;
-            std::string funcNameAtScriptName(functionNameAtScriptName);
-            size_t p=funcNameAtScriptName.find('@');
-            if (p!=std::string::npos)
-            {
-                scriptName.assign(funcNameAtScriptName.begin()+p+1,funcNameAtScriptName.end());
-                funcName.assign(funcNameAtScriptName.begin(),funcNameAtScriptName.begin()+p);
-            }
-            else
-                funcName=funcNameAtScriptName;
-            if (scriptHandleOrType==sim_scripttype_mainscript)
-                script=App::ct->luaScriptContainer->getMainScript();
-            if (scriptHandleOrType==sim_scripttype_generalcallback)
-                script=App::ct->luaScriptContainer->getGeneralCallbackHandlingScript_callback_OLD();
-            if (scriptHandleOrType==sim_scripttype_contactcallback)
-                script=App::ct->luaScriptContainer->getCustomContactHandlingScript_callback_OLD();
-            if (scriptHandleOrType==sim_scripttype_childscript)
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objId);
-            }
-            if (scriptHandleOrType==sim_scripttype_jointctrlcallback)
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_jointCallback_OLD(objId);
-            }
-            if (scriptHandleOrType==sim_scripttype_customizationscript)
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objId);
-            }
-        }
-        else
-        { // this is the old way of doing it. Deprecated. Was only 2 months active, not officially
-            funcName=functionNameAtScriptName;
-            if (scriptHandleOrType==0) // main script
-                script=App::ct->luaScriptContainer->getMainScript();
-            if (scriptHandleOrType==1) // general callback
-                script=App::ct->luaScriptContainer->getGeneralCallbackHandlingScript_callback_OLD();
-            if (scriptHandleOrType==2) // contact callback
-                script=App::ct->luaScriptContainer->getCustomContactHandlingScript_callback_OLD();
-            if (scriptHandleOrType==3) // child script
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objId);
-            }
-            if (scriptHandleOrType==4) // joint callback
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_jointCallback_OLD(objId);
-            }
-            if (scriptHandleOrType==5) // customization
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objId);
-            }
-        }
-    }
-
-    if (script!=NULL)
-    {
-        int retVal=-1; // error
-        if (script->getThreadedExecutionIsUnderWay())
-        { // very special handling here!
-            if (VThread::areThreadIDsSame(script->getThreadedScriptThreadId(),VThread::getCurrentThreadId()))
-                retVal=script->callScriptFunction(funcName.c_str(),data);
-            else
-            { // we have to execute that function via another thread!
-                void* d[4];
-                int callType=0;
-                d[0]=&callType;
-                d[1]=script;
-                d[2]=(void*)funcName.c_str();
-                d[3]=data;
-
-                retVal=CThreadPool::callRoutineViaSpecificThread(script->getThreadedScriptThreadId(),d);
-            }
-        }
-        else
-        {
-            if (VThread::isCurrentThreadTheMainSimulationThread())
-            { // For now we don't allow non-main threads to call non-threaded scripts!
-                retVal=script->callScriptFunction(funcName.c_str(),data);
-            }
-        }
-        if (retVal==-1)
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_FAILED_CALLING_SCRIPT_FUNCTION);
-        return(retVal);
-    }
-    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_INEXISTANT);
-
-    return(-1);
-}
 
 simInt simCallScriptFunctionEx_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId)
 {
@@ -21783,5 +21677,119 @@ simInt simHandleCustomizationScripts_internal(simInt callType)
         return(retVal);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+
+simInt simCallScriptFunction_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull)
+{ // DEPRECATED
+    C_API_FUNCTION_DEBUG;
+    CLuaScriptObject* script=NULL;
+
+    std::string funcName;
+    if (scriptHandleOrType>=SIM_IDSTART_LUASCRIPT)
+    { // script is identified by its ID
+        std::string funcNameAtScriptName(functionNameAtScriptName);
+        size_t p=funcNameAtScriptName.find('@');
+        if (p!=std::string::npos)
+            funcName.assign(funcNameAtScriptName.begin(),funcNameAtScriptName.begin()+p);
+        else
+            funcName=funcNameAtScriptName;
+        script=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(scriptHandleOrType);
+    }
+    else
+    { // script is identified by a script type and sometimes also a script name
+        if (reservedSetToNull==NULL)
+        {
+            std::string scriptName;
+            std::string funcNameAtScriptName(functionNameAtScriptName);
+            size_t p=funcNameAtScriptName.find('@');
+            if (p!=std::string::npos)
+            {
+                scriptName.assign(funcNameAtScriptName.begin()+p+1,funcNameAtScriptName.end());
+                funcName.assign(funcNameAtScriptName.begin(),funcNameAtScriptName.begin()+p);
+            }
+            else
+                funcName=funcNameAtScriptName;
+            if (scriptHandleOrType==sim_scripttype_mainscript)
+                script=App::ct->luaScriptContainer->getMainScript();
+            if (scriptHandleOrType==sim_scripttype_generalcallback)
+                script=App::ct->luaScriptContainer->getGeneralCallbackHandlingScript_callback_OLD();
+            if (scriptHandleOrType==sim_scripttype_contactcallback)
+                script=App::ct->luaScriptContainer->getCustomContactHandlingScript_callback_OLD();
+            if (scriptHandleOrType==sim_scripttype_childscript)
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objId);
+            }
+            if (scriptHandleOrType==sim_scripttype_jointctrlcallback)
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_jointCallback_OLD(objId);
+            }
+            if (scriptHandleOrType==sim_scripttype_customizationscript)
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objId);
+            }
+        }
+        else
+        { // this is the old way of doing it. Deprecated. Was only 2 months active, not officially
+            funcName=functionNameAtScriptName;
+            if (scriptHandleOrType==0) // main script
+                script=App::ct->luaScriptContainer->getMainScript();
+            if (scriptHandleOrType==1) // general callback
+                script=App::ct->luaScriptContainer->getGeneralCallbackHandlingScript_callback_OLD();
+            if (scriptHandleOrType==2) // contact callback
+                script=App::ct->luaScriptContainer->getCustomContactHandlingScript_callback_OLD();
+            if (scriptHandleOrType==3) // child script
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objId);
+            }
+            if (scriptHandleOrType==4) // joint callback
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_jointCallback_OLD(objId);
+            }
+            if (scriptHandleOrType==5) // customization
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objId);
+            }
+        }
+    }
+
+    if (script!=NULL)
+    {
+        int retVal=-1; // error
+        if (script->getThreadedExecutionIsUnderWay())
+        { // very special handling here!
+            if (VThread::areThreadIDsSame(script->getThreadedScriptThreadId(),VThread::getCurrentThreadId()))
+                retVal=script->callScriptFunction(funcName.c_str(),data);
+            else
+            { // we have to execute that function via another thread!
+                void* d[4];
+                int callType=0;
+                d[0]=&callType;
+                d[1]=script;
+                d[2]=(void*)funcName.c_str();
+                d[3]=data;
+
+                retVal=CThreadPool::callRoutineViaSpecificThread(script->getThreadedScriptThreadId(),d);
+            }
+        }
+        else
+        {
+            if (VThread::isCurrentThreadTheMainSimulationThread())
+            { // For now we don't allow non-main threads to call non-threaded scripts!
+                retVal=script->callScriptFunction(funcName.c_str(),data);
+            }
+        }
+        if (retVal==-1)
+            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_FAILED_CALLING_SCRIPT_FUNCTION);
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_INEXISTANT);
+
     return(-1);
 }

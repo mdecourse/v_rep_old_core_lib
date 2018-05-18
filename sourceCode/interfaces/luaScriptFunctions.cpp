@@ -1160,7 +1160,8 @@ const SLuaVariables simLuaVariables[]=
     {"sim.childscriptattribute_enabled",sim_childscriptattribute_enabled,true},
     {"sim.scriptattribute_enabled",sim_scriptattribute_enabled,true},
     {"sim.customizationscriptattribute_cleanupbeforesave",sim_customizationscriptattribute_cleanupbeforesave,true},
-    {"sim.scriptattribute_debuglevel",sim_scriptattribute_debuglevel,true,},
+    {"sim.scriptattribute_debuglevel",sim_scriptattribute_debuglevel,true},
+    {"sim.scriptattribute_scripttype",sim_scriptattribute_scripttype,true},
     // script execution order:
     {"sim.scriptexecorder_first",sim_scriptexecorder_first,true},
     {"sim.scriptexecorder_normal",sim_scriptexecorder_normal,true},
@@ -6087,8 +6088,13 @@ int _simGetScriptHandle(luaWrap_lua_State* L)
             retVal=getCurrentScriptID(L); // nil argument
         else
         {
-            if (checkInputArguments(L,&errorString,lua_arg_string,0))
-            {
+            if (checkInputArguments(L,NULL,lua_arg_number,0))
+            { // argument sim.handle_self
+                if (luaWrap_lua_tointeger(L,1)==sim_handle_self)
+                    retVal=getCurrentScriptID(L);
+            }
+            if ( (retVal==-1)&&checkInputArguments(L,&errorString,lua_arg_string,0) )
+            { // string argument
                 std::string name(luaWrap_lua_tostring(L,1));
                 if (suffixAdjustStringIfNeeded(functionName,true,L,name))
                 {
@@ -16117,7 +16123,7 @@ int _simGetScriptAttribute(luaWrap_lua_State* L)
         {
             if ( (attribID==sim_customizationscriptattribute_activeduringsimulation)||(attribID==sim_childscriptattribute_automaticcascadingcalls)||(attribID==sim_scriptattribute_enabled)||(attribID==sim_customizationscriptattribute_cleanupbeforesave) )
                 luaWrap_lua_pushboolean(L,intVal);
-            if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount) )
+            if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount)||(attribID==sim_scriptattribute_scripttype) )
                 luaWrap_lua_pushnumber(L,intVal);
             LUA_END(1);
         }

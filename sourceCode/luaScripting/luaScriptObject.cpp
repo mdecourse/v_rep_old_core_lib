@@ -1586,7 +1586,7 @@ void CLuaScriptObject::_launchThreadedChildScriptNow()
                 errMsg=std::string(luaWrap_lua_tostring(L,-1));
             else
                 errMsg="(error unknown)";
-            luaWrap_lua_pop(L,-1); // pop error from stack
+            luaWrap_lua_pop(L,1); // pop error from stack
 
             _displayScriptError(errMsg.c_str(),1);
             // Here we can decide what happens uppon error:
@@ -1619,14 +1619,14 @@ void CLuaScriptObject::_launchThreadedChildScriptNow()
                             errMsg=std::string(luaWrap_lua_tostring(L,-1));
                         else
                             errMsg="(error unknown)";
-                        luaWrap_lua_pop(L,-1); // pop error from stack
+                        luaWrap_lua_pop(L,1); // pop error from stack
 
                         _displayScriptError(errMsg.c_str(),1);
                         errOccured=true;
                     }
                 }
                 else
-                    luaWrap_lua_pop(L,-1); // pop the function name
+                    luaWrap_lua_pop(L,1); // pop the function name
             }
             if (CThreadPool::isThreadInFreeMode())
                 CThreadPool::setThreadFreeMode(false);
@@ -1642,7 +1642,7 @@ void CLuaScriptObject::_launchThreadedChildScriptNow()
         else
             errMsg="(error unknown)";
         _displayScriptError(errMsg.c_str(),0);
-        luaWrap_lua_pop(L,-1); // pop error from stack
+        luaWrap_lua_pop(L,1); // pop error from stack
         App::ct->simulation->pauseOnErrorRequested();
     }
     _numberOfPasses++;
@@ -1763,7 +1763,7 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
                     else
                         errorMsg[0]="(error unknown)";
                 }
-                luaWrap_lua_pop(L,-1); // pop error from stack
+                luaWrap_lua_pop(L,1); // pop error from stack
                 retVal=-1;
             }
             else
@@ -1773,7 +1773,7 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
                     std::string initCb=getSystemCallbackString(sim_syscb_init,false);
                     luaWrap_lua_getglobal(L,initCb.c_str());
                     _compatibilityModeOrFirstTimeCall_sysCallbacks=!(luaWrap_lua_isfunction(L,-1));
-                    luaWrap_lua_pop(L,-1);
+                    luaWrap_lua_pop(L,1);
                     if (!_compatibilityModeOrFirstTimeCall_sysCallbacks)
                         luaWrap_luaL_dostring(L,"sim_call_type=nil");
                 }
@@ -1797,7 +1797,7 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
                 else
                     errorMsg[0]="(error unknown)";
             }
-            luaWrap_lua_pop(L,-1); // pop error from stack
+            luaWrap_lua_pop(L,1); // pop error from stack
             retVal=-2;
         }
     }
@@ -1845,7 +1845,7 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
                     else
                         errorMsg[0]="(error unknown)";
                 }
-                luaWrap_lua_pop(L,-1); // pop error from stack
+                luaWrap_lua_pop(L,1); // pop error from stack
                 retVal=-1;
             }
             else
@@ -1860,7 +1860,7 @@ int CLuaScriptObject::_runScriptOrCallScriptFunction(int callType,const CInterfa
         }
         else
         {
-            luaWrap_lua_pop(L,-1); // pop the function name
+            luaWrap_lua_pop(L,1); // pop the function name
             retVal=0;
         }
     }
@@ -1976,7 +1976,7 @@ VTHREAD_RETURN_TYPE CLuaScriptObject::_startAddressForThreadedScripts(VTHREAD_AR
 }
 
 int CLuaScriptObject::callScriptFunction(const char* functionName,SLuaCallBack* pdata)
-{
+{ // DEPRECATED
     int retVal=-1; // means error
 
     if (!_prepareLuaStateAndCallScriptInitSectionIfNeeded())
@@ -2006,10 +2006,12 @@ int CLuaScriptObject::callScriptFunction(const char* functionName,SLuaCallBack* 
         {
             std::string var(func.begin(),func.begin()+ppos);
             luaWrap_lua_getfield(L,-1,var.c_str());
+            luaWrap_lua_remove(L,-2);
             func.erase(func.begin(),func.begin()+ppos+1);
             ppos=func.find('.');
         }
         luaWrap_lua_getfield(L,-1,func.c_str());
+        luaWrap_lua_remove(L,-2);
     }
 
     // Push the arguments onto the stack (will be automatically popped from stack after _luaPCall):
@@ -2041,7 +2043,7 @@ int CLuaScriptObject::callScriptFunction(const char* functionName,SLuaCallBack* 
             errMsg=std::string(luaWrap_lua_tostring(L,-1));
         else
             errMsg="(error unknown)";
-        luaWrap_lua_pop(L,-1); // pop error from stack
+        luaWrap_lua_pop(L,1); // pop error from stack
         _displayScriptError(errMsg.c_str(),1);
 
         // Following probably not needed:
@@ -2149,25 +2151,41 @@ int CLuaScriptObject::callScriptFunctionEx(const char* functionName,CInterfaceSt
     // Push the function name onto the stack (will be automatically popped from stack after _luaPCall):
     std::string func(functionName);
     size_t ppos=func.find('.');
+    bool notFunction=false;
     if (ppos==std::string::npos)
         luaWrap_lua_getglobal(L,func.c_str()); // in case we have a global function:
     else
     { // in case we have a function that is not global
         std::string globalVar(func.begin(),func.begin()+ppos);
         luaWrap_lua_getglobal(L,globalVar.c_str());
-        func.assign(func.begin()+ppos+1,func.end());
-        size_t ppos=func.find('.');
-        while (ppos!=std::string::npos)
+        if (luaWrap_lua_istable(L,-1))
         {
-            std::string var(func.begin(),func.begin()+ppos);
-            luaWrap_lua_getfield(L,-1,var.c_str());
-            func.erase(func.begin(),func.begin()+ppos+1);
-            ppos=func.find('.');
+            func.assign(func.begin()+ppos+1,func.end());
+            size_t ppos=func.find('.');
+            while (ppos!=std::string::npos)
+            {
+                std::string var(func.begin(),func.begin()+ppos);
+                luaWrap_lua_getfield(L,-1,var.c_str());
+                luaWrap_lua_remove(L,-2);
+                func.erase(func.begin(),func.begin()+ppos+1);
+                ppos=func.find('.');
+                if (!luaWrap_lua_istable(L,-1))
+                {
+                    notFunction=true;
+                    break;
+                }
+            }
+            if (!notFunction)
+            {
+                luaWrap_lua_getfield(L,-1,func.c_str());
+                luaWrap_lua_remove(L,-2);
+            }
         }
-        luaWrap_lua_getfield(L,-1,func.c_str());
+        else
+            notFunction=true;
     }
 
-    if (luaWrap_lua_isfunction(L,-1))
+    if ( (!notFunction)&&luaWrap_lua_isfunction(L,-1) )
     {
         retVal=-1;
         // Push the arguments onto the stack (will be automatically popped from stack after _luaPCall):
@@ -2192,7 +2210,7 @@ int CLuaScriptObject::callScriptFunctionEx(const char* functionName,CInterfaceSt
                 errMsg=std::string(luaWrap_lua_tostring(L,-1));
             else
                 errMsg="(error unknown)";
-            luaWrap_lua_pop(L,-1); // pop error from stack
+            luaWrap_lua_pop(L,1); // pop error from stack
             if (_errorReportMode!=0)
                 _displayScriptError(errMsg.c_str(),1);
         }
@@ -2213,9 +2231,9 @@ int CLuaScriptObject::callScriptFunctionEx(const char* functionName,CInterfaceSt
 
 int CLuaScriptObject::setScriptVariable(const char* variableName,CInterfaceStack* stack)
 {
+    int retVal=-1;
     if (!_prepareLuaStateAndCallScriptInitSectionIfNeeded())
-        return(-1);
-
+        return(retVal);
     int oldTop=luaWrap_lua_gettop(L);   // We store lua's stack
 
 
@@ -2228,29 +2246,44 @@ int CLuaScriptObject::setScriptVariable(const char* variableName,CInterfaceStack
         else
             luaWrap_lua_pushnil(L);
         luaWrap_lua_setglobal(L,variableName);
+        retVal=0;
     }
     else
     { // in case we have a variable that is not global
         std::string globalVar(var.begin(),var.begin()+ppos);
         luaWrap_lua_getglobal(L,globalVar.c_str());
-        var.assign(var.begin()+ppos+1,var.end());
-        size_t ppos=var.find('.');
-        while (ppos!=std::string::npos)
+        if (luaWrap_lua_istable(L,-1))
         {
-            std::string vvar(var.begin(),var.begin()+ppos);
-            luaWrap_lua_getfield(L,-1,vvar.c_str());
-            var.erase(var.begin(),var.begin()+ppos+1);
-            ppos=var.find('.');
+            var.assign(var.begin()+ppos+1,var.end());
+            size_t ppos=var.find('.');
+            bool badVar=false;
+            while (ppos!=std::string::npos)
+            {
+                std::string vvar(var.begin(),var.begin()+ppos);
+                luaWrap_lua_getfield(L,-1,vvar.c_str());
+                luaWrap_lua_remove(L,-2);
+                var.erase(var.begin(),var.begin()+ppos+1);
+                ppos=var.find('.');
+                if (!luaWrap_lua_istable(L,-1))
+                {
+                    badVar=true;
+                    break;
+                }
+            }
+            if (!badVar)
+            {
+                if (stack!=NULL)
+                    stack->buildOntoLuaStack(L,true);
+                else
+                    luaWrap_lua_pushnil(L);
+                luaWrap_lua_setfield(L,-2,var.c_str());
+                retVal=0;
+            }
         }
-        if (stack!=NULL)
-            stack->buildOntoLuaStack(L,true);
-        else
-            luaWrap_lua_pushnil(L);
-        luaWrap_lua_setfield(L,-2,var.c_str());
     }
 
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
-    return(0);
+    return(retVal);
 }
 
 int CLuaScriptObject::clearScriptVariable(const char* variableName)
@@ -2287,6 +2320,7 @@ int CLuaScriptObject::clearScriptVariable(const char* variableName)
         {
             std::string vvar(var.begin(),var.begin()+ppos);
             luaWrap_lua_getfield(L,-1,vvar.c_str());
+            luaWrap_lua_remove(L,-2);
             var.erase(var.begin(),var.begin()+ppos+1);
             ppos=var.find('.');
         }
@@ -3076,42 +3110,51 @@ void CLuaScriptObject::handleDebug(const char* funcName,const char* funcType,boo
         luaWrap_lua_sethook(L,luaHookFunction,0,0);
 
         luaWrap_lua_getglobal(L,"__HIDDEN__");
-        luaWrap_lua_getfield(L,-1,"debug");
-        luaWrap_lua_remove(L,-2);
-        luaWrap_lua_getfield(L,-1,"entryFunc");
-        luaWrap_lua_remove(L,-2);
+        if (luaWrap_lua_istable(L,-1))
+        {
+            luaWrap_lua_getfield(L,-1,"debug");
+            luaWrap_lua_remove(L,-2);
+            if (luaWrap_lua_istable(L,-1))
+            {
+                luaWrap_lua_getfield(L,-1,"entryFunc");
+                luaWrap_lua_remove(L,-2);
+                if (luaWrap_lua_isfunction(L,-1))
+                { // function name will be automatically popped after luaWrap_lua_pcall
+                    luaWrap_lua_newtable(L);
+                    luaWrap_lua_pushstring(L,getShortDescriptiveName().c_str());
+                    luaWrap_lua_rawseti(L,-2,1);
+                    luaWrap_lua_pushstring(L,funcName);
+                    luaWrap_lua_rawseti(L,-2,2);
+                    luaWrap_lua_pushstring(L,funcType);
+                    luaWrap_lua_rawseti(L,-2,3);
+                    luaWrap_lua_pushboolean(L,inCall);
+                    luaWrap_lua_rawseti(L,-2,4);
+                    luaWrap_lua_pushnumber(L,_debugLevel);
+                    luaWrap_lua_rawseti(L,-2,5);
+                    luaWrap_lua_pushboolean(L,sysCall);
+                    luaWrap_lua_rawseti(L,-2,6);
+                    luaWrap_lua_pushnumber(L,double(App::ct->simulation->getSimulationTime_ns())/1000000.0f);
+                    luaWrap_lua_rawseti(L,-2,7);
 
-        if (luaWrap_lua_isfunction(L,-1))
-        { // function name will be automatically popped after luaWrap_lua_pcall
-            luaWrap_lua_newtable(L);
-            luaWrap_lua_pushstring(L,getShortDescriptiveName().c_str());
-            luaWrap_lua_rawseti(L,-2,1);
-            luaWrap_lua_pushstring(L,funcName);
-            luaWrap_lua_rawseti(L,-2,2);
-            luaWrap_lua_pushstring(L,funcType);
-            luaWrap_lua_rawseti(L,-2,3);
-            luaWrap_lua_pushboolean(L,inCall);
-            luaWrap_lua_rawseti(L,-2,4);
-            luaWrap_lua_pushnumber(L,_debugLevel);
-            luaWrap_lua_rawseti(L,-2,5);
-            luaWrap_lua_pushboolean(L,sysCall);
-            luaWrap_lua_rawseti(L,-2,6);
-            luaWrap_lua_pushnumber(L,double(App::ct->simulation->getSimulationTime_ns())/1000000.0f);
-            luaWrap_lua_rawseti(L,-2,7);
-
-            if (luaWrap_lua_pcall(L,1,0,0)!=0)
-            { // an error occured in the lua debug code
-                std::string errMsg("(DEBUG ROUTINE): ");
-                if (luaWrap_lua_isstring(L,-1))
-                    errMsg+=std::string(luaWrap_lua_tostring(L,-1));
+                    if (luaWrap_lua_pcall(L,1,0,0)!=0)
+                    { // an error occured in the lua debug code
+                        std::string errMsg("(DEBUG ROUTINE): ");
+                        if (luaWrap_lua_isstring(L,-1))
+                            errMsg+=std::string(luaWrap_lua_tostring(L,-1));
+                        else
+                            errMsg+="error unknown";
+                        luaWrap_lua_pop(L,1); // pop error from stack
+                        _displayScriptError(errMsg.c_str(),1);
+                    }
+                }
                 else
-                    errMsg+="error unknown";
-                luaWrap_lua_pop(L,-1); // pop error from stack
-                _displayScriptError(errMsg.c_str(),1);
+                    luaWrap_lua_pop(L,1); // pop function name from stack
             }
+            else
+                luaWrap_lua_pop(L,1);
         }
         else
-            luaWrap_lua_pop(L,-1); // pop function name from stack
+            luaWrap_lua_pop(L,1);
 
         // Re-enable the hook:
         int randComponent=rand()/(RAND_MAX/10);
@@ -3231,7 +3274,7 @@ void CLuaScriptObject::_runJointCtrlCallback_OLD(int callType,const std::vector<
                         errMsg=std::string(luaWrap_lua_tostring(L,-1));
                     else
                         errMsg="(error unknown)";
-                    luaWrap_lua_pop(L,-1); // pop error from stack
+                    luaWrap_lua_pop(L,1); // pop error from stack
                     _displayScriptError(errMsg.c_str(),1);
                     // Here we can decide what happens uppon error:
                     App::ct->simulation->pauseOnErrorRequested();
@@ -3257,7 +3300,7 @@ void CLuaScriptObject::_runJointCtrlCallback_OLD(int callType,const std::vector<
                         std::string initCb=getSystemCallbackString(sim_syscb_init,false);
                         luaWrap_lua_getglobal(L,initCb.c_str());
                         _compatibilityModeOrFirstTimeCall_sysCallbacks=!(luaWrap_lua_isfunction(L,-1));
-                        luaWrap_lua_pop(L,-1);
+                        luaWrap_lua_pop(L,1);
                     }
                 }
                 _numberOfPasses++;
@@ -3270,7 +3313,7 @@ void CLuaScriptObject::_runJointCtrlCallback_OLD(int callType,const std::vector<
                 else
                     errMsg="(error unknown)";
                 _displayScriptError(errMsg.c_str(),0);
-                luaWrap_lua_pop(L,-1); // pop error from stack
+                luaWrap_lua_pop(L,1); // pop error from stack
                 // Here we can decide what happens uppon error:
                 App::ct->simulation->pauseOnErrorRequested();
             }
@@ -3358,7 +3401,7 @@ void CLuaScriptObject::_runJointCtrlCallback_OLD(int callType,const std::vector<
                         errMsg=std::string(luaWrap_lua_tostring(L,-1));
                     else
                         errMsg="(error unknown)";
-                    luaWrap_lua_pop(L,-1); // pop error from stack
+                    luaWrap_lua_pop(L,1); // pop error from stack
                     _displayScriptError(errMsg.c_str(),1);
                     // Here we can decide what happens uppon error:
                     App::ct->simulation->pauseOnErrorRequested();
@@ -3385,7 +3428,7 @@ void CLuaScriptObject::_runJointCtrlCallback_OLD(int callType,const std::vector<
 
             }
             else
-                luaWrap_lua_pop(L,-1); // pop the function name
+                luaWrap_lua_pop(L,1); // pop the function name
             if (callType!=sim_syscb_init)
                 break;
             else
@@ -3434,7 +3477,7 @@ int CLuaScriptObject::runContactCallback_OLD(const int inDataInt[3],int outDataI
                 errMsg=std::string(luaWrap_lua_tostring(L,-1));
             else
                 errMsg="(error unknown)";
-            luaWrap_lua_pop(L,-1); // pop error from stack
+            luaWrap_lua_pop(L,1); // pop error from stack
 
             _displayScriptError(errMsg.c_str(),1);
         }
@@ -3465,7 +3508,7 @@ int CLuaScriptObject::runContactCallback_OLD(const int inDataInt[3],int outDataI
         else
             errMsg="(error unknown)";
         _displayScriptError(errMsg.c_str(),0);
-        luaWrap_lua_pop(L,-1); // pop error from stack
+        luaWrap_lua_pop(L,1); // pop error from stack
     }
     _numberOfPasses++;
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack
@@ -3513,7 +3556,7 @@ int CLuaScriptObject::runGeneralCallback_OLD(int callbackId,int callbackTag,void
                 errMsg=std::string(luaWrap_lua_tostring(L,-1));
             else
                 errMsg="(error unknown)";
-            luaWrap_lua_pop(L,-1); // pop error from stack
+            luaWrap_lua_pop(L,1); // pop error from stack
 
             _displayScriptError(errMsg.c_str(),1);
         }
@@ -3532,7 +3575,7 @@ int CLuaScriptObject::runGeneralCallback_OLD(int callbackId,int callbackTag,void
         else
             errMsg="(error unknown)";
         _displayScriptError(errMsg.c_str(),0);
-        luaWrap_lua_pop(L,-1); // pop error from stack
+        luaWrap_lua_pop(L,1); // pop error from stack
     }
     _numberOfPasses++;
     luaWrap_lua_settop(L,oldTop);       // We restore lua's stack

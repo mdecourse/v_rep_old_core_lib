@@ -354,7 +354,6 @@ simInt simTransformImage_internal(simUChar* image,const simInt* resolution,simIn
 simInt simGetQHull_internal(const simFloat* inVertices,simInt inVerticesL,simFloat** verticesOut,simInt* verticesOutL,simInt** indicesOut,simInt* indicesOutL,simInt reserved1,const simFloat* reserved2);
 simInt simGetDecimatedMesh_internal(const simFloat* inVertices,simInt inVerticesL,const simInt* inIndices,simInt inIndicesL,simFloat** verticesOut,simInt* verticesOutL,simInt** indicesOut,simInt* indicesOutL,simFloat decimationPercent,simInt reserved1,const simFloat* reserved2);
 simInt simExportIk_internal(const simChar* pathAndFilename,simInt reserved1,simVoid* reserved2);
-simInt simCallScriptFunction_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull);
 simInt simCallScriptFunctionEx_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId);
 simInt simComputeJacobian_internal(simInt ikGroupHandle,simInt options,simVoid* reserved);
 simInt simGetConfigForTipPose_internal(simInt ikGroupHandle,simInt jointCnt,const simInt* jointHandles,simFloat thresholdDist,simInt maxTimeInMs,simFloat* retConfig,const simFloat* metric,simInt collisionPairCnt,const simInt* collisionPairs,const simInt* jointOptions,const simFloat* lowLimits,const simFloat* ranges,simVoid* reserved);
@@ -597,6 +596,7 @@ simInt simRegisterJointCtrlCallback_internal(simInt(*callBack)(simInt,simInt,sim
 simInt simGetMechanismHandle_internal(const simChar* mechanismName);
 simInt simHandleMechanism_internal(simInt mechanismHandle);
 simInt simHandleCustomizationScripts_internal(simInt callType);
+simInt simCallScriptFunction_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull);
 
 
 #endif // !defined(V_REP_internal_INCLUDED_)
