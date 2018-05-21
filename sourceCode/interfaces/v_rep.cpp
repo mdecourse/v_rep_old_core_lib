@@ -1687,6 +1687,14 @@ VREP_DLLEXPORT simInt simGetModuleInfo(const simChar* moduleName,simInt infoType
 {
     return(simGetModuleInfo_internal(moduleName,infoType,stringInfo,intInfo));
 }
+VREP_DLLEXPORT simInt simIsDeprecated(const simChar* funcOrConst)
+{
+    return(simIsDeprecated_internal(funcOrConst));
+}
+VREP_DLLEXPORT simChar* simGetPersistentDataTags(simInt* tagCount)
+{
+    return(simGetPersistentDataTags_internal(tagCount));
+}
 
 
 VREP_DLLEXPORT simInt _simGetContactCallbackCount()

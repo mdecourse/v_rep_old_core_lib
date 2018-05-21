@@ -519,8 +519,13 @@ std::vector<std::string> CLuaScriptObject::getAllSystemCallbackStrings(int scrip
     size_t i=0;
     while (ct[i]!=-1)
     {
-        if (canCallSystemCallback(scriptType,threaded,ct[i]))
-            retVal.push_back(getSystemCallbackString(ct[i],callTips));
+        if (scriptType!=-1)
+        {
+            if (canCallSystemCallback(scriptType,threaded,ct[i]))
+                retVal.push_back(getSystemCallbackString(ct[i],callTips));
+        }
+        else
+            retVal.push_back(getSystemCallbackString(ct[i],false));
         i++;
     }
     return(retVal);

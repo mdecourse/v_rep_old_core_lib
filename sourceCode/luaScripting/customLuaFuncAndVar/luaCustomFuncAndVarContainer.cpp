@@ -109,8 +109,11 @@ void CLuaCustomFuncAndVarContainer::appendAllFunctionNames_spaceSeparated(std::s
 {
     for (size_t i=0;i<allCustomFunctions.size();i++)
     {
-        v+=allCustomFunctions[i]->getFunctionName();
-        v+=" ";
+        if (allCustomFunctions[i]->hasCalltipsAndSyntaxHighlighing())
+        {
+            v+=allCustomFunctions[i]->getFunctionName();
+            v+=" ";
+        }
     }
 }
 
@@ -118,14 +121,14 @@ void CLuaCustomFuncAndVarContainer::registerCustomLuaFunctions(luaWrap_lua_State
 {
     for (size_t i=0;i<allCustomFunctions.size();i++)
     {
-        if ( (allCustomFunctions[i]->callBackFunction_new!=NULL)||(allCustomFunctions[i]->callBackFunction_old!=NULL) )
+        if (allCustomFunctions[i]->hasCallback())
             allCustomFunctions[i]->registerCustomLuaFunction(L,func);
     }
 }
 
 void CLuaCustomFuncAndVarContainer::removeAllCustomVariables()
 {
-    for (int i=0;i<int(allCustomVariables.size());i++)
+    for (size_t i=0;i<allCustomVariables.size();i++)
         delete allCustomVariables[i];
     allCustomVariables.clear();
 }
@@ -138,6 +141,29 @@ bool CLuaCustomFuncAndVarContainer::isVariableNamePresent(const char* name)
             return(true);
     }
     return(false);
+}
+
+int CLuaCustomFuncAndVarContainer::isFuncOrConstDeprecated(const char* name)
+{
+    for (size_t i=0;i<allCustomFunctions.size();i++)
+    {
+        if (allCustomFunctions[i]->getFunctionName().compare(name)==0)
+        {
+            if (allCustomFunctions[i]->isDeprecated())
+                return(1);
+            return(0);
+        }
+    }
+    for (size_t i=0;i<allCustomVariables.size();i++)
+    {
+        if (allCustomVariables[i]->getVariableName().compare(name)==0)
+        {
+            if (allCustomVariables[i]->isDeprecated())
+                return(1);
+            return(0);
+        }
+    }
+    return(-1);
 }
 
 bool CLuaCustomFuncAndVarContainer::removeCustomVariable(const char* fullVariableName)
@@ -201,7 +227,7 @@ void CLuaCustomFuncAndVarContainer::appendAllVariableNames_spaceSeparated_keywor
 {
     for (size_t i=0;i<allCustomVariables.size();i++)
     {
-        //if (!allCustomVariables[i]->getNoAutoCompletion())
+        if (allCustomVariables[i]->getHasAutoCompletion())
         {
             v+=allCustomVariables[i]->getVariableName();
             v+=" ";
@@ -215,9 +241,7 @@ void CLuaCustomFuncAndVarContainer::pushAllFunctionNamesThatStartSame_autoComple
     bool hasDot=(ttxt.find('.')!=std::string::npos);
     for (size_t i=0;i<allCustomFunctions.size();i++)
     {
-        // if (allCustomFunctions[i]->hasCallback())
-        // We can register a function without callback when for instance lua provides the func definition
-
+        if (allCustomFunctions[i]->hasAutocompletion())
         {
             std::string n(allCustomFunctions[i]->getFunctionName());
             if ((n.size()>=txt.size())&&(n.compare(0,txt.size(),txt)==0))
@@ -245,7 +269,7 @@ void CLuaCustomFuncAndVarContainer::pushAllVariableNamesThatStartSame_autoComple
     bool hasDot=(ttxt.find('.')!=std::string::npos);
     for (size_t i=0;i<allCustomVariables.size();i++)
     {
-        if (!allCustomVariables[i]->getNoAutoCompletion())
+        if (allCustomVariables[i]->getHasAutoCompletion())
         {
             std::string n(allCustomVariables[i]->getVariableName());
             if ((n.size()>=txt.size())&&(n.compare(0,txt.size(),txt)==0))

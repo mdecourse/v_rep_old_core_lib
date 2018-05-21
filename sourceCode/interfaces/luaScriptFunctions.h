@@ -125,6 +125,8 @@ void appendAllVrepVariableNames_spaceSeparated(std::string& keywords);
 void pushAllVrepFunctionNamesThatStartSame_autoCompletionList(const std::string& txt,std::vector<std::string>& v,std::map<std::string,bool>& m,int scriptType,bool scriptIsThreaded);
 void pushAllVrepVariableNamesThatStartSame_autoCompletionList(const std::string& txt,std::vector<std::string>& v,std::map<std::string,bool>& m);
 std::string getVrepFunctionCalltip(const char* txt,int scriptType,bool scriptIsThreaded,bool forceDoNotSupportOldApi);
+int isFuncOrConstDeprecated(const char* txt);
+
 
 int _genericFunctionHandler_new(luaWrap_lua_State* L,CLuaCustomFunction* func,std::string& raiseErrorWithMsg);
 int _genericFunctionHandler_old(luaWrap_lua_State* L,CLuaCustomFunction* func);
@@ -558,6 +560,8 @@ extern int _simGetApiInfo(luaWrap_lua_State* L);
 extern int _simGetModuleInfo(luaWrap_lua_State* L);
 extern int _simRegisterScriptFunction(luaWrap_lua_State* L);
 extern int _simRegisterScriptVariable(luaWrap_lua_State* L);
+extern int _simIsDeprecated(luaWrap_lua_State* L);
+extern int _simGetPersistentDataTags(luaWrap_lua_State* L);
 extern int _simTest(luaWrap_lua_State* L);
 
 // DEPRECATED

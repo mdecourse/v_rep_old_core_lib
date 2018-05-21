@@ -14,18 +14,21 @@ public:
 
     virtual ~CLuaCustomFunction();
     
-    void registerCustomLuaFunction(luaWrap_lua_State* L,luaWrap_lua_CFunction func);
-    bool getUsesStackToExchangeData();
-    std::string getFunctionName();
-    bool isFunctionNameSame(const char* fullName);
-    bool isPluginNameSame(const char* plugName);
-    std::string getPluginName();
-    std::string getCallTips();
-    int getFunctionID();
+    void registerCustomLuaFunction(luaWrap_lua_State* L,luaWrap_lua_CFunction func) const;
+    bool getUsesStackToExchangeData() const;
+    std::string getFunctionName() const;
+    bool isFunctionNameSame(const char* fullName) const;
+    bool isPluginNameSame(const char* plugName) const;
+    std::string getPluginName() const;
+    std::string getCallTips() const;
+    int getFunctionID() const;
     void setFunctionID(int newID);
     static std::string _getFunctionNameFromFull(const char* fullName);
     static std::string _getPluginNameFromFull(const char* fullName);
-    bool hasCallback();
+    bool hasCallback() const;
+    bool hasCalltipsAndSyntaxHighlighing() const;
+    bool hasAutocompletion() const;
+    bool isDeprecated() const;
 
     void(*callBackFunction_new)(struct SScriptCallBack* p);
     void(*callBackFunction_old)(struct SLuaCallBack* p);
@@ -37,4 +40,5 @@ protected:
     std::string callTips;
     int functionID;
     bool useStackToExchangeData;
+    bool _functionIsDefinedInScript;
 };

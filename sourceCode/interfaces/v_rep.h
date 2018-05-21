@@ -437,6 +437,9 @@ VREP_DLLEXPORT simChar* simGetApiFunc(simInt scriptHandleOrType,const simChar* a
 VREP_DLLEXPORT simChar* simGetApiInfo(simInt scriptHandleOrType,const simChar* apiWord);
 VREP_DLLEXPORT simInt simSetModuleInfo(const simChar* moduleName,simInt infoType,const simChar* stringInfo,simInt intInfo);
 VREP_DLLEXPORT simInt simGetModuleInfo(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo);
+VREP_DLLEXPORT simInt simIsDeprecated(const simChar* funcOrConst);
+VREP_DLLEXPORT simChar* simGetPersistentDataTags(simInt* tagCount);
+
 
 
 VREP_DLLEXPORT simInt _simGetContactCallbackCount();

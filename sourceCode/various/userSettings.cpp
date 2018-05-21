@@ -459,6 +459,7 @@ CUserSettings::CUserSettings()
     doNotShowSceneSelectionThumbnails=false;
     doNotShowProgressBars=false;
     doNotShowAcknowledgmentMessages=false;
+    doNotShowVideoCompressionLibraryLoadError=false;
     redirectStatusbarMsgToConsoleInHeadlessMode=false;
 
 

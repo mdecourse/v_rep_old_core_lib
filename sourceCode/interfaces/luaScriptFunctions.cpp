@@ -459,6 +459,10 @@ const SLuaCommands simLuaCommands[]=
     {"sim.getModuleInfo",_simGetModuleInfo,                      "string/number info=sim.getModuleInfo(string moduleName,number infoType)",true},
     {"sim.registerScriptFunction",_simRegisterScriptFunction,    "number result=sim.registerScriptFunction(string funcNameAtPluginName,string callTips)",true},
     {"sim.registerScriptVariable",_simRegisterScriptVariable,    "number result=sim.registerScriptVariable(string varNameAtPluginName)",true},
+    {"sim.isDeprecated",_simIsDeprecated,                        "number result=sim.isDeprecated(string funcOrConst)",true},
+    {"sim.getPersistentDataTags",_simGetPersistentDataTags,      "table tags=sim.getPersistentDataTags()",true},
+
+
 
     {"sim.test",_simTest,                                        "test function - shouldn't be used",true},
     // Add new commands here!
@@ -4645,6 +4649,66 @@ std::string getVrepFunctionCalltip(const char* txt,int scriptType,bool scriptIsT
     return("");
 }
 
+int isFuncOrConstDeprecated(const char* txt)
+{
+    // Functions:
+    for (size_t i=0;simLuaCommands[i].name!="";i++)
+    {
+        std::string n(simLuaCommands[i].name);
+        if (n.compare(txt)==0)
+        {
+            if (simLuaCommands[i].autoComplete)
+                return(0);
+            return(1);
+        }
+    }
+    if (App::userSettings->getSupportOldApiNotation())
+    {
+        for (size_t i=0;simLuaCommandsOldApi[i].name!="";i++)
+        {
+            std::string n(simLuaCommandsOldApi[i].name);
+            if (n.compare(txt)==0)
+            {
+                if (simLuaCommandsOldApi[i].autoComplete)
+                    return(0);
+                return(1);
+            }
+        }
+    }
+    std::vector<std::string> sysCb=CLuaScriptObject::getAllSystemCallbackStrings(-1,false,false);
+    for (size_t i=0;i<sysCb.size();i++)
+    {
+        std::string n(sysCb[i]);
+        if (n.compare(txt)==0)
+            return(0);
+    }
+
+    // Variables/Constants:
+    for (size_t i=0;simLuaVariables[i].name!="";i++)
+    {
+        std::string n(simLuaVariables[i].name);
+        if (n.compare(txt)==0)
+        {
+            if (simLuaVariables[i].autoComplete)
+                return(0);
+            return(1);
+        }
+    }
+    if (App::userSettings->getSupportOldApiNotation())
+    {
+        for (size_t i=0;simLuaVariablesOldApi[i].name!="";i++)
+        {
+            std::string n(simLuaVariablesOldApi[i].name);
+            if (n.compare(txt)==0)
+            {
+                if (simLuaVariablesOldApi[i].autoComplete)
+                    return(0);
+                return(1);
+            }
+        }
+    }
+    return(-1);
+}
 
 //-----------------------------------------------
 //-----------------------------------------------
@@ -17562,8 +17626,9 @@ int _simRegisterScriptFunction(luaWrap_lua_State* L)
     if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0))
     {
         const char* funcNameAtPluginName=luaWrap_lua_tostring(L,1);
-        const char* callTips=luaWrap_lua_tostring(L,2);
-        retVal=simRegisterScriptCallbackFunction_internal(funcNameAtPluginName,callTips,NULL);
+        std::string ct(luaWrap_lua_tostring(L,2));
+        ct="####"+ct;
+        retVal=simRegisterScriptCallbackFunction_internal(funcNameAtPluginName,ct.c_str(),NULL);
     }
 
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
@@ -17586,6 +17651,44 @@ int _simRegisterScriptVariable(luaWrap_lua_State* L)
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
     luaWrap_lua_pushnumber(L,retVal);
     LUA_END(1);
+}
+
+int _simIsDeprecated(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.isDeprecated");
+
+    int retVal=-1;
+    if (checkInputArguments(L,&errorString,lua_arg_string,0))
+        retVal=simIsDeprecated_internal(luaWrap_lua_tostring(L,1));
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
+
+int _simGetPersistentDataTags(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.getPersistentDataTags");
+
+    int tagCount;
+    char* data=simGetPersistentDataTags_internal(&tagCount);
+    if (data!=NULL)
+    {
+        std::vector<std::string> stringTable;
+        size_t off=0;
+        for (int i=0;i<tagCount;i++)
+        {
+            stringTable.push_back(data+off);
+            off+=strlen(data+off)+1;
+        }
+        pushStringTableOntoStack(L,stringTable);
+        simReleaseBuffer_internal(data);
+        LUA_END(1);
+    }
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
 }
 
 

@@ -84,6 +84,12 @@ bool CPersistentDataContainer::readData(const char* dataName,std::string& value)
     return(true);
 }
 
+int CPersistentDataContainer::getAllDataNames(std::vector<std::string>& names)
+{
+    names.assign(_dataNames.begin(),_dataNames.end());
+    return(int(names.size()));
+}
+
 int CPersistentDataContainer::_getDataIndex(const char* dataName)
 {
     for (int i=0;i<int(_dataNames.size());i++)

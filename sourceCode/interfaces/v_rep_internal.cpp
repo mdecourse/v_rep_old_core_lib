@@ -18609,6 +18609,53 @@ simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simCh
     return(-1);
 }
 
+simInt simIsDeprecated_internal(const simChar* funcOrConst)
+{
+    C_API_FUNCTION_DEBUG;
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        int retVal=isFuncOrConstDeprecated(funcOrConst);
+        if (retVal<0)
+            retVal=App::ct->luaCustomFuncAndVarContainer->isFuncOrConstDeprecated(funcOrConst);
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+simChar* simGetPersistentDataTags_internal(simInt* tagCount)
+{
+    C_API_FUNCTION_DEBUG;
+
+    if (!isSimulatorInitialized(__func__))
+        return(NULL);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
+    {
+        std::vector<std::string> allTags;
+        tagCount[0]=App::ct->persistentDataContainer->getAllDataNames(allTags);
+        char* retBuffer=NULL;
+        if (allTags.size()>0)
+        {
+            tagCount[0]=int(allTags.size());
+            int totChars=0;
+            for (size_t i=0;i<allTags.size();i++)
+                totChars+=(int)allTags[i].length()+1;
+            retBuffer=new char[totChars];
+            totChars=0;
+            for (size_t i=0;i<allTags.size();i++)
+            {
+                for (size_t j=0;j<allTags[i].length();j++)
+                    retBuffer[totChars+j]=allTags[i][j];
+                retBuffer[totChars+allTags[i].length()]=0;
+                totChars+=(int)allTags[i].length()+1;
+            }
+        }
+        return(retBuffer);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
+    return(NULL);
+}
 
 
 //************************************************************************************************************

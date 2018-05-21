@@ -31,6 +31,7 @@ public:
     void pushAllVariableNamesThatStartSame_autoCompletionList(const std::string& txt,std::vector<std::string>& v,std::map<std::string,bool>& m);
 
     bool isVariableNamePresent(const char* name);
+    int isFuncOrConstDeprecated(const char* name);
 
 
     std::vector<CLuaCustomFunction*> allCustomFunctions;
