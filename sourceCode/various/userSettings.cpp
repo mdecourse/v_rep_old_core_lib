@@ -242,6 +242,7 @@
 #define _USR_DO_NOT_SHOW_SCENE_SELECTION_THUMBNAILS "doNotShowSceneSelectionThumbnails"
 #define _USR_DO_NOT_SHOW_PROGRESS_BARS "doNotShowProgressBars"
 #define _USR_DO_NOT_SHOW_ACKNOWLEDGMENT_MESSAGES "doNotShowAcknowledgmentMessages"
+#define _USR_DO_NOT_SHOW_VIDEO_COMPRESSION_LIBRARY_LOAD_ERROR "doNotShowVideoCompressionLibraryLoadError"
 #define _USR_REDIRECT_STATUSBAR_MSG_TO_CONSOLE_IN_HEADLESS_MODE "redirectStatusbarMsgToConsoleInHeadlessMode"
 
 #define _USR_SCRIPT_EDITOR_FONT "scriptEditorFont"
@@ -899,6 +900,7 @@ void CUserSettings::saveUserSettings()
     c.addBoolean(_USR_DO_NOT_SHOW_SCENE_SELECTION_THUMBNAILS,doNotShowSceneSelectionThumbnails,"");
     c.addBoolean(_USR_DO_NOT_SHOW_PROGRESS_BARS,doNotShowProgressBars,"");
     c.addBoolean(_USR_DO_NOT_SHOW_ACKNOWLEDGMENT_MESSAGES,doNotShowAcknowledgmentMessages,"");
+    c.addBoolean(_USR_DO_NOT_SHOW_VIDEO_COMPRESSION_LIBRARY_LOAD_ERROR,doNotShowVideoCompressionLibraryLoadError,"");
     c.addBoolean(_USR_REDIRECT_STATUSBAR_MSG_TO_CONSOLE_IN_HEADLESS_MODE,redirectStatusbarMsgToConsoleInHeadlessMode,"");
 
 
@@ -1238,6 +1240,7 @@ void CUserSettings::loadUserSettings()
     c.getBoolean(_USR_DO_NOT_SHOW_SCENE_SELECTION_THUMBNAILS,doNotShowSceneSelectionThumbnails);
     c.getBoolean(_USR_DO_NOT_SHOW_PROGRESS_BARS,doNotShowProgressBars);
     c.getBoolean(_USR_DO_NOT_SHOW_ACKNOWLEDGMENT_MESSAGES,doNotShowAcknowledgmentMessages);
+    c.getBoolean(_USR_DO_NOT_SHOW_VIDEO_COMPRESSION_LIBRARY_LOAD_ERROR,doNotShowVideoCompressionLibraryLoadError);
     c.getBoolean(_USR_REDIRECT_STATUSBAR_MSG_TO_CONSOLE_IN_HEADLESS_MODE,redirectStatusbarMsgToConsoleInHeadlessMode);
 
 

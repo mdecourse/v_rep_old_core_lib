@@ -114,6 +114,7 @@ public:
     bool doNotShowSceneSelectionThumbnails;
     bool doNotShowProgressBars;
     bool doNotShowAcknowledgmentMessages;
+    bool doNotShowVideoCompressionLibraryLoadError;
     bool redirectStatusbarMsgToConsoleInHeadlessMode;
 
     std::string scriptEditorFont;
