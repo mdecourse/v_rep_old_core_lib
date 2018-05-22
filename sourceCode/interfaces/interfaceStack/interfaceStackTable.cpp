@@ -219,6 +219,18 @@ bool CInterfaceStackTable::removeFromKey(const CInterfaceStackObject* keyToRemov
                 return(true);
             }
         }
+        if ( (key->getObjectType()==STACK_OBJECT_BOOL)&&(keyToRemove->getObjectType()==STACK_OBJECT_BOOL) )
+        {
+            double theKey1(((CInterfaceStackBool*)key)->getValue());
+            double theKey2(((CInterfaceStackBool*)keyToRemove)->getValue());
+            if (theKey1==theKey2)
+            {
+                delete key;
+                delete obj;
+                _tableObjects.erase(_tableObjects.begin()+2*i,_tableObjects.begin()+2*i+2);
+                return(true);
+            }
+        }
     }
     return(false);
 }
@@ -239,6 +251,13 @@ void CInterfaceStackTable::appendMapObject(CInterfaceStackObject* obj,double key
 {
     _isTableArray=false;
     _tableObjects.push_back(new CInterfaceStackNumber(key));
+    _tableObjects.push_back(obj);
+}
+
+void CInterfaceStackTable::appendMapObject(CInterfaceStackObject* obj,bool key)
+{
+    _isTableArray=false;
+    _tableObjects.push_back(new CInterfaceStackBool(key));
     _tableObjects.push_back(obj);
 }
 
@@ -282,19 +301,23 @@ CInterfaceStackObject* CInterfaceStackTable::getArrayItemAtIndex(int ind) const
     return(_tableObjects[ind]);
 }
 
-CInterfaceStackObject* CInterfaceStackTable::getMapItemAtIndex(int ind,std::string& stringKey,double& numberKey,bool& isStringKey) const
+CInterfaceStackObject* CInterfaceStackTable::getMapItemAtIndex(int ind,std::string& stringKey,double& numberKey,bool& boolKey,int& keyType) const
 {
     if ( (_isTableArray)||(ind>=(int)_tableObjects.size()/2) )
         return(NULL);
-    if (_tableObjects[2*ind+0]->getObjectType()==STACK_OBJECT_NUMBER)
+    keyType=_tableObjects[2*ind+0]->getObjectType();
+    if (keyType==STACK_OBJECT_BOOL)
     {
-        isStringKey=false;
+        CInterfaceStackBool* keyObj=(CInterfaceStackBool*)_tableObjects[2*ind+0];
+        boolKey=keyObj->getValue();
+    }
+    if (keyType==STACK_OBJECT_NUMBER)
+    {
         CInterfaceStackNumber* keyObj=(CInterfaceStackNumber*)_tableObjects[2*ind+0];
         numberKey=keyObj->getValue();
     }
-    else
+    if (keyType==STACK_OBJECT_STRING)
     {
-        isStringKey=true;
         CInterfaceStackString* keyObj=(CInterfaceStackString*)_tableObjects[2*ind+0];
         stringKey=keyObj->getValue(NULL);
     }

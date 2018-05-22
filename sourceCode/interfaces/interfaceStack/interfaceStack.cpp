@@ -189,8 +189,14 @@ CInterfaceStackTable* CInterfaceStack::_generateTableMapFromLuaStack(luaWrap_lua
             CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-2,visitedTables);
             table->appendMapObject(obj,key);
         }
+        else if (luaWrap_lua_stype(L,-1)==STACK_OBJECT_BOOL)
+        { // the key is a bool
+            bool key=luaWrap_lua_toboolean(L,-1);
+            CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-2,visitedTables);
+            table->appendMapObject(obj,key);
+        }
         else
-        { // the key is a string
+        { // the key is probably a string (but could also be a function or table, etc., but doesn't make sense)
             const char* key=luaWrap_lua_tostring(L,-1);
             CInterfaceStackObject* obj=_generateObjectFromLuaStack(L,-2,visitedTables);
             table->appendMapObject(obj,key);
@@ -351,12 +357,16 @@ void CInterfaceStack::_pushOntoLuaStack(luaWrap_lua_State* L,CInterfaceStackObje
             {
                 std::string stringKey;
                 double numberKey;
-                bool isStringKey;
-                CInterfaceStackObject* tobj=table->getMapItemAtIndex(i,stringKey,numberKey,isStringKey);
-                if (isStringKey)
+                bool boolKey;
+                int keyType;
+                bool isNumberKey;
+                CInterfaceStackObject* tobj=table->getMapItemAtIndex(i,stringKey,numberKey,boolKey,keyType);
+                if (keyType==STACK_OBJECT_STRING)
                     luaWrap_lua_pushstring(L,stringKey.c_str());
-                else
+                if (keyType==STACK_OBJECT_NUMBER)
                     luaWrap_lua_pushnumber(L,numberKey);
+                if (keyType==STACK_OBJECT_BOOL)
+                    luaWrap_lua_pushboolean(L,boolKey);
                 _pushOntoLuaStack(L,tobj);
                 luaWrap_lua_settable(L,-3);
             }

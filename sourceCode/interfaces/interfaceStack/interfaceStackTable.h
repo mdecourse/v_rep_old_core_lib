@@ -23,7 +23,7 @@ public:
     void setCircularRef();
 
     CInterfaceStackObject* getArrayItemAtIndex(int ind) const;
-    CInterfaceStackObject* getMapItemAtIndex(int ind,std::string& stringKey,double& numberKey,bool& isStringKey) const;
+    CInterfaceStackObject* getMapItemAtIndex(int ind,std::string& stringKey,double& numberKey,bool& boolKey,int& keyType) const;
     void getAllObjectsAndClearTable(std::vector<CInterfaceStackObject*>& allObjs);
 
     void setUCharArray(const unsigned char* array,int l);
@@ -34,6 +34,7 @@ public:
     void appendArrayObject(CInterfaceStackObject* obj);
     void appendMapObject(CInterfaceStackObject* obj,const char* key);
     void appendMapObject(CInterfaceStackObject* obj,double key);
+    void appendMapObject(CInterfaceStackObject* obj,bool key);
     void appendArrayOrMapObject(CInterfaceStackObject* obj,CInterfaceStackObject* key);
 
     bool getUCharArray(unsigned char* array,int count) const;
