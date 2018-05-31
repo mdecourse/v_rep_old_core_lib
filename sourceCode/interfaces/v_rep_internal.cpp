@@ -12341,7 +12341,7 @@ simInt simGetJointForce_internal(simInt jointHandle,simFloat* forceOrTorque)
     return(-1);
 }
 
-simInt simPersistentDataWrite_internal(const simChar* dataName,const simChar* dataValue,simInt dataLength,simInt options)
+simInt simPersistentDataWrite_internal(const simChar* dataTag,const simChar* dataValue,simInt dataLength,simInt options)
 {
     C_API_FUNCTION_DEBUG;
 
@@ -12350,14 +12350,14 @@ simInt simPersistentDataWrite_internal(const simChar* dataName,const simChar* da
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
-        App::ct->persistentDataContainer->writeData(dataName,std::string(dataValue,dataLength),(options&1)!=0);
+        App::ct->persistentDataContainer->writeData(dataTag,std::string(dataValue,dataLength),(options&1)!=0);
         return(1);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
     return(-1);
 }
 
-simChar* simPersistentDataRead_internal(const simChar* dataName,simInt* dataLength)
+simChar* simPersistentDataRead_internal(const simChar* dataTag,simInt* dataLength)
 {
     C_API_FUNCTION_DEBUG;
 
@@ -12367,7 +12367,7 @@ simChar* simPersistentDataRead_internal(const simChar* dataName,simInt* dataLeng
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
         std::string sigVal;
-        if (App::ct->persistentDataContainer->readData(dataName,sigVal))
+        if (App::ct->persistentDataContainer->readData(dataTag,sigVal))
         {
             char* retVal=new char[sigVal.length()];
             for (unsigned int i=0;i<sigVal.length();i++)

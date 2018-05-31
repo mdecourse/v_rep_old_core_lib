@@ -145,7 +145,7 @@ const SLuaCommands simLuaCommands[]=
     {"sim.getSimulatorMessage",_simGetSimulatorMessage,          "number messageID,table_4 auxiliaryData,table auxiliaryData2=sim.getSimulatorMessage()",true},
     {"sim.resetGraph",_simResetGraph,                            "number result=sim.resetGraph(number objectHandle)",true},
     {"sim.handleGraph",_simHandleGraph,                          "number result=sim.handleGraph(number objectHandle,number simulationTime)",true},
-    {"sim.addStatusbarMessage",_simAddStatusbarMessage,          "number result=sim.addStatusbarMessage(string message)",true},
+    {"sim.addStatusbarMessage",_simAddStatusbarMessage,          "number result=sim.addStatusbarMessage(string message=nil)",true},
     {"sim.getLastError",_simGetLastError,                        "string lastError=sim.getLastError()",true},
     {"sim.getObjects",_simGetObjects,                            "number objectHandle=sim.getObjects(number index,number objectType)",true},
     {"sim.refreshDialogs",_simRefreshDialogs,                    "number result=sim.refreshDialogs(number refreshDegree)",true},
@@ -275,8 +275,8 @@ const SLuaCommands simLuaCommands[]=
     {"sim.clearStringSignal",_simClearStringSignal,              "number clearCount=sim.clearStringSignal(string signalName)",true},
     {"sim.getSignalName",_simGetSignalName,                      "string signalName=sim.getSignalName(number signalIndex,number signalType)",true},
     {"sim.waitForSignal",_simWaitForSignal,                      "number/string signalValue=sim.waitForSignal(string signalName)",true},
-    {"sim.persistentDataWrite",_simPersistentDataWrite,          "number result=sim.persistentDataWrite(string dataName,string dataValue,number options=0)",true},
-    {"sim.persistentDataRead",_simPersistentDataRead,            "string dataValue=sim.persistentDataRead(string dataName)",true},
+    {"sim.persistentDataWrite",_simPersistentDataWrite,          "number result=sim.persistentDataWrite(string dataTag,string dataValue,number options=0)",true},
+    {"sim.persistentDataRead",_simPersistentDataRead,            "string dataValue=sim.persistentDataRead(string dataTag)",true},
     {"sim.setObjectProperty",_simSetObjectProperty,              "number result=sim.setObjectProperty(number objectHandle,number property)",true},
     {"sim.getObjectProperty",_simGetObjectProperty,              "number property=sim.getObjectProperty(number objectHandle)",true},
     {"sim.setObjectSpecialProperty",_simSetObjectSpecialProperty,"number result=sim.setObjectSpecialProperty(number objectHandle,number property)",true},
@@ -6975,11 +6975,22 @@ int _simAddStatusbarMessage(luaWrap_lua_State* L)
     int retVal=-1; // means error
 
     if (luaWrap_lua_gettop(L)==0)
+    {
         App::clearStatusbar();
+        retVal=1;
+    }
     else
     {
-        if (checkInputArguments(L,&errorString,lua_arg_string,0))
-            retVal=simAddStatusbarMessage_internal(luaWrap_lua_tostring(L,1));
+        if (checkInputArguments(L,NULL,lua_arg_nil,0))
+        {
+            App::clearStatusbar();
+            retVal=1;
+        }
+        else
+        {
+            if (checkInputArguments(L,&errorString,lua_arg_string,0))
+                retVal=simAddStatusbarMessage_internal(luaWrap_lua_tostring(L,1));
+        }
     }
 
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
@@ -17625,10 +17636,10 @@ int _simRegisterScriptFunction(luaWrap_lua_State* L)
     int retVal=-1;
     if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0))
     {
-        const char* funcNameAtPluginName=luaWrap_lua_tostring(L,1);
+        std::string funcNameAtPluginName(luaWrap_lua_tostring(L,1));
         std::string ct(luaWrap_lua_tostring(L,2));
         ct="####"+ct;
-        retVal=simRegisterScriptCallbackFunction_internal(funcNameAtPluginName,ct.c_str(),NULL);
+        retVal=simRegisterScriptCallbackFunction_internal(funcNameAtPluginName.c_str(),ct.c_str(),NULL);
     }
 
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
