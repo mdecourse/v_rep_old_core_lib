@@ -6572,8 +6572,9 @@ simInt simAddStatusbarMessage_internal(const simChar* message)
 #endif
         if (message!=NULL)
         {
-            App::addStatusbarMessage(message);
-            if (std::string(message).compare(0,18,"Lua runtime error:")==0)
+            bool scriptErrorMsg=(std::string(message).compare(0,18,"Lua runtime error:")==0);
+            App::addStatusbarMessage(message,scriptErrorMsg);
+            if (scriptErrorMsg)
             { // this is to intercept the xpcall error message generated in a threaded child script, and to flash the status bar
                 SUIThreadCommand cmdIn;
                 SUIThreadCommand cmdOut;
@@ -9378,9 +9379,7 @@ simInt simAuxiliaryConsoleOpen_internal(const simChar* title,simInt maxLines,sim
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
@@ -9445,9 +9444,7 @@ simInt simAuxiliaryConsolePrint_internal(simInt consoleHandle,const simChar* tex
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {

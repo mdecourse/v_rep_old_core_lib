@@ -691,15 +691,15 @@ void App::setFullScreen(bool f)
 #endif
 }
 
-void App::addStatusbarMessage(const std::string& txt)
+void App::addStatusbarMessage(const std::string& txt,bool scriptErrorMsg/*=false*/)
 {
     if (!VThread::isCurrentThreadTheUiThread())
     { // we are NOT in the UI thread. We execute the command in a delayed manner:
         SUIThreadCommand cmdIn;
-        SUIThreadCommand cmdOut;
         cmdIn.cmdId=ADD_STATUSBAR_MESSAGE_UITHREADCMD;
         cmdIn.stringParams.push_back(txt);
-        uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
+        cmdIn.boolParams.push_back(scriptErrorMsg);
+        uiThread->executeCommandViaUiThread(&cmdIn,NULL);
     }
     else
     {
@@ -740,6 +740,7 @@ void App::addStatusbarMessage(const std::string& txt)
                 else
                     printf("[statusbar]: %s\n",str.c_str());
             }
+            handleVerSpecStatusBarMsg(str.c_str(),html,scriptErrorMsg);
         #endif
     }
 }

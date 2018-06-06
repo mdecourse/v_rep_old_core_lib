@@ -25,6 +25,7 @@ public:
     int addConsoleInfo(CConsoleInitInfo* consoleInfo);
     CConsoleInitInfo* getConsoleInfoFromHandle(int handle);
     CScintillaConsoleDlg* getConsoleFromHandle(int handle);
+    bool isConsoleHandleValid(int handle);
 
 protected:
     std::vector<CScintillaConsoleDlg*> _allConsoles;

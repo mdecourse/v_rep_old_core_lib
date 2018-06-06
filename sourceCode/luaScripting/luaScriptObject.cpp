@@ -2647,11 +2647,10 @@ void CLuaScriptObject::_displayScriptError(const char* errMsg,int errorType)
     if (errorType==2)
         message="System callback error: ";
     message+=errMsg;
-    App::addStatusbarMessage(message.c_str());
+    App::addStatusbarMessage(message.c_str(),true);
     SUIThreadCommand cmdIn;
-    SUIThreadCommand cmdOut;
     cmdIn.cmdId=FLASH_STATUSBAR_UITHREADCMD;
-    App::uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
+    App::uiThread->executeCommandViaUiThread(&cmdIn,NULL);
 }
 
 
