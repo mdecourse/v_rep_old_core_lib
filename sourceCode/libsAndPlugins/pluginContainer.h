@@ -122,6 +122,13 @@ typedef char (__cdecl *ptrv_repMesh_getRayProxSensorOctreeDistanceIfSmaller)(con
 typedef char (__cdecl *ptrv_repMesh_getProxSensorOctreeDistanceIfSmaller)(const void*,const float*,float*,const float*,int,const float*,int,float,float*,char,char,char,float*,void*);
 typedef char (__cdecl *ptrv_repMesh_removePointCloudPointsFromOctree)(void*,const float*,const void*,const float*,int*);
 
+typedef char* (__cdecl *ptrCodeEditor_openModal)(const char* initText,const char* properties,int* positionAndSize);
+typedef int (__cdecl *ptrCodeEditor_open)(const char* initText,const char* properties);
+typedef int (__cdecl *ptrCodeEditor_setText)(int handle,const char* text,int insertMode);
+typedef char* (__cdecl *ptrCodeEditor_getText)(int handle);
+typedef int (__cdecl *ptrCodeEditor_show)(int handle,int showState);
+typedef int (__cdecl *ptrCodeEditor_close)(int handle,int* positionAndSize);
+
 class CPlugin
 {
 public:
@@ -241,7 +248,12 @@ public:
     ptrv_repMesh_getProxSensorOctreeDistanceIfSmaller v_repMesh_getProxSensorOctreeDistanceIfSmaller;
     ptrv_repMesh_removePointCloudPointsFromOctree v_repMesh_removePointCloudPointsFromOctree;
 
-
+    ptrCodeEditor_openModal _codeEditor_openModal;
+    ptrCodeEditor_open _codeEditor_open;
+    ptrCodeEditor_setText _codeEditor_setText;
+    ptrCodeEditor_getText _codeEditor_getText;
+    ptrCodeEditor_show _codeEditor_show;
+    ptrCodeEditor_close _codeEditor_close;
 
     std::string name;
     std::string _filename;
@@ -280,7 +292,6 @@ public:
 
     // physics engines:
     static CPlugin* currentDynEngine;
-
     static bool dyn_startSimulation(int engine,int version,const float floatParams[20],const int intParams[20]);
     static bool dyn_isInitialized();
     static bool dyn_isDynamicContentAvailable();
@@ -302,7 +313,6 @@ public:
 
     // mesh calc engine:
     static CPlugin* currentMeshEngine;
-
     static bool isMeshPluginAvailable();
     static void mesh_lockUnlock(bool lock);
     static void* mesh_createCollisionInformationStructure(const float* cumulMeshVertices,int cumulMeshVerticesSize,const int* cumulMeshIndices,int cumulMeshIndicesSize,float maxTriSize,float edgeAngle,int maxTriCount);
@@ -395,6 +405,15 @@ public:
     static bool mesh_getProxSensorOctreeDistanceIfSmaller(const void* octreeInfo,const C4X4Matrix& octreeRTM,float& dist,const std::vector<float>* planes,const std::vector<float>* planesOutside,float cosAngle,C3Vector& detectPoint,bool fast,bool frontFace,bool backFace,C3Vector& triNormalNotNormalized,void* theOcclusionCheckCallback);
     static bool mesh_removePointCloudPointsFromOctree(void* pointCloudInfo,const C4X4Matrix& pointCloudPCTM,const void* octreeInfo,const C4X4Matrix& octreePCTM,int& removedCnt);
 
+    // code editor plugin:
+    static CPlugin* currentCodeEditor;
+    static bool isCodeEditorPluginAvailable();
+    static bool codeEditor_openModal(const char* initText,const char* properties,std::string& modifiedText,int* positionAndSize);
+    static int codeEditor_open(const char* initText,const char* properties);
+    static int codeEditor_setText(int handle,const char* text,int insertMode);
+    static bool codeEditor_getText(int handle,std::string& text);
+    static int codeEditor_show(int handle,int showState);
+    static int codeEditor_close(int handle,int* positionAndSize);
 
     static bool enableOrDisableSpecificEventCallback(int eventCallbackType,const char* pluginName);
     static void sendSpecialEventCallbackMessageToSomePlugins(int msg,int* auxVals,void* data,int retVals[4]);
@@ -409,7 +428,6 @@ public:
     static ptrExtRenderer _oculusAddress;
     static ptrExtRenderer _oculusWindowedAddress;
     static ptrExtRenderer _activeExtRendererAddress;
-    //static int _extRendererIndex;
 
     static ptrQhull _qhullAddress;
     static ptrHACD _hacdAddress;

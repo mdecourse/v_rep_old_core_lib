@@ -465,6 +465,15 @@ const SLuaCommands simLuaCommands[]=
 
 
     {"sim.test",_simTest,                                        "test function - shouldn't be used",true},
+
+    {"sim.testCE_openModal",_simTestCE_openModal,                "string text,table_2 pos,table_2 size=sim.testCE_openModal(string initText,string properties)",true},
+    {"sim.testCE_open",_simTestCE_open,                          "number handle=sim.testCE_open(string initText,string properties)",true},
+    {"sim.testCE_setText",_simTestCE_setText,                    "number result=sim.testCE_setText(number handle,string text,int insertMode)",true},
+    {"sim.testCE_getText",_simTestCE_getText,                    "string text=sim.testCE_getText(number handle)",true},
+    {"sim.testCE_show",_simTestCE_show,                          "number result=sim.testCE_show(number handle,number showState)",true},
+    {"sim.testCE_close",_simTestCE_close,                        "number result,table_2 pos,table_2 size=sim.testCE_show(number handle)",true},
+
+
     // Add new commands here!
     // Then regenerate the notepad++ keywords and calltips
     {"simHandlePath",_simHandlePath,                                "Deprecated",false},
@@ -8582,6 +8591,156 @@ int _simTest(luaWrap_lua_State* L)
 
     LUA_END(0);
 }
+
+int _simTestCE_openModal(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_openModal");
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0))
+        {
+            const char* arg1=luaWrap_lua_tostring(L,1);
+            const char* arg2=luaWrap_lua_tostring(L,2);
+            int posAndSize[4];
+            std::string text;
+            if (CPluginContainer::codeEditor_openModal(arg1,arg2,text,posAndSize))
+            {
+                luaWrap_lua_pushstring(L,text.c_str());
+                pushIntTableOntoStack(L,2,posAndSize);
+                pushIntTableOntoStack(L,2,posAndSize+2);
+                LUA_END(3);
+            }
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
+}
+int _simTestCE_open(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_open");
+    int retVal=-1;
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0))
+        {
+            const char* arg1=luaWrap_lua_tostring(L,1);
+            const char* arg2=luaWrap_lua_tostring(L,2);
+            retVal=CPluginContainer::codeEditor_open(arg1,arg2);
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushinteger(L,retVal);
+    LUA_END(1);
+}
+int _simTestCE_setText(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_setText");
+    int retVal=-1;
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_string,0,lua_arg_number,0))
+        {
+            int handle=luaWrap_lua_tointeger(L,1);
+            const char* text=luaWrap_lua_tostring(L,2);
+            int insertMode=luaWrap_lua_tointeger(L,3);
+            retVal=CPluginContainer::codeEditor_setText(handle,text,insertMode);
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushinteger(L,retVal);
+    LUA_END(1);
+}
+int _simTestCE_getText(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_getText");
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0))
+        {
+            int handle=luaWrap_lua_tointeger(L,1);
+            std::string text;
+            if (CPluginContainer::codeEditor_getText(handle,text))
+            {
+                luaWrap_lua_pushstring(L,text.c_str());
+                LUA_END(1);
+            }
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
+}
+int _simTestCE_show(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_show");
+    int retVal=-1;
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_number,0))
+        {
+            int handle=luaWrap_lua_tointeger(L,1);
+            int showState=luaWrap_lua_tointeger(L,2);
+            retVal=CPluginContainer::codeEditor_show(handle,showState);
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushinteger(L,retVal);
+    LUA_END(1);
+}
+int _simTestCE_close(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_close");
+    int retVal=-1;
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0))
+        {
+            int handle=luaWrap_lua_tointeger(L,1);
+            int posAndSize[4];
+            retVal=CPluginContainer::codeEditor_close(handle,posAndSize);
+            if (retVal>=0)
+            {
+                luaWrap_lua_pushinteger(L,retVal);
+                pushIntTableOntoStack(L,2,posAndSize);
+                pushIntTableOntoStack(L,2,posAndSize+2);
+                LUA_END(3);
+            }
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushinteger(L,retVal);
+    LUA_END(1);
+}
+
 
 
 int _simSetNavigationMode(luaWrap_lua_State* L)

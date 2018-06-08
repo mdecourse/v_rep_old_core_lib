@@ -1695,6 +1695,10 @@ VREP_DLLEXPORT simChar* simGetPersistentDataTags(simInt* tagCount)
 {
     return(simGetPersistentDataTags_internal(tagCount));
 }
+VREP_DLLEXPORT simInt simEventNotification(const simChar* event)
+{
+    return(simEventNotification_internal(event));
+}
 
 
 VREP_DLLEXPORT simInt _simGetContactCallbackCount()

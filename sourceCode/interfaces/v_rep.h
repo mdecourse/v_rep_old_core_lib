@@ -439,6 +439,8 @@ VREP_DLLEXPORT simInt simSetModuleInfo(const simChar* moduleName,simInt infoType
 VREP_DLLEXPORT simInt simGetModuleInfo(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo);
 VREP_DLLEXPORT simInt simIsDeprecated(const simChar* funcOrConst);
 VREP_DLLEXPORT simChar* simGetPersistentDataTags(simInt* tagCount);
+VREP_DLLEXPORT simInt simEventNotification(const simChar* event);
+
 
 
 

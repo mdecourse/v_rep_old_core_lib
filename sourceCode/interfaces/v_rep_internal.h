@@ -429,6 +429,7 @@ simInt simSetModuleInfo_internal(const simChar* moduleName,simInt infoType,const
 simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo);
 simInt simIsDeprecated_internal(const simChar* funcOrConst);
 simChar* simGetPersistentDataTags_internal(simInt* tagCount);
+simInt simEventNotification_internal(const simChar* event);
 
 
 

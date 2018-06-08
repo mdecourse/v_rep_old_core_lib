@@ -18654,6 +18654,51 @@ simChar* simGetPersistentDataTags_internal(simInt* tagCount)
     return(NULL);
 }
 
+simInt simEventNotification_internal(const simChar* event)
+{
+    C_API_FUNCTION_DEBUG;
+    int retVal=-1;
+
+    if (!isSimulatorInitialized(__func__))
+        return(retVal);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
+    {
+        tinyxml2::XMLDocument xmldoc;
+        tinyxml2::XMLError error=xmldoc.Parse(event);
+        if(error==tinyxml2::XML_NO_ERROR)
+        {
+            tinyxml2::XMLElement* rootElement=xmldoc.FirstChildElement();
+            const char* origin=rootElement->Attribute("origin");
+            if (origin!=NULL)
+            {
+                if (strcmp(origin,"codeEditor")==0)
+                {
+                    const char* msg=rootElement->Attribute("msg");
+                    const char* handle=rootElement->Attribute("handle");
+                    if ((msg!=NULL)&&(handle!=NULL))
+                    {
+                        if (strcmp(msg,"close")==0)
+                        {
+                            int h;
+                            if (tt::stringToInt(handle,h))
+                            {
+                                if (CPluginContainer::isCodeEditorPluginAvailable())
+                                { // testing
+                                    retVal=CPluginContainer::codeEditor_close(h,NULL);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
+    return(retVal);
+}
+
 
 //************************************************************************************************************
 //************************************************************************************************************
