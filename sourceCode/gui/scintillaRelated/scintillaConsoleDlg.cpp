@@ -6,8 +6,6 @@
 #include "scintillaConsoleDlg.h"
 #include "v_rep_internal.h"
 #include "luaScriptFunctions.h"
-
-
 #include <QCloseEvent>
 #include <QVBoxLayout>
 #include "app.h"

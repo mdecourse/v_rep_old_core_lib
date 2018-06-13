@@ -8306,8 +8306,8 @@ simInt simReadForceSensor_internal(simInt objectHandle,simFloat* forceVector,sim
             return(-1);
         if (App::ct->simulation->isSimulationStopped())
         {
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SIMULATION_NOT_RUNNING);
-            return(-1);
+//            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SIMULATION_NOT_RUNNING);
+            return(0);
         }
         CForceSensor* it=App::ct->objCont->getForceSensor(handle);
         int retVal=0;
@@ -9423,15 +9423,23 @@ simInt simAuxiliaryConsoleShow_internal(simInt consoleHandle,simBool showState)
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
 #ifdef SIM_WITH_GUI
-        if ( (App::mainWindow!=NULL)&&(App::mainWindow->scintillaConsoleContainer->consoleSetShowState(consoleHandle,showState!=0)) )
-            return(1);
+        int handleFlags=consoleHandle&0x0ff00000;
+        int handle=consoleHandle&0x000fffff;
+        if ((handleFlags&sim_handleflag_extended)!=0)
+        { // we just wanna now if the console is still open
+            if ( (App::mainWindow!=NULL)&&(App::mainWindow->scintillaConsoleContainer->isConsoleHandleValid(handle)) )
+                return(1);
+        }
+        else
+        { // normal operation
+            if ( (App::mainWindow!=NULL)&&(App::mainWindow->scintillaConsoleContainer->consoleSetShowState(handle,showState!=0)) )
+                return(1);
+        }
 #endif
         return(0);
     }
@@ -12597,31 +12605,21 @@ simInt simCheckVisionSensor_internal(simInt sensorHandle,simInt entityHandle,sim
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         if (!doesObjectExist(__func__,sensorHandle))
-        {
             return(-1);
-        }
         if (!isVisionSensor(__func__,sensorHandle))
-        {
             return(-1);
-        }
         if ( (entityHandle!=sim_handle_all)&&(!doesEntityExist(__func__,entityHandle)) )
-        {
             return(-1);
-        }
         if (entityHandle==sim_handle_all)
             entityHandle=-1;
 
         if (!App::ct->mainSettings->visionSensorsEnabled)
-        {
             return(0);
-        }
 
         if (auxValues!=NULL)
             auxValues[0]=NULL;

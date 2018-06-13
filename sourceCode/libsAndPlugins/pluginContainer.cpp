@@ -13,6 +13,8 @@ CPlugin::CPlugin(const char* filename,const char* pluginName)
     _filename=filename;
     name=pluginName;
     instance=NULL;
+    v_repMesh_createCollisionInformationStructure=NULL;
+    _codeEditor_openModal=NULL;
     _loadCount=1;
     extendedVersionInt=-1;
 }
@@ -21,6 +23,8 @@ CPlugin::~CPlugin()
 {
     if (instance!=NULL)
         VVarious::closeLibrary(instance);
+    if (v_repMesh_createCollisionInformationStructure!=NULL)
+        CPluginContainer::currentMeshEngine=NULL;
     if (_codeEditor_openModal!=NULL)
         CPluginContainer::currentCodeEditor=NULL;
 }
@@ -291,7 +295,7 @@ int CPluginContainer::addPlugin(const char* filename,const char* pluginName)
 
 CPlugin* CPluginContainer::getPluginFromName(const char* pluginName)
 {
-    for (int i=0;i<int(_allPlugins.size());i++)
+    for (size_t i=0;i<_allPlugins.size();i++)
     {
         if (_allPlugins[i]->name==std::string(pluginName))
             return(_allPlugins[i]);
