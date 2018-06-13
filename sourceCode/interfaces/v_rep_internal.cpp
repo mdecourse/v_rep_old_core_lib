@@ -11600,14 +11600,14 @@ simInt simGetObjectFloatParameter_internal(simInt objectHandle,simInt parameterI
                     parameter[0]=v(2);
                 retVal=1;
             }
-            if ((parameterID==sim_shapefloatparam_init_velocity_a)||(parameterID==sim_shapefloatparam_init_velocity_b)||(parameterID==sim_shapefloatparam_init_velocity_g))
+            if ((parameterID==sim_shapefloatparam_init_ang_velocity_x)||(parameterID==sim_shapefloatparam_init_ang_velocity_y)||(parameterID==sim_shapefloatparam_init_ang_velocity_z))
             {
                 C3Vector v(shape->getInitialDynamicAngularVelocity());
-                if (parameterID==sim_shapefloatparam_init_velocity_a)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_x)
                     parameter[0]=v(0);
-                if (parameterID==sim_shapefloatparam_init_velocity_b)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_y)
                     parameter[0]=v(1);
-                if (parameterID==sim_shapefloatparam_init_velocity_g)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_z)
                     parameter[0]=v(2);
                 retVal=1;
             }
@@ -11958,14 +11958,14 @@ simInt simSetObjectFloatParameter_internal(simInt objectHandle,simInt parameterI
                 shape->setInitialDynamicLinearVelocity(v);
                 retVal=1;
             }
-            if ((parameterID==sim_shapefloatparam_init_velocity_a)||(parameterID==sim_shapefloatparam_init_velocity_b)||(parameterID==sim_shapefloatparam_init_velocity_g))
+            if ((parameterID==sim_shapefloatparam_init_ang_velocity_x)||(parameterID==sim_shapefloatparam_init_ang_velocity_y)||(parameterID==sim_shapefloatparam_init_ang_velocity_z))
             {
                 C3Vector v(shape->getInitialDynamicAngularVelocity());
-                if (parameterID==sim_shapefloatparam_init_velocity_a)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_x)
                     v(0)=parameter;
-                if (parameterID==sim_shapefloatparam_init_velocity_b)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_y)
                     v(1)=parameter;
-                if (parameterID==sim_shapefloatparam_init_velocity_g)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_z)
                     v(2)=parameter;
                 shape->setInitialDynamicAngularVelocity(v);
                 retVal=1;
