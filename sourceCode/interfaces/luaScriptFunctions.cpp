@@ -17689,8 +17689,9 @@ int _simExecuteScriptString(luaWrap_lua_State* L)
         int s=1;
         if (stack->getStackSize()>0)
         {
-            stack->buildOntoLuaStack(L,true);
-            s++;
+            //stack->printContent(-1);
+            stack->buildOntoLuaStack(L,false);//true);
+            s+=stack->getStackSize();//s++;
         }
         App::ct->interfaceStackContainer->destroyStack(stackHandle);
         LUA_END(s);

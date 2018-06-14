@@ -2366,7 +2366,8 @@ int CLuaScriptObject::executeScriptString(const char* scriptString,CInterfaceSta
         {
             stack->clear();
             if (luaWrap_lua_gettop(L)>intermediateTop)
-                stack->buildFromLuaStack(L,intermediateTop+1,1);
+//                stack->buildFromLuaStack(L,intermediateTop+1,1);
+                stack->buildFromLuaStack(L,intermediateTop+1,luaWrap_lua_gettop(L)-intermediateTop);
         }
     }
     else
@@ -2375,7 +2376,8 @@ int CLuaScriptObject::executeScriptString(const char* scriptString,CInterfaceSta
         {
             stack->clear();
             if (luaWrap_lua_gettop(L)>oldTop)
-                stack->buildFromLuaStack(L,oldTop+1,1);
+//                stack->buildFromLuaStack(L,oldTop+1,1);
+                stack->buildFromLuaStack(L,oldTop+1,luaWrap_lua_gettop(L)-oldTop);
         }
         retVal=0;
     }
