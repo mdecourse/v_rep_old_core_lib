@@ -30,7 +30,7 @@ struct SLuaVariables
 };
 
 
-luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString);
+luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString,int debugLevel);
 void registerTableFunction(luaWrap_lua_State* L,char const* const tableName,char const* const functionName,luaWrap_lua_CFunction functionCallback);
 void registerNewLuaFunctions(luaWrap_lua_State* L);
 void prepareNewLuaVariables_onlyRequire(luaWrap_lua_State* L);
@@ -117,14 +117,16 @@ void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar);
 void moduleCommonPart(luaWrap_lua_State* L,int action,std::string* errorString);
 
 
-int handleChildScriptsRoutine(int callType,CLuaScriptObject* it,CInterfaceStack& inputArguments);
-int launchThreadedChildScriptsRoutine(CLuaScriptObject* it);
+int handleChildScriptsRoutine_OLD(int callType,CLuaScriptObject* it,CInterfaceStack& inputArguments);
+int launchThreadedChildScriptsRoutine_OLD(CLuaScriptObject* it);
 
 void appendAllVrepFunctionNames_spaceSeparated(std::string& keywords,int scriptType,bool scriptIsThreaded);
 void appendAllVrepVariableNames_spaceSeparated(std::string& keywords);
 void pushAllVrepFunctionNamesThatStartSame_autoCompletionList(const std::string& txt,std::vector<std::string>& v,std::map<std::string,bool>& m,int scriptType,bool scriptIsThreaded);
 void pushAllVrepVariableNamesThatStartSame_autoCompletionList(const std::string& txt,std::vector<std::string>& v,std::map<std::string,bool>& m);
 std::string getVrepFunctionCalltip(const char* txt,int scriptType,bool scriptIsThreaded,bool forceDoNotSupportOldApi);
+int isFuncOrConstDeprecated(const char* txt);
+
 
 int _genericFunctionHandler_new(luaWrap_lua_State* L,CLuaCustomFunction* func,std::string& raiseErrorWithMsg);
 int _genericFunctionHandler_old(luaWrap_lua_State* L,CLuaCustomFunction* func);
@@ -136,7 +138,6 @@ const extern SLuaCommands simLuaCommandsOldApi[];
 const extern SLuaVariables simLuaVariables[];
 const extern SLuaVariables simLuaVariablesOldApi[];
 
-extern int _simHandleChildScript(luaWrap_lua_State* L);
 extern int _simHandleChildScripts(luaWrap_lua_State* L);
 extern int _simLaunchThreadedChildScripts(luaWrap_lua_State* L);
 extern int _simHandleSensingChildScripts(luaWrap_lua_State* L);
@@ -504,6 +505,7 @@ extern int _simSetShapeTexture(luaWrap_lua_State* L);
 extern int _simGetShapeTextureId(luaWrap_lua_State* L);
 extern int _simGetCollectionObjects(luaWrap_lua_State* L);
 extern int _simHandleCustomizationScripts(luaWrap_lua_State* L);
+extern int _simHandleAddOnScripts(luaWrap_lua_State* L);
 extern int _simSetScriptAttribute(luaWrap_lua_State* L);
 extern int _simGetScriptAttribute(luaWrap_lua_State* L);
 extern int _simReorientShapeBoundingBox(luaWrap_lua_State* L);
@@ -550,12 +552,25 @@ extern int _simAuxFunc(luaWrap_lua_State* L);
 extern int _simSetReferencedHandles(luaWrap_lua_State* L);
 extern int _simGetReferencedHandles(luaWrap_lua_State* L);
 extern int _simGetGraphCurve(luaWrap_lua_State* L);
+extern int _simGetGraphInfo(luaWrap_lua_State* L);
 extern int _simGetShapeViz(luaWrap_lua_State* L);
 extern int _simExecuteScriptString(luaWrap_lua_State* L);
 extern int _simGetApiFunc(luaWrap_lua_State* L);
 extern int _simGetApiInfo(luaWrap_lua_State* L);
 extern int _simGetModuleInfo(luaWrap_lua_State* L);
+extern int _simRegisterScriptFunction(luaWrap_lua_State* L);
+extern int _simRegisterScriptVariable(luaWrap_lua_State* L);
+extern int _simIsDeprecated(luaWrap_lua_State* L);
+extern int _simGetPersistentDataTags(luaWrap_lua_State* L);
 extern int _simTest(luaWrap_lua_State* L);
+
+extern int _simTestCE_openModal(luaWrap_lua_State* L);
+extern int _simTestCE_open(luaWrap_lua_State* L);
+extern int _simTestCE_setText(luaWrap_lua_State* L);
+extern int _simTestCE_getText(luaWrap_lua_State* L);
+extern int _simTestCE_show(luaWrap_lua_State* L);
+extern int _simTestCE_close(luaWrap_lua_State* L);
+
 
 // DEPRECATED
 extern int _simGetMaterialId(luaWrap_lua_State* L);
@@ -600,3 +615,8 @@ extern int _simLoadUI(luaWrap_lua_State* L);
 extern int _simSaveUI(luaWrap_lua_State* L);
 extern int _simRemoveUI(luaWrap_lua_State* L);
 extern int _simSetUIButtonColor(luaWrap_lua_State* L);
+extern int _simHandleChildScript(luaWrap_lua_State* L);
+extern int _simHandleChildScripts_legacy(luaWrap_lua_State* L);
+extern int _simHandleChildScripts2_legacy(luaWrap_lua_State* L,std::string &functionName, std::string& errorString);
+extern int _simLaunchThreadedChildScripts_legacy(luaWrap_lua_State* L);
+extern int _simResumeThreads_legacy(luaWrap_lua_State* L);

@@ -736,7 +736,11 @@ void CObjFile::_appendMaterialFileToMaterialList(const char* matFile,std::vector
                 else if ((matCode=="map_Kd")&&(currentMat!=NULL))
                     currentMat->textureFile=matValue;
                 else if ((matCode=="Tr")&&(currentMat!=NULL))
+                {
                     tt::getValidFloat(matValue,currentMat->transparency);
+                    if (currentMat->transparency>0.5f)
+                        currentMat->transparency=0.5f;
+                }
                 else if ((matCode=="Ns")&&(currentMat!=NULL))
                 {
                     if (tt::getValidFloat(matValue,currentMat->shininess))

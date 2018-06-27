@@ -212,7 +212,7 @@ CMainWindow::CMainWindow() : QMainWindow()
     statusBar=new CStatusBar();
     statusBar->setReadOnly(true);
     statusBar->setLineWrapMode(QPlainTextEdit::WidgetWidth);
-    statusBar->setMaximumBlockCount(500);
+    statusBar->setMaximumBlockCount(5000);
     statusBar->moveCursor(QTextCursor::End);
     statusBar->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     statusBar->setMinimumHeight(50);
@@ -241,9 +241,9 @@ CMainWindow::CMainWindow() : QMainWindow()
 
 // --- Browser splitter ---
     _modelBrowserSplitter=new QSplitter(Qt::Horizontal);
-    _modelBrowserSplitter->setCollapsible(0,false);
     _modelBrowserSplitter->addWidget(_modelBrowser);
     _modelBrowserSplitter->addWidget(_statusbarSplitter);
+    _modelBrowserSplitter->setCollapsible(0,false);
     _modelBrowserSplitter->setOpaqueResize(false);
     splitSizes.clear();
     splitSizes << 1 << 10000;
@@ -1836,7 +1836,7 @@ void CMainWindow::_actualizetoolbarButtonState()
             for (int i=0;i<int(App::ct->objCont->objectList.size());i++)
             {
                 C3DObject* it2=App::ct->objCont->getObject(App::ct->objCont->objectList[i]);
-                if ( (it2!=it)&&(it2->getLocalObjectProperty()&sim_objectproperty_canupdatedna)&&(it2->getUniqueUpdatableString().compare(it->getUniqueUpdatableString())==0) )
+                if ( (it2!=it)&&(it2->getLocalObjectProperty()&sim_objectproperty_canupdatedna)&&(it2->getDnaString().compare(it->getDnaString())==0) )
                 {
                     if (!model)
                     {

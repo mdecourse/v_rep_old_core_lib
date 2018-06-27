@@ -23,6 +23,7 @@ public:
     QVBoxLayout* bl;
     int currentPage;
     int desiredPage;
+    int topBorderWidth;
 
     CDlgEx* pageDlgs[7];
     int originalHeights[7];

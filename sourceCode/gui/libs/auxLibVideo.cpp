@@ -47,7 +47,8 @@ void CAuxLibVideo::loadLibrary(bool headless)
             cmd.intParams.push_back(sim_msgbox_type_info);
             cmd.stringParams.push_back("Video compression library");
             cmd.stringParams.push_back("Could not find or correctly load the video compression library.");
-            App::appendSimulationThreadCommand(cmd,5000);
+            if(!App::userSettings->doNotShowVideoCompressionLibraryLoadError)
+                App::appendSimulationThreadCommand(cmd,5000);
             printf("Could not find or correctly load the video compression library.\n");
         }
     }

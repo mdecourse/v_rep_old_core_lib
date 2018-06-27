@@ -328,7 +328,7 @@ std::string CGraphingRoutines::getDataUnit(CGraphData* it)
         (dType==GRAPH_NOOBJECT_WORK_THREADS_EXECUTION_TIME)||
         (dType==GRAPH_NOOBJECT_RENDERING_TIME)||
         (dType==GRAPH_NOOBJECT_GCS_OVERALL_CALCULATION_TIME)||
-        (dType==GRAPH_NOOBJECT_MAINSCRIPT_EXECUTION_TIME)||
+        (dType==GRAPH_NOOBJECT_CHILDSCRIPT_EXECUTION_TIME)||
         (dType==GRAPH_NOOBJECT_SIMULATIONPASS_EXECUTION_TIME) )
     {
         if ((it->getDerivativeIntegralAndCumulative()==DATA_STREAM_ORIGINAL)||(it->getDerivativeIntegralAndCumulative()==DATA_STREAM_CUMULATIVE))
@@ -758,8 +758,8 @@ bool CGraphingRoutines::getDataName(int dataIndex,std::string& dataName)
         dataName=IDS_RENDERING_TIME;
     if (dataIndex==GRAPH_NOOBJECT_GCS_OVERALL_CALCULATION_TIME)
         dataName=IDS_GCS_OVERALL_CALCULATION_TIME;
-    if (dataIndex==GRAPH_NOOBJECT_MAINSCRIPT_EXECUTION_TIME)
-        dataName=IDS_MAIN_SCRIPT_EXECUTION_TIME;
+    if (dataIndex==GRAPH_NOOBJECT_CHILDSCRIPT_EXECUTION_TIME)
+        dataName=IDS_CHILD_SCRIPT_EXECUTION_TIME;
     if (dataIndex==GRAPH_NOOBJECT_SIMULATIONPASS_EXECUTION_TIME)
         dataName=IDS_SIMULATION_PASS_EXECUTION_TIME;
 
@@ -797,12 +797,12 @@ bool CGraphingRoutines::getDataValue(int dataIndex,int objectID,float& value,con
         }
         if (dataIndex==GRAPH_NOOBJECT_GCS_OVERALL_CALCULATION_TIME)
         {
-            value=App::ct->calcInfo->getGcsCalculationTime();
+            value=0; // deprecated
             return(true);
         }
-        if (dataIndex==GRAPH_NOOBJECT_MAINSCRIPT_EXECUTION_TIME)
+        if (dataIndex==GRAPH_NOOBJECT_CHILDSCRIPT_EXECUTION_TIME)
         {
-            value=App::ct->calcInfo->getMainScriptExecutionTime();
+            value=App::ct->calcInfo->getChildScriptExecutionTime();
             return(true);
         }
         if (dataIndex==GRAPH_NOOBJECT_RENDERING_TIME)
@@ -1611,7 +1611,7 @@ bool CGraphingRoutines::getGraphObjectName(int dataIndex,int objectID,std::strin
         objName=IDS_OVERALL_CUT_VOLUME;
         return(true);
     }
-    if (dataIndex==GRAPH_NOOBJECT_MAINSCRIPT_EXECUTION_TIME)
+    if (dataIndex==GRAPH_NOOBJECT_CHILDSCRIPT_EXECUTION_TIME)
     {
         objName=IDS_EXECUTION_TIME;
         return(true);

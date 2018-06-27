@@ -14,8 +14,25 @@ enum {  STACK_OBJECT_NULL=0,
         STACK_OBJECT_LIGHTUSERDAT
 };
 
+struct luaWrap_lua_Debug
+{
+  int event;
+  const char* name;
+  const char* namewhat;
+  const char* what;
+  const char* source;
+  int currentline;
+  int linedefined;
+  int lastlinedefined;
+  unsigned char nups;
+  unsigned char nparams;
+  char isvararg;
+  char istailcall;
+  char* short_src;
+  // and other fields..
+};
+
 typedef void luaWrap_lua_State;
-typedef void luaWrap_lua_Debug;
 typedef double luaWrap_lua_Number;
 typedef void (*luaWrap_lua_Hook) (luaWrap_lua_State* L,luaWrap_lua_Debug* ar);
 typedef int (*luaWrap_lua_CFunction) (luaWrap_lua_State* L);
@@ -27,6 +44,11 @@ bool _loadExtLuaLibrary(const char* pathAndFilename);
 
 int luaWrapGet_LUA_MULTRET();
 int luaWrapGet_LUA_MASKCOUNT();
+int luaWrapGet_LUA_MASKCALL();
+int luaWrapGet_LUA_MASKRET();
+int luaWrapGet_LUA_HOOKCOUNT();
+int luaWrapGet_LUA_HOOKCALL();
+int luaWrapGet_LUA_HOOKRET();
 int luaWrapGet_LUA_GLOBALSINDEX();
 
 luaWrap_lua_State* luaWrap_luaL_newstate();
@@ -47,6 +69,7 @@ void luaWrap_lua_createtable(luaWrap_lua_State* L,int narr, int nrec);
 int luaWrap_lua_tointeger(luaWrap_lua_State* L,int idx);
 luaWrap_lua_Number luaWrap_lua_tonumber(luaWrap_lua_State* L,int idx);
 int luaWrap_lua_toboolean(luaWrap_lua_State* L,int idx);
+const void* luaWrap_lua_topointer(luaWrap_lua_State* L,int idx);
 const char* luaWrap_lua_tostring(luaWrap_lua_State* L,int idx);
 const char* luaWrap_lua_tolstring(luaWrap_lua_State* L,int idx,size_t* len);
 int luaWrap_lua_isnumber(luaWrap_lua_State* L,int idx);

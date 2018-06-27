@@ -105,8 +105,6 @@ simInt simHandleMill_internal(simInt millHandle,simFloat* removedSurfaceAndVolum
 simInt simHandleIkGroup_internal(simInt ikGroupHandle);
 simInt simCheckIkGroup_internal(simInt ikGroupHandle,simInt jointCnt,const simInt* jointHandles,simFloat* jointValues,const simInt* jointOptions);
 simInt simHandleDynamics_internal(simFloat deltaTime);
-simInt simGetMechanismHandle_internal(const simChar* mechanismName);
-simInt simHandleMechanism_internal(simInt mechanismHandle);
 simInt simGetScriptHandle_internal(const simChar* scriptName);
 simInt simSetScriptText_internal(simInt scriptHandle,const simChar* scriptText);
 const simChar* simGetScriptText_internal(simInt scriptHandle);
@@ -173,7 +171,7 @@ simInt simGetDialogResult_internal(simInt genericDialogHandle);
 simChar* simGetDialogInput_internal(simInt genericDialogHandle);
 simInt simEndDialog_internal(simInt genericDialogHandle);
 simInt simRegisterScriptCallbackFunction_internal(const simChar* funcNameAtPluginName,const simChar* callTips,simVoid(*callBack)(struct SScriptCallBack* cb));
-simInt simRegisterScriptVariable_internal(const simChar* varName,const simChar* varValue,simInt stackHandle);
+simInt simRegisterScriptVariable_internal(const simChar* varNameAtPluginName,const simChar* varValue,simInt stackHandle);
 simInt simSetJointTargetVelocity_internal(simInt objectHandle,simFloat targetVelocity);
 simInt simGetJointTargetVelocity_internal(simInt objectHandle,simFloat* targetVelocity);
 simInt simSetPathTargetNominalVelocity_internal(simInt objectHandle,simFloat targetNominalVelocity);
@@ -280,8 +278,8 @@ simInt simGetArrayParameter_internal(simInt parameter,simVoid* arrayOfValues);
 simInt simSetIkGroupProperties_internal(simInt ikGroupHandle,simInt resolutionMethod,simInt maxIterations,simFloat damping,void* reserved);
 simInt simSetIkElementProperties_internal(simInt ikGroupHandle,simInt tipDummyHandle,simInt constraints,const simFloat* precision,const simFloat* weight,void* reserved);
 simInt simCameraFitToView_internal(simInt viewHandleOrIndex,simInt objectCount,const simInt* objectHandles,simInt options,simFloat scaling);
-simInt simPersistentDataWrite_internal(const simChar* dataName,const simChar* dataValue,simInt dataLength,simInt options);
-simChar* simPersistentDataRead_internal(const simChar* dataName,simInt* dataLength);
+simInt simPersistentDataWrite_internal(const simChar* dataTag,const simChar* dataValue,simInt dataLength,simInt options);
+simChar* simPersistentDataRead_internal(const simChar* dataTag,simInt* dataLength);
 simInt simIsHandleValid_internal(simInt generalObjectHandle,simInt generalObjectType);
 simInt simHandleVisionSensor_internal(simInt visionSensorHandle,simFloat** auxValues,simInt** auxValuesCount);
 simInt simReadVisionSensor_internal(simInt visionSensorHandle,simFloat** auxValues,simInt** auxValuesCount);
@@ -340,7 +338,6 @@ simInt simScaleObject_internal(simInt objectHandle,simFloat xScale,simFloat ySca
 simInt simSetShapeTexture_internal(simInt shapeHandle,simInt textureId,simInt mappingMode,simInt options,const simFloat* uvScaling,const simFloat* position,const simFloat* orientation);
 simInt simGetShapeTextureId_internal(simInt shapeHandle);
 simInt* simGetCollectionObjects_internal(simInt collectionHandle,simInt* objectCount);
-simInt simHandleCustomizationScripts_internal(simInt callType);
 simInt simSetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,simFloat floatVal,simInt intOrBoolVal);
 simInt simGetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,simFloat* floatVal,simInt* intOrBoolVal);
 simInt simReorientShapeBoundingBox_internal(simInt shapeHandle,simInt relativeToHandle,simInt reservedSetToZero);
@@ -357,7 +354,6 @@ simInt simTransformImage_internal(simUChar* image,const simInt* resolution,simIn
 simInt simGetQHull_internal(const simFloat* inVertices,simInt inVerticesL,simFloat** verticesOut,simInt* verticesOutL,simInt** indicesOut,simInt* indicesOutL,simInt reserved1,const simFloat* reserved2);
 simInt simGetDecimatedMesh_internal(const simFloat* inVertices,simInt inVerticesL,const simInt* inIndices,simInt inIndicesL,simFloat** verticesOut,simInt* verticesOutL,simInt** indicesOut,simInt* indicesOutL,simFloat decimationPercent,simInt reserved1,const simFloat* reserved2);
 simInt simExportIk_internal(const simChar* pathAndFilename,simInt reserved1,simVoid* reserved2);
-simInt simCallScriptFunction_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull);
 simInt simCallScriptFunctionEx_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId);
 simInt simComputeJacobian_internal(simInt ikGroupHandle,simInt options,simVoid* reserved);
 simInt simGetConfigForTipPose_internal(simInt ikGroupHandle,simInt jointCnt,const simInt* jointHandles,simFloat thresholdDist,simInt maxTimeInMs,simFloat* retConfig,const simFloat* metric,simInt collisionPairCnt,const simInt* collisionPairs,const simInt* jointOptions,const simFloat* lowLimits,const simFloat* ranges,simVoid* reserved);
@@ -431,6 +427,9 @@ simChar* simGetApiFunc_internal(simInt scriptHandleOrType,const simChar* apiWord
 simChar* simGetApiInfo_internal(simInt scriptHandleOrType,const simChar* apiWord);
 simInt simSetModuleInfo_internal(const simChar* moduleName,simInt infoType,const simChar* stringInfo,simInt intInfo);
 simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo);
+simInt simIsDeprecated_internal(const simChar* funcOrConst);
+simChar* simGetPersistentDataTags_internal(simInt* tagCount);
+simInt simEventNotification_internal(const simChar* event);
 
 
 
@@ -597,6 +596,10 @@ simInt simHandleGeneralCallbackScript_internal(simInt callbackId,simInt callback
 simInt simRegisterCustomLuaFunction_internal(const simChar* funcName,const simChar* callTips,const simInt* inputArgumentTypes,simVoid(*callBack)(struct SLuaCallBack* p));
 simInt simRegisterContactCallback_internal(simInt(*callBack)(simInt,simInt,simInt,simInt*,simFloat*));
 simInt simRegisterJointCtrlCallback_internal(simInt(*callBack)(simInt,simInt,simInt,const simInt*,const simFloat*,simFloat*));
+simInt simGetMechanismHandle_internal(const simChar* mechanismName);
+simInt simHandleMechanism_internal(simInt mechanismHandle);
+simInt simHandleCustomizationScripts_internal(simInt callType);
+simInt simCallScriptFunction_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull);
 
 
 #endif // !defined(V_REP_internal_INCLUDED_)

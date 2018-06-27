@@ -21,7 +21,6 @@ CConstraintSolverObject::CConstraintSolverObject()
     _base3DObject=-1;
     _objectID=SIM_IDSTART_GCSOBJECT;
     _explicitHandling=false;
-    _calcTimeInMs=0;
     _initialValuesInitialized=false;
     _objectName=IDSOGL_MECHANISM;
 }
@@ -65,7 +64,7 @@ int CConstraintSolverObject::getObjectID()
 
 float CConstraintSolverObject::getCalculationTime()
 {
-    return(float(_calcTimeInMs)*0.001f);
+    return(0.0);
 }
 
 void CConstraintSolverObject::setObjectName(const char* newName)
@@ -234,11 +233,7 @@ bool CConstraintSolverObject::computeGcs()
     if (it==NULL)
         return(false);
     CGeometricConstraintSolverInt work(_base3DObject,_objectID);
-    App::ct->calcInfo->gcsStart();
-    int stTime=VDateTime::getTimeInMs();
     work.solve();
-    _calcTimeInMs=VDateTime::getTimeDiffInMs(stTime);
-    App::ct->calcInfo->gcsEnd();
     return(true);
 }
 

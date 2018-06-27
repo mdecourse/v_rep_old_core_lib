@@ -5,6 +5,7 @@
 CLuaCustomFunction::CLuaCustomFunction(const char* theFullFunctionName,const char* theCallTips,std::vector<int>& theInputArgTypes,void(*callBack)(struct SLuaCallBack* p))
 { // the old way, called through simRegisterCustomLuaFunction
     useStackToExchangeData=false;
+    _functionIsDefinedInScript=false;
     if (theFullFunctionName!=NULL)
     {
         functionName=_getFunctionNameFromFull(theFullFunctionName);
@@ -21,13 +22,22 @@ CLuaCustomFunction::CLuaCustomFunction(const char* theFullFunctionName,const cha
 CLuaCustomFunction::CLuaCustomFunction(const char* theFullFunctionName,const char* theCallTips,void(*callBack)(struct SScriptCallBack* cb))
 { // the new way, called through simRegisterScriptCallbackFunction
     useStackToExchangeData=true;
+    _functionIsDefinedInScript=false;
     if (theFullFunctionName!=NULL)
     {
         functionName=_getFunctionNameFromFull(theFullFunctionName);
         pluginName=_getPluginNameFromFull(theFullFunctionName);
     }
     if (theCallTips!=NULL)
-        callTips=theCallTips;
+    {
+        std::string ct(theCallTips);
+        if (ct.find("####")==0)
+        {
+            ct.erase(0,4);
+            _functionIsDefinedInScript=true;
+        }
+        callTips=ct;
+    }
     callBackFunction_old=NULL;
     callBackFunction_new=callBack;
 }
@@ -36,14 +46,29 @@ CLuaCustomFunction::~CLuaCustomFunction()
 {
 }
 
-bool CLuaCustomFunction::hasCallback()
+bool CLuaCustomFunction::hasCallback() const
 {
     return( (callBackFunction_old!=NULL)||(callBackFunction_new!=NULL) );
 }
 
-void CLuaCustomFunction::registerCustomLuaFunction(luaWrap_lua_State* L,luaWrap_lua_CFunction func)
+bool CLuaCustomFunction::hasCalltipsAndSyntaxHighlighing() const
 {
-    if ( (callBackFunction_old!=NULL)||(callBackFunction_new!=NULL) )
+    return(callTips.length()>0);
+}
+
+bool CLuaCustomFunction::hasAutocompletion() const
+{
+    return( (callTips.length()>0)&&(hasCallback()||_functionIsDefinedInScript) );
+}
+
+bool CLuaCustomFunction::isDeprecated() const
+{
+    return( (callTips.length()==0)||( (!hasCallback())&&(!_functionIsDefinedInScript) ) );
+}
+
+void CLuaCustomFunction::registerCustomLuaFunction(luaWrap_lua_State* L,luaWrap_lua_CFunction func) const
+{
+    if (hasCallback())
     {
         size_t p=functionName.find(".");
         if (p!=std::string::npos)
@@ -70,49 +95,40 @@ void CLuaCustomFunction::registerCustomLuaFunction(luaWrap_lua_State* L,luaWrap_
             luaWrap_lua_setfield(L,luaWrapGet_LUA_GLOBALSINDEX(),functionName.c_str());
         }
     }
-
-/* Following until 21/5/2017:
-    luaWrap_lua_pushnumber(L,functionID+1);
-    luaWrap_lua_pushcclosure(L,func,1);
-    luaWrap_lua_setfield(L,luaWrapGet_LUA_GLOBALSINDEX(),functionName.c_str());
-*/
-
-/* removed on 31/5/2016
-#ifdef LIN_VREP
-    luaWrap_lua_setglobal(L,functionName.c_str());
-#else
-    luaWrap_lua_setfield(L,luaWrapGet_LUA_GLOBALSINDEX(),functionName.c_str());
-#endif
-*/
 }
 
-bool CLuaCustomFunction::getUsesStackToExchangeData()
+bool CLuaCustomFunction::getUsesStackToExchangeData() const
 {
     return(useStackToExchangeData);
 }
 
-bool CLuaCustomFunction::isFunctionNameSame(const char* fullName)
+bool CLuaCustomFunction::isFunctionNameSame(const char* fullName) const
 {
     std::string funcName(_getFunctionNameFromFull(fullName));
     return(functionName.compare(funcName)==0);
 }
 
-std::string CLuaCustomFunction::getFunctionName()
+bool CLuaCustomFunction::isPluginNameSame(const char* plugName) const
+{
+    return(pluginName.compare(plugName)==0);
+}
+
+std::string CLuaCustomFunction::getFunctionName() const
 {
     return(functionName);
 }
 
-std::string CLuaCustomFunction::getPluginName()
+std::string CLuaCustomFunction::getPluginName() const
 {
     return(pluginName);
 }
 
-std::string CLuaCustomFunction::getCallTips()
+std::string CLuaCustomFunction::getCallTips() const
 {
     return(callTips);
 }
 
-int CLuaCustomFunction::getFunctionID()
+int CLuaCustomFunction::getFunctionID() const
 {
     return(functionID);
 }

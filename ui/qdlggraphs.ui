@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>380</width>
-    <height>584</height>
+    <height>534</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
      <x>10</x>
      <y>10</y>
      <width>361</width>
-     <height>171</height>
+     <height>121</height>
     </rect>
    </property>
    <property name="title">
@@ -141,92 +141,44 @@
      <string>Remove all static streams/curves</string>
     </property>
    </widget>
-   <widget class="QGroupBox" name="groupBox_2">
+   <widget class="QToolButton" name="qqAdjustBackgroundColor">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>85</y>
-      <width>341</width>
-      <height>71</height>
+      <y>90</y>
+      <width>141</width>
+      <height>18</height>
      </rect>
     </property>
-    <property name="title">
-     <string>Time graph / xy graph properties</string>
+    <property name="focusPolicy">
+     <enum>Qt::StrongFocus</enum>
     </property>
-    <property name="flat">
-     <bool>false</bool>
+    <property name="text">
+     <string>Adjust background color</string>
     </property>
-    <widget class="QCheckBox" name="qqDisplayGrids">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>20</y>
-       <width>131</width>
-       <height>18</height>
-      </rect>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::StrongFocus</enum>
-     </property>
-     <property name="text">
-      <string>Display grids</string>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="qqDisplayGridValues">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>40</y>
-       <width>151</width>
-       <height>18</height>
-      </rect>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::StrongFocus</enum>
-     </property>
-     <property name="text">
-      <string>Display grid values</string>
-     </property>
-    </widget>
-    <widget class="QToolButton" name="qqAdjustBackgroundColor">
-     <property name="geometry">
-      <rect>
-       <x>160</x>
-       <y>20</y>
-       <width>181</width>
-       <height>18</height>
-      </rect>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::StrongFocus</enum>
-     </property>
-     <property name="text">
-      <string>Adjust background color</string>
-     </property>
-    </widget>
-    <widget class="QToolButton" name="qqAdjustGridColor">
-     <property name="geometry">
-      <rect>
-       <x>160</x>
-       <y>40</y>
-       <width>181</width>
-       <height>18</height>
-      </rect>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::StrongFocus</enum>
-     </property>
-     <property name="text">
-      <string>Adjust graduation/grid color</string>
-     </property>
-    </widget>
+   </widget>
+   <widget class="QToolButton" name="qqAdjustGridColor">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>90</y>
+      <width>141</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::StrongFocus</enum>
+    </property>
+    <property name="text">
+     <string>Adjust grid color</string>
+    </property>
    </widget>
   </widget>
   <widget class="QGroupBox" name="groupBox_4">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>190</y>
+     <y>140</y>
      <width>361</width>
      <height>321</height>
     </rect>
@@ -478,7 +430,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>520</y>
+     <y>470</y>
      <width>361</width>
      <height>51</height>
     </rect>
@@ -530,9 +482,7 @@
   <tabstop>qqBufferSize</tabstop>
   <tabstop>qqShowXYZPlanes</tabstop>
   <tabstop>qqRemoveAllStatics</tabstop>
-  <tabstop>qqDisplayGrids</tabstop>
   <tabstop>qqAdjustBackgroundColor</tabstop>
-  <tabstop>qqDisplayGridValues</tabstop>
   <tabstop>qqAdjustGridColor</tabstop>
   <tabstop>qqAddNewDataStream</tabstop>
   <tabstop>qqRecordingList</tabstop>

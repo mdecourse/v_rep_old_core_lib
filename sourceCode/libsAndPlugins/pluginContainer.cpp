@@ -13,6 +13,8 @@ CPlugin::CPlugin(const char* filename,const char* pluginName)
     _filename=filename;
     name=pluginName;
     instance=NULL;
+    v_repMesh_createCollisionInformationStructure=NULL;
+    _codeEditor_openModal=NULL;
     _loadCount=1;
     extendedVersionInt=-1;
 }
@@ -21,6 +23,10 @@ CPlugin::~CPlugin()
 {
     if (instance!=NULL)
         VVarious::closeLibrary(instance);
+    if (v_repMesh_createCollisionInformationStructure!=NULL)
+        CPluginContainer::currentMeshEngine=NULL;
+    if (_codeEditor_openModal!=NULL)
+        CPluginContainer::currentCodeEditor=NULL;
 }
 
 int CPlugin::load()
@@ -159,9 +165,19 @@ int CPlugin::load()
                 v_repMesh_getProxSensorOctreeDistanceIfSmaller=(ptrv_repMesh_getProxSensorOctreeDistanceIfSmaller)(VVarious::resolveLibraryFuncName(lib,"v_repMesh_getProxSensorOctreeDistanceIfSmaller"));
                 v_repMesh_removePointCloudPointsFromOctree=(ptrv_repMesh_removePointCloudPointsFromOctree)(VVarious::resolveLibraryFuncName(lib,"v_repMesh_removePointCloudPointsFromOctree"));
 
-
                 if ((v_repMesh_createCollisionInformationStructure!=NULL)&&(v_repMesh_copyCollisionInformationStructure!=NULL)) // just check the 2 first functions
                     CPluginContainer::currentMeshEngine=this;
+
+                _codeEditor_openModal=(ptrCodeEditor_openModal)(VVarious::resolveLibraryFuncName(lib,"codeEditor_openModal"));
+                _codeEditor_open=(ptrCodeEditor_open)(VVarious::resolveLibraryFuncName(lib,"codeEditor_open"));
+                _codeEditor_setText=(ptrCodeEditor_setText)(VVarious::resolveLibraryFuncName(lib,"codeEditor_setText"));
+                _codeEditor_getText=(ptrCodeEditor_getText)(VVarious::resolveLibraryFuncName(lib,"codeEditor_getText"));
+                _codeEditor_show=(ptrCodeEditor_show)(VVarious::resolveLibraryFuncName(lib,"codeEditor_show"));
+                _codeEditor_close=(ptrCodeEditor_close)(VVarious::resolveLibraryFuncName(lib,"codeEditor_close"));
+
+                if ((_codeEditor_openModal!=NULL)&&(_codeEditor_open!=NULL)) // just check the 2 first functions
+                    CPluginContainer::currentCodeEditor=this;
+
 
                 // For other specific plugins:
                 if (pov!=NULL)
@@ -234,6 +250,7 @@ ptrMeshDecimator CPluginContainer::_meshDecimatorAddress=NULL;
 
 CPlugin* CPluginContainer::currentDynEngine=NULL;
 CPlugin* CPluginContainer::currentMeshEngine=NULL;
+CPlugin* CPluginContainer::currentCodeEditor=NULL;
 
 VMutex _meshMutex;
 
@@ -278,7 +295,7 @@ int CPluginContainer::addPlugin(const char* filename,const char* pluginName)
 
 CPlugin* CPluginContainer::getPluginFromName(const char* pluginName)
 {
-    for (int i=0;i<int(_allPlugins.size());i++)
+    for (size_t i=0;i<_allPlugins.size();i++)
     {
         if (_allPlugins[i]->name==std::string(pluginName))
             return(_allPlugins[i]);
@@ -675,6 +692,11 @@ int CPluginContainer::dyn_getEngineInfo(int* engine,int* data1,char* data2,char*
 bool CPluginContainer::isMeshPluginAvailable()
 {
     return(currentMeshEngine!=NULL);
+}
+
+bool CPluginContainer::isCodeEditorPluginAvailable()
+{
+    return(currentCodeEditor!=NULL);
 }
 
 void CPluginContainer::mesh_lockUnlock(bool lock)
@@ -1759,4 +1781,68 @@ bool CPluginContainer::mesh_removePointCloudPointsFromOctree(void* pointCloudInf
     if (currentMeshEngine!=NULL)
         return(currentMeshEngine->v_repMesh_removePointCloudPointsFromOctree(pointCloudInfo,_pointCloudPCTM,octreeInfo,_octreePCTM,&removedCnt)!=0);
     return(false);
+}
+
+bool CPluginContainer::codeEditor_openModal(const char* initText,const char* properties,std::string& modifiedText,int* positionAndSize)
+{
+    bool retVal=false;
+    if (currentCodeEditor!=NULL)
+    {
+        char* buffer=currentCodeEditor->_codeEditor_openModal(initText,properties,positionAndSize);
+        if (buffer!=NULL)
+        {
+            modifiedText=buffer;
+            delete[] buffer;
+            retVal=true;
+        }
+    }
+    return(retVal);
+}
+
+int CPluginContainer::codeEditor_open(const char* initText,const char* properties)
+{
+    int retVal=-1;
+    if (currentCodeEditor!=NULL)
+        retVal=currentCodeEditor->_codeEditor_open(initText,properties);
+    return(retVal);
+}
+
+int CPluginContainer::codeEditor_setText(int handle,const char* text,int insertMode)
+{
+    int retVal=-1;
+    if (currentCodeEditor!=NULL)
+        retVal=currentCodeEditor->_codeEditor_setText(handle,text,insertMode);
+    return(retVal);
+}
+
+bool CPluginContainer::codeEditor_getText(int handle,std::string& text)
+{
+    bool retVal=false;
+    if (currentCodeEditor!=NULL)
+    {
+        char* buffer=currentCodeEditor->_codeEditor_getText(handle);
+        if (buffer!=NULL)
+        {
+            text=buffer;
+            delete[] buffer;
+            retVal=true;
+        }
+    }
+    return(retVal);
+}
+
+int CPluginContainer::codeEditor_show(int handle,int showState)
+{
+    int retVal=-1;
+    if (currentCodeEditor!=NULL)
+        retVal=currentCodeEditor->_codeEditor_show(handle,showState);
+    return(retVal);
+}
+
+int CPluginContainer::codeEditor_close(int handle,int* positionAndSize)
+{
+    int retVal=-1;
+    if (currentCodeEditor!=NULL)
+        retVal=currentCodeEditor->_codeEditor_close(handle,positionAndSize);
+    return(retVal);
 }

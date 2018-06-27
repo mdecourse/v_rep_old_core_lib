@@ -79,13 +79,15 @@ SIMPLE_VTHREAD_RETURN_TYPE _workThread(SIMPLE_VTHREAD_ARGUMENT_TYPE lpData)
         // Handle customization script execution:
         if ( App::ct->simulation->isSimulationStopped()&&(App::getEditModeType()==NO_EDIT_MODE) )
         {
-            App::ct->luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_nonsimulation,NULL,NULL);
+            App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_nonsimulation,NULL,NULL,NULL);
             App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
+            App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_nonsimulation,NULL,NULL);
         }
         if (App::ct->simulation->isSimulationPaused())
         {
-            App::ct->luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_suspended,NULL,NULL);
+            App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_suspended,NULL,NULL,NULL);
             App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
+            App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_suspended,NULL,NULL);
         }
 
         // Handle the main loop (one pass):
@@ -95,7 +97,7 @@ SIMPLE_VTHREAD_RETURN_TYPE _workThread(SIMPLE_VTHREAD_ARGUMENT_TYPE lpData)
         App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_childscript);
         App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_jointctrlcallback);
 
-        // Handle add-on execution:
+        // Keep for backward compatibility:
         if (!App::ct->simulation->isSimulationRunning()) // when simulation is running, we handle the add-on scripts after the main script was called
             App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aos_run,NULL,NULL);
 
@@ -689,32 +691,56 @@ void App::setFullScreen(bool f)
 #endif
 }
 
-void App::addStatusbarMessage(const std::string& txt)
+void App::addStatusbarMessage(const std::string& txt,bool scriptErrorMsg/*=false*/)
 {
     if (!VThread::isCurrentThreadTheUiThread())
     { // we are NOT in the UI thread. We execute the command in a delayed manner:
         SUIThreadCommand cmdIn;
-        SUIThreadCommand cmdOut;
         cmdIn.cmdId=ADD_STATUSBAR_MESSAGE_UITHREADCMD;
         cmdIn.stringParams.push_back(txt);
-        uiThread->executeCommandViaUiThread(&cmdIn,&cmdOut);
+        cmdIn.boolParams.push_back(scriptErrorMsg);
+        uiThread->executeCommandViaUiThread(&cmdIn,NULL);
     }
     else
     {
         #ifdef SIM_WITH_GUI
+            std::string str(txt);
+            size_t p=txt.rfind("@html");
+            bool html=false;
+            if ( (p!=std::string::npos)&&(p==strlen(txt.c_str())-5) )
+            {
+                html=true;
+                str.assign(txt.begin(),txt.end()-5);
+            }
+
             if (mainWindow!=NULL)
             {
                 if ((operationalUIParts&sim_gui_statusbar)&&(mainWindow->statusBar!=NULL) )
                 {
-                    mainWindow->statusBar->appendPlainText(txt.c_str());
+                    if (html)
+                    {
+                        str+="<font color='black'> </font>"; // color is otherwise not reset
+                        mainWindow->statusBar->appendHtml(str.c_str());
+                    }
+                    else
+                        mainWindow->statusBar->appendPlainText(str.c_str());
                     mainWindow->statusBar->moveCursor(QTextCursor::End);
-        //            mainWindow->statusBar->moveCursor(QTextCursor::PreviousBlock);
                     mainWindow->statusBar->verticalScrollBar()->setValue(mainWindow->statusBar->verticalScrollBar()->maximum());
                     mainWindow->statusBar->ensureCursorVisible();
                 }
             }
             if ( ((mainWindow==NULL)&&userSettings->redirectStatusbarMsgToConsoleInHeadlessMode)||CMiscBase::handleVerSpec_statusbarMsgToConsole() )
-                printf("[statusbar]: %s\n",txt.c_str());
+            {
+                if (html)
+                {
+                    QTextDocument text;
+                    text.setHtml(str.c_str());
+                    printf("[statusbar]: %s\n",text.toPlainText().toStdString().c_str());
+                }
+                else
+                    printf("[statusbar]: %s\n",str.c_str());
+            }
+            handleVerSpecStatusBarMsg(str.c_str(),html,scriptErrorMsg);
         #endif
     }
 }

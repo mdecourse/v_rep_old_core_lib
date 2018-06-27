@@ -15,10 +15,10 @@ CScintillaConsoleContainer::CScintillaConsoleContainer()
 
 CScintillaConsoleContainer::~CScintillaConsoleContainer()
 {
-    for (int i=0;i<int(_allConsoles.size());i++)
+    for (size_t i=0;i<_allConsoles.size();i++)
         delete _allConsoles[i];
     _allConsoles.clear();
-    for (int i=0;i<int(_allUninitializedConsoles.size());i++)
+    for (size_t i=0;i<_allUninitializedConsoles.size();i++)
         delete _allUninitializedConsoles[i];
     _allUninitializedConsoles.clear();
 }
@@ -70,7 +70,7 @@ void CScintillaConsoleContainer::simulationEnded()
 
 CConsoleInitInfo* CScintillaConsoleContainer::getConsoleInfoFromHandle(int handle)
 {
-    for (int i=0;i<int(_allUninitializedConsoles.size());i++)
+    for (size_t i=0;i<_allUninitializedConsoles.size();i++)
     {
         if (_allUninitializedConsoles[i]->getHandle()==handle)
             return(_allUninitializedConsoles[i]);
@@ -80,12 +80,27 @@ CConsoleInitInfo* CScintillaConsoleContainer::getConsoleInfoFromHandle(int handl
 
 CScintillaConsoleDlg* CScintillaConsoleContainer::getConsoleFromHandle(int handle)
 {
-    for (int i=0;i<int(_allConsoles.size());i++)
+    for (size_t i=0;i<_allConsoles.size();i++)
     {
         if (_allConsoles[i]->info->getHandle()==handle)
             return(_allConsoles[i]);
     }
     return(NULL);
+}
+
+bool CScintillaConsoleContainer::isConsoleHandleValid(int handle)
+{
+    for (size_t i=0;i<_allConsoles.size();i++)
+    {
+        if (_allConsoles[i]->info->getHandle()==handle)
+            return(true);
+    }
+    for (size_t i=0;i<_allUninitializedConsoles.size();i++)
+    {
+        if (_allUninitializedConsoles[i]->_consoleHandle==handle)
+            return(true);
+    }
+    return(false);
 }
 
 int CScintillaConsoleContainer::addConsoleInfo(CConsoleInitInfo* consoleInfo)
@@ -98,7 +113,7 @@ int CScintillaConsoleContainer::addConsoleInfo(CConsoleInitInfo* consoleInfo)
 
 bool CScintillaConsoleContainer::consoleSetShowState(int handle,bool show)
 {
-    for (int i=0;i<int(_allConsoles.size());i++)
+    for (size_t i=0;i<_allConsoles.size();i++)
     {
         if (_allConsoles[i]->info->getHandle()==handle)
         {
@@ -106,7 +121,7 @@ bool CScintillaConsoleContainer::consoleSetShowState(int handle,bool show)
             return(true);
         }
     }
-    for (int i=0;i<int(_allUninitializedConsoles.size());i++)
+    for (size_t i=0;i<_allUninitializedConsoles.size();i++)
     {
         if (_allUninitializedConsoles[i]->_consoleHandle==handle)
         {
@@ -119,7 +134,7 @@ bool CScintillaConsoleContainer::consoleSetShowState(int handle,bool show)
 
 bool CScintillaConsoleContainer::removeConsole(int handle)
 {
-    for (int i=0;i<int(_allConsoles.size());i++)
+    for (size_t i=0;i<_allConsoles.size();i++)
     {
         if (_allConsoles[i]->info->getHandle()==handle)
         {
@@ -127,7 +142,7 @@ bool CScintillaConsoleContainer::removeConsole(int handle)
             return(true);
         }
     }
-    for (int i=0;i<int(_allUninitializedConsoles.size());i++)
+    for (size_t i=0;i<_allUninitializedConsoles.size();i++)
     {
         if (_allUninitializedConsoles[i]->_consoleHandle==handle)
         {
@@ -166,7 +181,7 @@ void CScintillaConsoleContainer::handleConsoles()
         }
 
         // 3. Handle text update and other (important for threads that printed text):
-        for (int i=0;i<int(_allConsoles.size());i++)
+        for (size_t i=0;i<_allConsoles.size();i++)
             _allConsoles[i]->handleTextUpdate();
     }
     else
@@ -180,6 +195,6 @@ void CScintillaConsoleContainer::handleConsoles()
 
 void CScintillaConsoleContainer::hideOrShowAll(bool showState)
 {
-    for (int i=0;i<int(_allConsoles.size());i++)
+    for (size_t i=0;i<_allConsoles.size();i++)
         _allConsoles[i]->showOrHideDlg(showState);
 }

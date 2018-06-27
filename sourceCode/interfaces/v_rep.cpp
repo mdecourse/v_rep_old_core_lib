@@ -387,14 +387,6 @@ VREP_DLLEXPORT simInt simHandleDynamics(simFloat deltaTime)
 {
     return(simHandleDynamics_internal(deltaTime));
 }
-VREP_DLLEXPORT simInt simGetMechanismHandle(const simChar* mechanismName)
-{
-    return(simGetMechanismHandle_internal(mechanismName));
-}
-VREP_DLLEXPORT simInt simHandleMechanism(simInt mechanismHandle)
-{
-    return(simHandleMechanism_internal(mechanismHandle));
-}
 VREP_DLLEXPORT simInt simGetScriptHandle(const simChar* scriptName)
 {
     return(simGetScriptHandle_internal(scriptName));
@@ -659,9 +651,9 @@ VREP_DLLEXPORT simInt simRegisterScriptCallbackFunction(const simChar* funcNameA
 {
     return(simRegisterScriptCallbackFunction_internal(funcNameAtPluginName,callTips,callBack));
 }
-VREP_DLLEXPORT simInt simRegisterScriptVariable(const simChar* varName,const simChar* varValue,simInt stackHandle)
+VREP_DLLEXPORT simInt simRegisterScriptVariable(const simChar* varNameAtPluginName,const simChar* varValue,simInt stackHandle)
 {
-    return(simRegisterScriptVariable_internal(varName,varValue,stackHandle));
+    return(simRegisterScriptVariable_internal(varNameAtPluginName,varValue,stackHandle));
 }
 VREP_DLLEXPORT simInt simSetJointTargetVelocity(simInt objectHandle,simFloat targetVelocity)
 {
@@ -1335,10 +1327,6 @@ VREP_DLLEXPORT simInt* simGetCollectionObjects(simInt collectionHandle,simInt* o
 {
     return(simGetCollectionObjects_internal(collectionHandle,objectCount));
 }
-VREP_DLLEXPORT simInt simHandleCustomizationScripts(simInt callType)
-{
-    return(simHandleCustomizationScripts_internal(callType));
-}
 VREP_DLLEXPORT simInt simSetScriptAttribute(simInt scriptHandle,simInt attributeID,simFloat floatVal,simInt intOrBoolVal)
 {
     return(simSetScriptAttribute_internal(scriptHandle,attributeID,floatVal,intOrBoolVal));
@@ -1405,10 +1393,6 @@ VREP_DLLEXPORT simInt simGetDecimatedMesh(const simFloat* inVertices,simInt inVe
 VREP_DLLEXPORT simInt simExportIk(const simChar* pathAndFilename,simInt reserved1,simVoid* reserved2)
 {
     return(simExportIk_internal(pathAndFilename,reserved1,reserved2));
-}
-VREP_DLLEXPORT simInt simCallScriptFunction(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull)
-{
-    return(simCallScriptFunction_internal(scriptHandleOrType,functionNameAtScriptName,data,reservedSetToNull));
 }
 VREP_DLLEXPORT simInt simCallScriptFunctionEx(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId)
 {
@@ -1702,6 +1686,18 @@ VREP_DLLEXPORT simInt simSetModuleInfo(const simChar* moduleName,simInt infoType
 VREP_DLLEXPORT simInt simGetModuleInfo(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo)
 {
     return(simGetModuleInfo_internal(moduleName,infoType,stringInfo,intInfo));
+}
+VREP_DLLEXPORT simInt simIsDeprecated(const simChar* funcOrConst)
+{
+    return(simIsDeprecated_internal(funcOrConst));
+}
+VREP_DLLEXPORT simChar* simGetPersistentDataTags(simInt* tagCount)
+{
+    return(simGetPersistentDataTags_internal(tagCount));
+}
+VREP_DLLEXPORT simInt simEventNotification(const simChar* event)
+{
+    return(simEventNotification_internal(event));
 }
 
 
@@ -2352,6 +2348,22 @@ VREP_DLLEXPORT simInt simRegisterContactCallback(simInt(*callBack)(simInt,simInt
 VREP_DLLEXPORT simInt simRegisterJointCtrlCallback(simInt(*callBack)(simInt,simInt,simInt,const simInt*,const simFloat*,simFloat*))
 {
     return(simRegisterJointCtrlCallback_internal(callBack));
+}
+VREP_DLLEXPORT simInt simGetMechanismHandle(const simChar* mechanismName)
+{
+    return(simGetMechanismHandle_internal(mechanismName));
+}
+VREP_DLLEXPORT simInt simHandleMechanism(simInt mechanismHandle)
+{
+    return(simHandleMechanism_internal(mechanismHandle));
+}
+VREP_DLLEXPORT simInt simHandleCustomizationScripts(simInt callType)
+{
+    return(simHandleCustomizationScripts_internal(callType));
+}
+VREP_DLLEXPORT simInt simCallScriptFunction(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull)
+{
+    return(simCallScriptFunction_internal(scriptHandleOrType,functionNameAtScriptName,data,reservedSetToNull));
 }
 // Deprecated end
 

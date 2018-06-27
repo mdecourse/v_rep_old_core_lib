@@ -18,6 +18,8 @@ struct SCustomRefs
 class CShape;
 class CCustomData;
 class CViewableBase;
+class CLuaScriptObject;
+class CInterfaceStack;
 
 class C3DObject  
 {
@@ -99,6 +101,10 @@ public:
     bool getRestoreToDefaultLights() const;
     
     // Various functions
+    void getChildScriptsToRun_OLD(std::vector<int>& childScriptIDs);
+    int getScriptExecutionOrder(int scriptType) const;
+    int getScriptsToExecute(int scriptType,int parentTraversalDirection,std::vector<CLuaScriptObject*>& scripts);
+
     void scalePosition(float scalingFactor);
     void getAllShapeObjectsRecursive(std::vector<CShape*>* shapeList,bool baseIncluded=true,bool start=true) const;
     void getAllObjectsRecursive(std::vector<C3DObject*>* objectList,bool baseIncluded=true,bool start=true) const;
@@ -131,7 +137,6 @@ public:
     void setModelBase(bool m);
     bool getModelBase() const;
 
-    void getChildScriptsToRun(std::vector<int>& childScriptIDs);
     void setObjectManipulationModePermissions(int p);
     int getObjectManipulationModePermissions() const;
     void setObjectTranslationDisabledDuringSimulation(bool d);
@@ -237,8 +242,9 @@ public:
     C7Vector getCumulativeTransformationPart1_forDisplay(bool guiIsRendering) const;
     C7Vector getLocalTransformationPart1_forDisplay(bool guiIsRendering) const;
 
-    void generateUniqueUpdatableString();
-    std::string getUniqueUpdatableString() const;
+    void generateDnaString();
+    std::string getDnaString() const;
+    std::string getUniquePersistentIdString() const;
 
     std::string getExtensionString() const;
     void setExtensionString(const char* str);
@@ -310,7 +316,8 @@ protected:
 
     std::vector<std::string> _assemblyMatchValuesChild;
     std::vector<std::string> _assemblyMatchValuesParent;
-    std::string _uniqueUpdatableString;
+    std::string _dnaString;
+    std::string _uniquePersistentIdString;
 
     C7Vector _transformation; // Quaternion and position
     int _objectID;

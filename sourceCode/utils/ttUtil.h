@@ -31,6 +31,7 @@ public:
     static std::string decode64(const std::string &data);
     static std::string encode64(const std::string &data);
     static std::string generateUniqueString();
+    static std::string generateUniqueReadableString();
 
     static int replaceWordInLine(std::string& line,const std::string& oldText,const std::string& newText);
 };

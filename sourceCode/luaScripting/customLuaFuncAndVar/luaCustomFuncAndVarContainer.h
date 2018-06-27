@@ -11,9 +11,13 @@ public:
     virtual ~CLuaCustomFuncAndVarContainer();
 
     void removeAllCustomFunctions();
+    void removeAllCustomVariables();
     bool removeCustomFunction(const char* fullFunctionName);
-    void announcePluginWasKilled(const char* pluginName);
+    bool removeCustomVariable(const char* fullVariableName);
     bool insertCustomFunction(CLuaCustomFunction* function);
+    bool insertCustomVariable(const char* fullVariableName,const char* variableValue,int stackHandle);
+
+    void announcePluginWasKilled(const char* pluginName);
     bool doesCustomFunctionAlreadyExist(CLuaCustomFunction* function);
     CLuaCustomFunction* getCustomFunctionFromID(int functionID);
     void appendAllFunctionNames_spaceSeparated(std::string& v);
@@ -21,15 +25,13 @@ public:
 
     void outputWarningWithFunctionNamesWithoutPlugin(bool o);
 
-    void removeAllCustomVariables();
-    bool removeCustomVariable(const char* fullVariableName);
-    bool insertCustomVariable(const char* fullVariableName,const char* variableValue,int stackHandle);
     void assignCustomVariables(luaWrap_lua_State* L,bool handleOnlyRequireAssignments);
     void appendAllVariableNames_spaceSeparated_keywordHighlight(std::string& v);
     void pushAllFunctionNamesThatStartSame_autoCompletionList(const std::string& txt,std::vector<std::string>& v,std::map<std::string,bool>& m);
     void pushAllVariableNamesThatStartSame_autoCompletionList(const std::string& txt,std::vector<std::string>& v,std::map<std::string,bool>& m);
 
     bool isVariableNamePresent(const char* name);
+    int isFuncOrConstDeprecated(const char* name);
 
 
     std::vector<CLuaCustomFunction*> allCustomFunctions;

@@ -298,7 +298,7 @@ void CUiThread::__executeCommandViaUiThread(SUIThreadCommand* cmdIn,SUIThreadCom
     }
 
     if ( (App::mainWindow!=NULL)&&(cmdIn->cmdId==ADD_STATUSBAR_MESSAGE_UITHREADCMD) )
-        App::addStatusbarMessage(cmdIn->stringParams[0]);
+        App::addStatusbarMessage(cmdIn->stringParams[0],cmdIn->boolParams[0]);
     if ( (App::mainWindow!=NULL)&&(cmdIn->cmdId==CLEAR_STATUSBAR_UITHREADCMD) )
         App::clearStatusbar();
 

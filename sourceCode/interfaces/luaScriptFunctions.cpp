@@ -145,7 +145,7 @@ const SLuaCommands simLuaCommands[]=
     {"sim.getSimulatorMessage",_simGetSimulatorMessage,          "number messageID,table_4 auxiliaryData,table auxiliaryData2=sim.getSimulatorMessage()",true},
     {"sim.resetGraph",_simResetGraph,                            "number result=sim.resetGraph(number objectHandle)",true},
     {"sim.handleGraph",_simHandleGraph,                          "number result=sim.handleGraph(number objectHandle,number simulationTime)",true},
-    {"sim.addStatusbarMessage",_simAddStatusbarMessage,          "number result=sim.addStatusbarMessage(string message)",true},
+    {"sim.addStatusbarMessage",_simAddStatusbarMessage,          "number result=sim.addStatusbarMessage(string message=nil)",true},
     {"sim.getLastError",_simGetLastError,                        "string lastError=sim.getLastError()",true},
     {"sim.getObjects",_simGetObjects,                            "number objectHandle=sim.getObjects(number index,number objectType)",true},
     {"sim.refreshDialogs",_simRefreshDialogs,                    "number result=sim.refreshDialogs(number refreshDegree)",true},
@@ -214,7 +214,7 @@ const SLuaCommands simLuaCommands[]=
     {"sim.setThreadAutomaticSwitch",_simSetThreadAutomaticSwitch,"number result=sim.setThreadAutomaticSwitch(boolean automaticSwitch)",true},
     {"sim.getThreadAutomaticSwitch",_simGetThreadAutomaticSwitch,"boolean result=sim.getThreadAutomaticSwitch()",true},
     {"sim.setThreadSwitchTiming",_simSetThreadSwitchTiming,      "number result=sim.setThreadSwitchTiming(number deltaTimeInMilliseconds)",true},
-    {"sim.setThreadResumeLocation",_simSetThreadResumeLocation,  "number result=sim.setThreadResumeLocation(number location,number order)",true},
+    {"sim.setThreadResumeLocation",_simSetThreadResumeLocation,  "number result=sim.setThreadResumeLocation(number location,number priority)",true},
     {"sim.resumeThreads",_simResumeThreads,                      "number count=sim.resumeThreads(number location)",true},
     {"sim.switchThread",_simSwitchThread,                        "number result=sim.switchThread()",true},
     {"sim.createIkGroup",_simCreateIkGroup,                      "number ikGroupHandle=sim.createIkGroup(number options,table intParams=nil,table floatParams=nil)",true},
@@ -275,8 +275,8 @@ const SLuaCommands simLuaCommands[]=
     {"sim.clearStringSignal",_simClearStringSignal,              "number clearCount=sim.clearStringSignal(string signalName)",true},
     {"sim.getSignalName",_simGetSignalName,                      "string signalName=sim.getSignalName(number signalIndex,number signalType)",true},
     {"sim.waitForSignal",_simWaitForSignal,                      "number/string signalValue=sim.waitForSignal(string signalName)",true},
-    {"sim.persistentDataWrite",_simPersistentDataWrite,          "number result=sim.persistentDataWrite(string dataName,string dataValue,number options=0)",true},
-    {"sim.persistentDataRead",_simPersistentDataRead,            "string dataValue=sim.persistentDataRead(string dataName)",true},
+    {"sim.persistentDataWrite",_simPersistentDataWrite,          "number result=sim.persistentDataWrite(string dataTag,string dataValue,number options=0)",true},
+    {"sim.persistentDataRead",_simPersistentDataRead,            "string dataValue=sim.persistentDataRead(string dataTag)",true},
     {"sim.setObjectProperty",_simSetObjectProperty,              "number result=sim.setObjectProperty(number objectHandle,number property)",true},
     {"sim.getObjectProperty",_simGetObjectProperty,              "number property=sim.getObjectProperty(number objectHandle)",true},
     {"sim.setObjectSpecialProperty",_simSetObjectSpecialProperty,"number result=sim.setObjectSpecialProperty(number objectHandle,number property)",true},
@@ -385,6 +385,7 @@ const SLuaCommands simLuaCommands[]=
     {"sim.getShapeTextureId",_simGetShapeTextureId,              "number textureId=sim.getShapeTextureId(number shapeHandle)",true},
     {"sim.getCollectionObjects",_simGetCollectionObjects,        "table objectHandles=sim.getCollectionObjects(number collectionHandle)",true},
     {"sim.handleCustomizationScripts",_simHandleCustomizationScripts,"number count=sim.handleCustomizationScripts(number callType)",true},
+    {"sim.handleAddOnScripts",_simHandleAddOnScripts,            "number count=sim.handleAddOnScripts(number callType)",true},
     {"sim.setScriptAttribute",_simSetScriptAttribute,            "number result=sim.setScriptAttribute(number scriptHandle,number attributeID,number/boolean attribute)",true},
     {"sim.getScriptAttribute",_simGetScriptAttribute,            "number/boolean attribute=sim.getScriptAttribute(number scriptHandle,number attributeID)",true},
     {"sim.handleChildScripts",_simHandleChildScripts,            "number executedScriptCount=sim.handleChildScripts(number callType,...<objects to be passed>)",true},
@@ -450,17 +451,36 @@ const SLuaCommands simLuaCommands[]=
     {"sim.setReferencedHandles",_simSetReferencedHandles,        "number result=sim.setReferencedHandles(number objectHandle,table referencedHandles)",true},
     {"sim.getReferencedHandles",_simGetReferencedHandles,        "table referencedHandles=sim.getReferencedHandles(number objectHandle)",true},
     {"sim.getGraphCurve",_simGetGraphCurve,                      "string label,number curveType,table curveColor,table xData,table yData,table zData,table minMax=\nsim.getGraphCurve(number graphHandle,number graphType,number curveIndex)",true},
+    {"sim.getGraphInfo",_simGetGraphInfo,                        "number bitCoded,table_3 bgColor,table_3 fgColor=sim.getGraphInfo(number graphHandle)",true},
     {"sim.getShapeViz",_simGetShapeViz,                          "map data=sim.getShapeViz(number shapeHandle,number itemIndex)",true},
     {"sim.executeScriptString",_simExecuteScriptString,          "number result,executionResult=sim.executeScriptString(string stringAtScriptName,number scriptHandleOrType)",true},
     {"sim.getApiFunc",_simGetApiFunc,                            "table funcsAndVars=sim.getApiFunc(number scriptHandleOrType,string apiWord)",true},
     {"sim.getApiInfo",_simGetApiInfo,                            "string info=sim.getApiInfo(number scriptHandleOrType,string apiWord)",true},
     {"sim.getModuleInfo",_simGetModuleInfo,                      "string/number info=sim.getModuleInfo(string moduleName,number infoType)",true},
+    {"sim.registerScriptFunction",_simRegisterScriptFunction,    "number result=sim.registerScriptFunction(string funcNameAtPluginName,string callTips)",true},
+    {"sim.registerScriptVariable",_simRegisterScriptVariable,    "number result=sim.registerScriptVariable(string varNameAtPluginName)",true},
+    {"sim.isDeprecated",_simIsDeprecated,                        "number result=sim.isDeprecated(string funcOrConst)",true},
+    {"sim.getPersistentDataTags",_simGetPersistentDataTags,      "table tags=sim.getPersistentDataTags()",true},
+
+
 
     {"sim.test",_simTest,                                        "test function - shouldn't be used",true},
+
+    {"sim.testCE_openModal",_simTestCE_openModal,                "string text,table_2 pos,table_2 size=sim.testCE_openModal(string initText,string properties)",true},
+    {"sim.testCE_open",_simTestCE_open,                          "number handle=sim.testCE_open(string initText,string properties)",true},
+    {"sim.testCE_setText",_simTestCE_setText,                    "number result=sim.testCE_setText(number handle,string text,int insertMode)",true},
+    {"sim.testCE_getText",_simTestCE_getText,                    "string text=sim.testCE_getText(number handle)",true},
+    {"sim.testCE_show",_simTestCE_show,                          "number result=sim.testCE_show(number handle,number showState)",true},
+    {"sim.testCE_close",_simTestCE_close,                        "number result,table_2 pos,table_2 size=sim.testCE_show(number handle)",true},
+
+
     // Add new commands here!
     // Then regenerate the notepad++ keywords and calltips
     {"simHandlePath",_simHandlePath,                                "Deprecated",false},
     {"simHandleJoint",_simHandleJoint,                              "Deprecated",false},
+    {"sim.handleChildScripts_legacy",_simHandleChildScripts_legacy,    "Deprecated",false},
+    {"sim.launchThreadedChildScripts_legacy",_simLaunchThreadedChildScripts_legacy,"Deprecated",false},
+    {"sim.resumeThreads_legacy",_simResumeThreads_legacy,           "Deprecated",false},
     {"",NULL,"",false}
 };
 
@@ -1118,6 +1138,7 @@ const SLuaVariables simLuaVariables[]=
     {"sim.syscb_init",sim_syscb_init,true},
     {"sim.syscb_cleanup",sim_syscb_cleanup,true},
     {"sim.syscb_nonsimulation",sim_syscb_nonsimulation,true},
+    {"sim.syscb_beforemainscript",sim_syscb_beforemainscript,true},
     {"sim.syscb_beforesimulation",sim_syscb_beforesimulation,true},
     {"sim.syscb_aftersimulation",sim_syscb_aftersimulation,true},
     {"sim.syscb_actuation",sim_syscb_actuation,true},
@@ -1152,10 +1173,19 @@ const SLuaVariables simLuaVariables[]=
     {"sim.childscriptattribute_enabled",sim_childscriptattribute_enabled,true},
     {"sim.scriptattribute_enabled",sim_scriptattribute_enabled,true},
     {"sim.customizationscriptattribute_cleanupbeforesave",sim_customizationscriptattribute_cleanupbeforesave,true},
+    {"sim.scriptattribute_debuglevel",sim_scriptattribute_debuglevel,true},
+    {"sim.scriptattribute_scripttype",sim_scriptattribute_scripttype,true},
     // script execution order:
     {"sim.scriptexecorder_first",sim_scriptexecorder_first,true},
     {"sim.scriptexecorder_normal",sim_scriptexecorder_normal,true},
     {"sim.scriptexecorder_last",sim_scriptexecorder_last,true},
+    // script debug level:
+    {"sim.scriptdebug_none",sim_scriptdebug_none,true},
+    {"sim.scriptdebug_syscalls",sim_scriptdebug_syscalls,true},
+    {"sim.scriptdebug_vars_interval",sim_scriptdebug_vars_interval,true},
+    {"sim.scriptdebug_allcalls",sim_scriptdebug_allcalls,true},
+    {"sim.scriptdebug_vars",sim_scriptdebug_vars,true},
+    {"sim.scriptdebug_callsandvars",sim_scriptdebug_callsandvars,true},
     // threaded script resume location:
     {"sim.scriptthreadresume_allnotyetresumed",sim_scriptthreadresume_allnotyetresumed,true},
     {"sim.scriptthreadresume_default",sim_scriptthreadresume_default,true},
@@ -1347,6 +1377,7 @@ const SLuaVariables simLuaVariables[]=
     {"sim.intparam_motionplanning_seed",sim_intparam_motionplanning_seed,true},
     {"sim.intparam_speedmodifier",sim_intparam_speedmodifier,true},
     {"sim.intparam_dynamic_iteration_count",sim_intparam_dynamic_iteration_count,true},
+    {"sim.intparam_job_count",sim_intparam_job_count,true},
     // Float parameters:
     {"sim.floatparam_rand",sim_floatparam_rand,true},
     {"sim.floatparam_simulation_time_step",sim_floatparam_simulation_time_step,true},
@@ -1572,6 +1603,8 @@ const SLuaVariables simLuaVariables[]=
     {"sim.objintparam_manipulation_permissions",sim_objintparam_manipulation_permissions,true},
     {"sim.objintparam_illumination_handle",sim_objintparam_illumination_handle,true},
     {"sim.objstringparam_dna",sim_objstringparam_dna,true},
+    {"sim.objstringparam_unique_id",sim_objstringparam_unique_id,true},
+
     // vision_sensors
     {"sim.visionfloatparam_near_clipping",sim_visionfloatparam_near_clipping,true},
     {"sim.visionfloatparam_far_clipping",sim_visionfloatparam_far_clipping,true},
@@ -1646,9 +1679,12 @@ const SLuaVariables simLuaVariables[]=
     {"sim.shapeintparam_convex",sim_shapeintparam_convex,true},
     {"sim.shapeintparam_convex_check",sim_shapeintparam_convex_check,true},
     {"sim.shapeintparam_respondable_mask",sim_shapeintparam_respondable_mask,true},
-    {"sim.shapefloatparam_init_velocity_a",sim_shapefloatparam_init_velocity_a,true},
-    {"sim.shapefloatparam_init_velocity_b",sim_shapefloatparam_init_velocity_b,true},
-    {"sim.shapefloatparam_init_velocity_g",sim_shapefloatparam_init_velocity_g,true},
+    {"sim.shapefloatparam_init_ang_velocity_x",sim_shapefloatparam_init_ang_velocity_x,true},
+    {"sim.shapefloatparam_init_ang_velocity_y",sim_shapefloatparam_init_ang_velocity_y,true},
+    {"sim.shapefloatparam_init_ang_velocity_z",sim_shapefloatparam_init_ang_velocity_z,true},
+    {"sim.shapefloatparam_init_velocity_a",sim_shapefloatparam_init_ang_velocity_x,false},
+    {"sim.shapefloatparam_init_velocity_b",sim_shapefloatparam_init_ang_velocity_y,false},
+    {"sim.shapefloatparam_init_velocity_g",sim_shapefloatparam_init_ang_velocity_z,false},
     {"sim.shapestringparam_color_name",sim_shapestringparam_color_name,true},
     {"sim.shapeintparam_edge_visibility",sim_shapeintparam_edge_visibility,true},
     {"sim.shapefloatparam_shading_angle",sim_shapefloatparam_shading_angle,true},
@@ -2591,9 +2627,9 @@ const SLuaVariables simLuaVariablesOldApi[]=
     {"sim_shapeintparam_convex",sim_shapeintparam_convex,false},
     {"sim_shapeintparam_convex_check",sim_shapeintparam_convex_check,false},
     {"sim_shapeintparam_respondable_mask",sim_shapeintparam_respondable_mask,false},
-    {"sim_shapefloatparam_init_velocity_a",sim_shapefloatparam_init_velocity_a,false},
-    {"sim_shapefloatparam_init_velocity_b",sim_shapefloatparam_init_velocity_b,false},
-    {"sim_shapefloatparam_init_velocity_g",sim_shapefloatparam_init_velocity_g,false},
+    {"sim_shapefloatparam_init_velocity_a",sim_shapefloatparam_init_ang_velocity_x,false},
+    {"sim_shapefloatparam_init_velocity_b",sim_shapefloatparam_init_ang_velocity_y,false},
+    {"sim_shapefloatparam_init_velocity_g",sim_shapefloatparam_init_ang_velocity_z,false},
     {"sim_shapestringparam_color_name",sim_shapestringparam_color_name,false},
     {"sim_shapeintparam_edge_visibility",sim_shapeintparam_edge_visibility,false},
     {"sim_shapefloatparam_shading_angle",sim_shapefloatparam_shading_angle,false},
@@ -3262,7 +3298,7 @@ void getScriptChain(luaWrap_lua_State* L,bool selfIncluded,bool mainIncluded,std
     }
 }
 
-luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString)
+luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString,int debugLevel)
 {
     luaWrap_lua_State* L=luaWrap_luaL_newstate();
     luaWrap_luaL_openlibs(L);
@@ -3324,7 +3360,12 @@ luaWrap_lua_State* initializeNewLuaState(const char* scriptSuffixNumberString)
     tmp+="'";
     luaWrap_luaL_dostring(L,tmp.c_str());
 
-    luaWrap_lua_sethook(L,luaHookFunction,luaWrapGet_LUA_MASKCOUNT(),100); // This instruction gets also called in luaHookFunction!!!!
+    luaWrap_luaL_dostring(L,"__HIDDEN__.executeAfterLuaStateInit()"); // needed for various
+
+    int hookMask=luaWrapGet_LUA_MASKCOUNT();
+    if (debugLevel>=sim_scriptdebug_allcalls)
+        hookMask|=luaWrapGet_LUA_MASKCALL()|luaWrapGet_LUA_MASKRET();
+    luaWrap_lua_sethook(L,luaHookFunction,hookMask,100); // This instruction gets also called in luaHookFunction!!!!
 
     return(L);
 }
@@ -3380,72 +3421,108 @@ void registerNewLuaFunctions(luaWrap_lua_State* L)
 void luaHookFunction(luaWrap_lua_State* L,luaWrap_lua_Debug* ar)
 {
     FUNCTION_DEBUG;
-    // Following 2 instructions are important: it can happen that the user locks/unlocks automatic thread switch in a loop,
-    // and that the hook function by malchance only gets called when the thread switches are not allowed (due to the loop
-    // timing and hook call timing overlap) --> this thread doesn't switch and stays in a lua loop forever.
-    // To avoid this we add some random component to the hook timing:
-    int randComponent=rand()/(RAND_MAX/10);
-    luaWrap_lua_sethook(L,luaHookFunction,luaWrapGet_LUA_MASKCOUNT(),95+randComponent);
-    // Also remember: the hook gets also called when calling luaWrap_luaL_doString from c++!!
-
     CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(getCurrentScriptID(L));
-    int scriptType=it->getScriptType();
-    if ( (scriptType==sim_scripttype_mainscript)||(scriptType==sim_scripttype_childscript)||(scriptType==sim_scripttype_jointctrlcallback)||(scriptType==sim_scripttype_contactcallback) ) //||(scriptType==sim_scripttype_generalcallback) )
-    {
-#ifdef SIM_WITH_GUI
-        if (App::userSettings->abortScriptExecutionButton!=0)
-        {
-            bool doIt=( (App::ct->luaScriptContainer->getMainScriptExecTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000))&&App::ct->luaScriptContainer->getInMainScriptNow() );
-            if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
-            { // Otherwise can get very slow somehow
-                App::ct->simulation->showAndHandleEmergencyStopButton(doIt,it->getShortDescriptiveName().c_str());
-            }
-        }
+    if (it==NULL)
+        return; // the script ID was not yet set
+    int debugLevel=it->getDebugLevel();
 
-        if ( CThreadPool::getSimulationEmergencyStop() ) // No automatic yield when flagged for destruction!! ||it->getFlaggedForDestruction() )
-        { // This is the only way a non-threaded script can yield. But threaded child scripts can also yield here
-            luaWrap_lua_yield(L,0);
-            return;
+    if ( (ar->event==luaWrapGet_LUA_HOOKCALL())||(ar->event==luaWrapGet_LUA_HOOKRET()) )
+    { // Debug call and return hooks
+        if (debugLevel>=sim_scriptdebug_allcalls)
+        { // debugging (further down also several occurences (auto thread switches and script end force)
+            bool callIn=(ar->event==luaWrapGet_LUA_HOOKCALL());
+            luaWrap_lua_getinfo(L, "nS", ar);
+            it->handleDebug(ar->name,ar->what,callIn,false);
         }
-        else
+    }
+
+    if (ar->event!=luaWrapGet_LUA_HOOKCALL())
+    { // Return and Count hook (return somehow needed here too when debug is on)
+        // Following 6 instructions are important: it can happen that the user locks/unlocks automatic thread switch in a loop,
+        // and that the hook function by malchance only gets called when the thread switches are not allowed (due to the loop
+        // timing and hook call timing overlap) --> this thread doesn't switch and stays in a lua loop forever.
+        // To avoid this we add some random component to the hook timing:
+        int randComponent=rand()/(RAND_MAX/10);
+        int hookMask=luaWrapGet_LUA_MASKCOUNT();
+        if (debugLevel>=sim_scriptdebug_allcalls)
+            hookMask|=luaWrapGet_LUA_MASKCALL()|luaWrapGet_LUA_MASKRET();
+        luaWrap_lua_sethook(L,luaHookFunction,hookMask,95+randComponent);
+        // Also remember: the hook gets also called when calling luaWrap_luaL_doString from c++ and similar!!
+
+        int scriptType=it->getScriptType();
+        if ( (scriptType==sim_scripttype_mainscript)||(scriptType==sim_scripttype_childscript)||(scriptType==sim_scripttype_jointctrlcallback)||(scriptType==sim_scripttype_contactcallback) ) //||(scriptType==sim_scripttype_generalcallback) )
         {
-            if (CThreadPool::getSimulationStopRequestedAndActivated())
-            { // returns true only after 1-2 seconds after the request arrived
-                if (!VThread::isCurrentThreadTheMainSimulationThread())
-                { // Here only threaded scripts can yield!
-                    luaWrap_lua_yield(L,0);
-                    return;
+#ifdef SIM_WITH_GUI
+            if (App::userSettings->abortScriptExecutionButton!=0)
+            {
+                bool doIt=( (App::ct->luaScriptContainer->getMainScriptExecTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000))&&App::ct->luaScriptContainer->getInMainScriptNow() );
+                if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
+                { // Otherwise can get very slow somehow
+                    App::ct->simulation->showAndHandleEmergencyStopButton(doIt,it->getShortDescriptiveName().c_str());
                 }
             }
-        }
-#endif
-        CThreadPool::switchBackToPreviousThreadIfNeeded();
-    }
-    else
-    { // non-simulation scripts (i.e. add-ons and customization scripts)
-#ifdef SIM_WITH_GUI
-        if (App::userSettings->abortScriptExecutionButton!=0)
-        {
-            if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
-            { // Otherwise can get very slow somehow
-                if ( it->getScriptExecutionTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000) )
-                {
-                    App::ct->simulation->showAndHandleEmergencyStopButton(true,it->getShortDescriptiveName().c_str());
-                    if (CLuaScriptObject::emergencyStopButtonPressed)
-                    {
-                        CLuaScriptObject::emergencyStopButtonPressed=false;
-                        if (it->getScriptType()==sim_scripttype_customizationscript)
-                            it->setCustomizationScriptIsTemporarilyDisabled(true); // stop it
-                        if (it->getScriptType()==sim_scripttype_addonscript)
-                            it->flagForDestruction(); // stop it
+
+            if ( CThreadPool::getSimulationEmergencyStop() ) // No automatic yield when flagged for destruction!! ||it->getFlaggedForDestruction() )
+            { // This is the only way a non-threaded script can yield. But threaded child scripts can also yield here
+                if (debugLevel!=sim_scriptdebug_none)
+                    it->handleDebug("force_script_stop","C",true,true);
+                luaWrap_lua_yield(L,0);
+                return;
+            }
+            else
+            {
+                if (CThreadPool::getSimulationStopRequestedAndActivated())
+                { // returns true only after 1-2 seconds after the request arrived
+                    if (!VThread::isCurrentThreadTheMainSimulationThread())
+                    { // Here only threaded scripts can yield!
+                        if (debugLevel!=sim_scriptdebug_none)
+                            it->handleDebug("force_script_stop","C",true,true);
                         luaWrap_lua_yield(L,0);
+                        return;
                     }
                 }
-                else
-                    App::ct->simulation->showAndHandleEmergencyStopButton(false,"");
+            }
+#endif
+            if (!VThread::isCurrentThreadTheMainSimulationThread())
+            {
+                if (CThreadPool::isSwitchBackToPreviousThreadNeeded())
+                {
+                    if (debugLevel!=sim_scriptdebug_none)
+                        it->handleDebug("thread_automatic_switch","C",true,true);
+                    CThreadPool::switchBackToPreviousThreadIfNeeded();
+                    if (debugLevel!=sim_scriptdebug_none)
+                        it->handleDebug("thread_automatic_switch","C",false,true);
+                }
             }
         }
+        else
+        { // non-simulation scripts (i.e. add-ons and customization scripts)
+#ifdef SIM_WITH_GUI
+            if (App::userSettings->abortScriptExecutionButton!=0)
+            {
+                if ( (App::mainWindow!=NULL)&&(App::mainWindow->openglWidget->getModelDragAndDropInfo()==NULL) )
+                { // Otherwise can get very slow somehow
+                    if ( it->getScriptExecutionTimeInMs()>(App::userSettings->abortScriptExecutionButton*1000) )
+                    {
+                        App::ct->simulation->showAndHandleEmergencyStopButton(true,it->getShortDescriptiveName().c_str());
+                        if (CLuaScriptObject::emergencyStopButtonPressed)
+                        {
+                            CLuaScriptObject::emergencyStopButtonPressed=false;
+                            if (it->getScriptType()==sim_scripttype_customizationscript)
+                                it->setCustomizationScriptIsTemporarilyDisabled(true); // stop it
+                            if (it->getScriptType()==sim_scripttype_addonscript)
+                                it->flagForDestruction(); // stop it
+                            if (debugLevel!=sim_scriptdebug_none)
+                                it->handleDebug("force_script_stop","C",true,true);
+                            luaWrap_lua_yield(L,0);
+                        }
+                    }
+                    else
+                        App::ct->simulation->showAndHandleEmergencyStopButton(false,"");
+                }
+            }
 #endif
+        }
     }
 }
 
@@ -4584,6 +4661,66 @@ std::string getVrepFunctionCalltip(const char* txt,int scriptType,bool scriptIsT
     return("");
 }
 
+int isFuncOrConstDeprecated(const char* txt)
+{
+    // Functions:
+    for (size_t i=0;simLuaCommands[i].name!="";i++)
+    {
+        std::string n(simLuaCommands[i].name);
+        if (n.compare(txt)==0)
+        {
+            if (simLuaCommands[i].autoComplete)
+                return(0);
+            return(1);
+        }
+    }
+    if (App::userSettings->getSupportOldApiNotation())
+    {
+        for (size_t i=0;simLuaCommandsOldApi[i].name!="";i++)
+        {
+            std::string n(simLuaCommandsOldApi[i].name);
+            if (n.compare(txt)==0)
+            {
+                if (simLuaCommandsOldApi[i].autoComplete)
+                    return(0);
+                return(1);
+            }
+        }
+    }
+    std::vector<std::string> sysCb=CLuaScriptObject::getAllSystemCallbackStrings(-1,false,false);
+    for (size_t i=0;i<sysCb.size();i++)
+    {
+        std::string n(sysCb[i]);
+        if (n.compare(txt)==0)
+            return(0);
+    }
+
+    // Variables/Constants:
+    for (size_t i=0;simLuaVariables[i].name!="";i++)
+    {
+        std::string n(simLuaVariables[i].name);
+        if (n.compare(txt)==0)
+        {
+            if (simLuaVariables[i].autoComplete)
+                return(0);
+            return(1);
+        }
+    }
+    if (App::userSettings->getSupportOldApiNotation())
+    {
+        for (size_t i=0;simLuaVariablesOldApi[i].name!="";i++)
+        {
+            std::string n(simLuaVariablesOldApi[i].name);
+            if (n.compare(txt)==0)
+            {
+                if (simLuaVariablesOldApi[i].autoComplete)
+                    return(0);
+                return(1);
+            }
+        }
+    }
+    return(-1);
+}
 
 //-----------------------------------------------
 //-----------------------------------------------
@@ -4650,25 +4787,21 @@ int _simHandleChildScripts(luaWrap_lua_State* L)
         CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(currentScriptID);
         if (it!=NULL)
         {
-            if ( (it->getScriptType()==sim_scripttype_mainscript)||(it->getScriptType()==sim_scripttype_childscript) )
-            { // only main and child scripts can call this function
-                if ( (it->getScriptType()==sim_scripttype_mainscript)||((it->getScriptType()==sim_scripttype_childscript)&&(!it->getThreadedExecution())) )
-                { // Threaded scripts cannot call this function
-                    if ( it->getAutomaticCascadingCallsDisabled_OLD()||(it->getScriptType()==sim_scripttype_mainscript) )
-                    {
-                        // We read the function input arguments:
-                        CInterfaceStack inputArguments;
-                        inputArguments.buildFromLuaStack(L,2);
-                        retVal=handleChildScriptsRoutine(callType,it,inputArguments);
-                    }
-                    else
-                        errorString=SIM_ERROR_AUTOMATIC_CASCADING_CALLS_NOT_DISABLED;
-                }
-                else
-                    errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_NON_THREADED_CHILD_SCRIPTS;
+            if (it->getScriptType()==sim_scripttype_mainscript)
+            { // only the main script can call this function
+                CInterfaceStack inStack;
+                inStack.buildFromLuaStack(L,2);
+                int startT=VDateTime::getTimeInMs();
+                retVal=App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_childscript,callType,&inStack,NULL,NULL);
+                App::ct->calcInfo->addChildScriptCalcTime(VDateTime::getTimeInMs()-startT,false);
+                if (callType==sim_syscb_sensing)
+                    App::ct->calcInfo->addChildScriptExecCnt(App::ct->luaScriptContainer->getCalledScriptsCountInThisSimulationStep(sim_scripttype_childscript),false);
             }
             else
-                errorString=SIM_ERROR_NOT_MAIN_NOR_CHILD_SCRIPT;
+            { // normally: errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_MAIN_SCRIPT
+                // But to support very old scenes that might call simHandleChildScripts from a child script:
+                retVal=_simHandleChildScripts2_legacy(L,functionName,errorString);
+            }
         }
     }
 
@@ -4676,91 +4809,6 @@ int _simHandleChildScripts(luaWrap_lua_State* L)
     luaWrap_lua_pushnumber(L,retVal);
     LUA_END(1);
 }
-
-int handleChildScriptsRoutine(int callType,CLuaScriptObject* it,CInterfaceStack& inputArguments)
-{
-    int executionResult=sim_script_no_error;
-    std::vector<int> childScriptIDsToRun;
-
-    // Now find all first child scripts in the hierarchy, including threaded or explicit handling flagged ones:
-    if (it->getScriptType()==sim_scripttype_mainscript)
-    { // we have a main script here
-        for (int i=0;i<int(App::ct->objCont->objectList.size());i++)
-        {   // Do we have a parentless object?
-            C3DObject* q=App::ct->objCont->getObject(App::ct->objCont->objectList[i]);
-            if ( (q!=NULL)&&(q->getParent()==NULL) )
-                q->getChildScriptsToRun(childScriptIDsToRun);
-        }
-    }
-    else
-    { // we have a script linked to a 3d object or a passive script here
-        C3DObject* obj=App::ct->objCont->getObject(it->getObjectIDThatScriptIsAttachedTo_child());
-        if (obj!=NULL)
-        {
-            for (int i=0;i<int(obj->childList.size());i++)
-                obj->childList[i]->getChildScriptsToRun(childScriptIDsToRun);
-        }
-    }
-
-    // Now we order all scripts according to their execution order settings:
-    std::vector<int> firstToExecute;
-    std::vector<int> normalToExecute;
-    std::vector<int> lastToExecute;
-    for (int i=0;i<int(childScriptIDsToRun.size());i++)
-    {
-        CLuaScriptObject* as=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(childScriptIDsToRun[i]);
-        if (as!=NULL)//&&(!as->getScriptIsDisabled()) )
-        {
-            if (as->getThreadedExecution())
-            { // We have a threaded script. We just skip it and explore beyond:
-                C3DObject* obj=App::ct->objCont->getObject(as->getObjectIDThatScriptIsAttachedTo_child());
-                if (obj!=NULL)
-                {
-                    for (int j=0;j<int(obj->childList.size());j++)
-                        obj->childList[j]->getChildScriptsToRun(childScriptIDsToRun); // append to the end of the list
-                }
-            }
-            else
-            {
-                if (as->getExecutionOrder()==sim_scriptexecorder_first)
-                    firstToExecute.push_back(childScriptIDsToRun[i]);
-                if (as->getExecutionOrder()==sim_scriptexecorder_normal)
-                    normalToExecute.push_back(childScriptIDsToRun[i]);
-                if (as->getExecutionOrder()==sim_scriptexecorder_last)
-                    lastToExecute.push_back(childScriptIDsToRun[i]);
-            }
-        }
-    }
-    childScriptIDsToRun.clear();
-    childScriptIDsToRun.insert(childScriptIDsToRun.end(),firstToExecute.begin(),firstToExecute.end());
-    childScriptIDsToRun.insert(childScriptIDsToRun.end(),normalToExecute.begin(),normalToExecute.end());
-    childScriptIDsToRun.insert(childScriptIDsToRun.end(),lastToExecute.begin(),lastToExecute.end());
-
-    // Now we run all the scripts:
-    int retVal=0;
-    for (int i=0;i<int(childScriptIDsToRun.size());i++)
-    {
-        CLuaScriptObject* as=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(childScriptIDsToRun[i]);
-        if (as!=NULL)
-        {
-            if (!as->getScriptIsDisabled())
-            {
-                C3DObject* obj=App::ct->objCont->getObject(as->getObjectIDThatScriptIsAttachedTo_child());
-                if ((obj!=NULL)&&((obj->getCumulativeModelProperty()&sim_modelproperty_scripts_inactive)==0))
-                {
-                    retVal++;
-                    executionResult|=as->runNonThreadedChildScript(callType,&inputArguments,NULL);
-                }
-            }
-            if (!as->getAutomaticCascadingCallsDisabled_OLD())
-            { // now handle the childen of that one:
-                handleChildScriptsRoutine(callType,as,inputArguments);
-            }
-        }
-    }
-    return(retVal);
-}
-
 
 int _simLaunchThreadedChildScripts(luaWrap_lua_State* L)
 {
@@ -4773,8 +4821,11 @@ int _simLaunchThreadedChildScripts(luaWrap_lua_State* L)
     if (it!=NULL)
     {
         if (it->getScriptType()==sim_scripttype_mainscript)
-        { // only main script can call this function
-            retVal=launchThreadedChildScriptsRoutine(it);
+        {
+            int startT=VDateTime::getTimeInMs();
+            retVal=App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_childscript|sim_scripttype_threaded,sim_scriptthreadresume_launch,NULL,NULL,NULL);
+            App::ct->calcInfo->addChildScriptCalcTime(VDateTime::getTimeInMs()-startT,true);
+            App::ct->calcInfo->addChildScriptExecCnt(retVal,true);
         }
         else
             errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_MAIN_SCRIPT;
@@ -4783,88 +4834,6 @@ int _simLaunchThreadedChildScripts(luaWrap_lua_State* L)
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
     luaWrap_lua_pushnumber(L,retVal);
     LUA_END(1);
-}
-
-int launchThreadedChildScriptsRoutine(CLuaScriptObject* it)
-{
-    int executionResult=sim_script_no_error;
-    std::vector<int> childScriptIDsToRun;
-
-    // Now find all first child scripts in the hierarchy, including non-threaded or explicit handling flagged onces:
-    if (it->getScriptType()==sim_scripttype_mainscript)
-    { // we have a main script here
-        for (int i=0;i<int(App::ct->objCont->objectList.size());i++)
-        {   // Do we have a parentless object?
-            C3DObject* q=App::ct->objCont->getObject(App::ct->objCont->objectList[i]);
-            if ( (q!=NULL)&&(q->getParent()==NULL) )
-                q->getChildScriptsToRun(childScriptIDsToRun);
-        }
-    }
-    else
-    { // we have a script linked to a 3d object or a passive script here
-        C3DObject* obj=App::ct->objCont->getObject(it->getObjectIDThatScriptIsAttachedTo_child());
-        if (obj!=NULL)
-        {
-            for (int i=0;i<int(obj->childList.size());i++)
-                obj->childList[i]->getChildScriptsToRun(childScriptIDsToRun);
-        }
-    }
-
-    // Now we order all scripts according to their execution order settings:
-    std::vector<int> firstToExecute;
-    std::vector<int> normalToExecute;
-    std::vector<int> lastToExecute;
-    for (int i=0;i<int(childScriptIDsToRun.size());i++)
-    {
-        CLuaScriptObject* as=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(childScriptIDsToRun[i]);
-        if (as!=NULL) //&&(!as->getScriptIsDisabled()) )
-        {
-            if (!as->getThreadedExecution())
-            { // We have a non-threaded script. We just skip it and explore beyond:
-                C3DObject* obj=App::ct->objCont->getObject(as->getObjectIDThatScriptIsAttachedTo_child());
-                if (obj!=NULL)
-                {
-                    for (int j=0;j<int(obj->childList.size());j++)
-                        obj->childList[j]->getChildScriptsToRun(childScriptIDsToRun); // append to the end of the list
-                }
-            }
-            else
-            {
-                if (as->getExecutionOrder()==sim_scriptexecorder_first)
-                    firstToExecute.push_back(childScriptIDsToRun[i]);
-                if (as->getExecutionOrder()==sim_scriptexecorder_normal)
-                    normalToExecute.push_back(childScriptIDsToRun[i]);
-                if (as->getExecutionOrder()==sim_scriptexecorder_last)
-                    lastToExecute.push_back(childScriptIDsToRun[i]);
-            }
-        }
-    }
-    childScriptIDsToRun.clear();
-    childScriptIDsToRun.insert(childScriptIDsToRun.end(),firstToExecute.begin(),firstToExecute.end());
-    childScriptIDsToRun.insert(childScriptIDsToRun.end(),normalToExecute.begin(),normalToExecute.end());
-    childScriptIDsToRun.insert(childScriptIDsToRun.end(),lastToExecute.begin(),lastToExecute.end());
-
-    // Now we run all the scripts, except the disabled ones:
-    int retVal=0;
-    for (int i=0;i<int(childScriptIDsToRun.size());i++)
-    {
-        CLuaScriptObject* as=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(childScriptIDsToRun[i]);
-        if (as!=NULL)
-        {
-            if (!as->getScriptIsDisabled())
-            {
-                C3DObject* obj=App::ct->objCont->getObject(as->getObjectIDThatScriptIsAttachedTo_child());
-                if ((obj!=NULL)&&((obj->getCumulativeModelProperty()&sim_modelproperty_scripts_inactive)==0))
-                {
-                    retVal++;
-                    executionResult|=as->runThreadedChildScript();
-                }
-            }
-            // now handle the childen of that one:
-            launchThreadedChildScriptsRoutine(as);
-        }
-    }
-    return(retVal);
 }
 
 int _simGetScriptName(luaWrap_lua_State* L)
@@ -6195,8 +6164,13 @@ int _simGetScriptHandle(luaWrap_lua_State* L)
             retVal=getCurrentScriptID(L); // nil argument
         else
         {
-            if (checkInputArguments(L,&errorString,lua_arg_string,0))
-            {
+            if (checkInputArguments(L,NULL,lua_arg_number,0))
+            { // argument sim.handle_self
+                if (luaWrap_lua_tointeger(L,1)==sim_handle_self)
+                    retVal=getCurrentScriptID(L);
+            }
+            if ( (retVal==-1)&&checkInputArguments(L,&errorString,lua_arg_string,0) )
+            { // string argument
                 std::string name(luaWrap_lua_tostring(L,1));
                 if (suffixAdjustStringIfNeeded(functionName,true,L,name))
                 {
@@ -7013,11 +6987,22 @@ int _simAddStatusbarMessage(luaWrap_lua_State* L)
     int retVal=-1; // means error
 
     if (luaWrap_lua_gettop(L)==0)
+    {
         App::clearStatusbar();
+        retVal=1;
+    }
     else
     {
-        if (checkInputArguments(L,&errorString,lua_arg_string,0))
-            retVal=simAddStatusbarMessage_internal(luaWrap_lua_tostring(L,1));
+        if (checkInputArguments(L,NULL,lua_arg_nil,0))
+        {
+            App::clearStatusbar();
+            retVal=1;
+        }
+        else
+        {
+            if (checkInputArguments(L,&errorString,lua_arg_string,0))
+                retVal=simAddStatusbarMessage_internal(luaWrap_lua_tostring(L,1));
+        }
     }
 
     LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
@@ -8606,8 +8591,159 @@ int _simTest(luaWrap_lua_State* L)
 {
     LUA_API_FUNCTION_DEBUG;
     LUA_START("sim.test");
+
     LUA_END(0);
 }
+
+int _simTestCE_openModal(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_openModal");
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0))
+        {
+            const char* arg1=luaWrap_lua_tostring(L,1);
+            const char* arg2=luaWrap_lua_tostring(L,2);
+            int posAndSize[4];
+            std::string text;
+            if (CPluginContainer::codeEditor_openModal(arg1,arg2,text,posAndSize))
+            {
+                luaWrap_lua_pushstring(L,text.c_str());
+                pushIntTableOntoStack(L,2,posAndSize);
+                pushIntTableOntoStack(L,2,posAndSize+2);
+                LUA_END(3);
+            }
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
+}
+int _simTestCE_open(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_open");
+    int retVal=-1;
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0))
+        {
+            const char* arg1=luaWrap_lua_tostring(L,1);
+            const char* arg2=luaWrap_lua_tostring(L,2);
+            retVal=CPluginContainer::codeEditor_open(arg1,arg2);
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushinteger(L,retVal);
+    LUA_END(1);
+}
+int _simTestCE_setText(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_setText");
+    int retVal=-1;
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_string,0,lua_arg_number,0))
+        {
+            int handle=luaWrap_lua_tointeger(L,1);
+            const char* text=luaWrap_lua_tostring(L,2);
+            int insertMode=luaWrap_lua_tointeger(L,3);
+            retVal=CPluginContainer::codeEditor_setText(handle,text,insertMode);
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushinteger(L,retVal);
+    LUA_END(1);
+}
+int _simTestCE_getText(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_getText");
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0))
+        {
+            int handle=luaWrap_lua_tointeger(L,1);
+            std::string text;
+            if (CPluginContainer::codeEditor_getText(handle,text))
+            {
+                luaWrap_lua_pushstring(L,text.c_str());
+                LUA_END(1);
+            }
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
+}
+int _simTestCE_show(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_show");
+    int retVal=-1;
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_number,0))
+        {
+            int handle=luaWrap_lua_tointeger(L,1);
+            int showState=luaWrap_lua_tointeger(L,2);
+            retVal=CPluginContainer::codeEditor_show(handle,showState);
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushinteger(L,retVal);
+    LUA_END(1);
+}
+int _simTestCE_close(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.testCE_close");
+    int retVal=-1;
+
+    if (CPluginContainer::isCodeEditorPluginAvailable())
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0))
+        {
+            int handle=luaWrap_lua_tointeger(L,1);
+            int posAndSize[4];
+            retVal=CPluginContainer::codeEditor_close(handle,posAndSize);
+            if (retVal>=0)
+            {
+                luaWrap_lua_pushinteger(L,retVal);
+                pushIntTableOntoStack(L,2,posAndSize);
+                pushIntTableOntoStack(L,2,posAndSize+2);
+                LUA_END(3);
+            }
+        }
+    }
+    else
+        errorString="Code Editor plugin was not found.";
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushinteger(L,retVal);
+    LUA_END(1);
+}
+
 
 
 int _simSetNavigationMode(luaWrap_lua_State* L)
@@ -8880,11 +9016,16 @@ int _simResumeThreads(luaWrap_lua_State* L)
         if (checkInputArguments(L,&errorString,lua_arg_number,0))
         {
             int loc=luaWrap_lua_tointeger(L,1);
-            App::ct->calcInfo->runningThreadedScriptStart(0);
-            int startTime=VDateTime::getTimeInMs();
-            retVal=CThreadPool::handleAllThreads_withResumeLocation(loc);
-            App::ct->calcInfo->mainScriptPaused(VDateTime::getTimeDiffInMs(startTime));
-            App::ct->calcInfo->runningThreadedScriptEnd();
+
+            int startT=VDateTime::getTimeInMs();
+            retVal=App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_childscript|sim_scripttype_threaded,loc,NULL,NULL,NULL);
+            // Following line important: when erasing a running threaded script object, with above cascaded
+            // call, the thread will never resume nor be able to end. Next line basically runs all
+            // that were not yet ran:
+            retVal+=CThreadPool::handleAllThreads_withResumeLocation(loc);
+
+            App::ct->calcInfo->addChildScriptCalcTime(VDateTime::getTimeInMs()-startT,true);
+            App::ct->calcInfo->addChildScriptExecCnt(retVal,true);
         }
     }
     else
@@ -16125,7 +16266,38 @@ int _simHandleCustomizationScripts(luaWrap_lua_State* L)
         if (checkInputArguments(L,&errorString,lua_arg_number,0))
         {
             int callType=luaToInt(L,1);
-            retVal=simHandleCustomizationScripts_internal(callType);
+            retVal=0;
+            if (App::getEditModeType()==NO_EDIT_MODE)
+            {
+                retVal=App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,callType,NULL,NULL,NULL);
+                App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
+            }
+        }
+    }
+    else
+        errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_MAIN_SCRIPT;
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
+
+int _simHandleAddOnScripts(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.handleAddOnScripts");
+
+    int retVal=-1;
+    int currentScriptID=getCurrentScriptID(L);
+    CLuaScriptObject* itScrObj=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
+    if (itScrObj->getScriptType()==sim_scripttype_mainscript)
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0))
+        {
+            int callType=luaToInt(L,1);
+            retVal=0;
+            if (App::getEditModeType()==NO_EDIT_MODE)
+                retVal=App::ct->addOnScriptContainer->handleAddOnScriptExecution(callType,NULL,NULL);
         }
     }
     else
@@ -16153,14 +16325,14 @@ int _simSetScriptAttribute(luaWrap_lua_State* L)
             thirdArgType=lua_arg_bool;
 
 
-        if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount) )
+        if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount)||(attribID==sim_scriptattribute_debuglevel) )
             thirdArgType=lua_arg_number;
         int res=checkOneGeneralInputArgument(L,3,thirdArgType,0,false,false,&errorString);
         if (res==2)
         {
             if ( (attribID==sim_customizationscriptattribute_activeduringsimulation)||(attribID==sim_childscriptattribute_automaticcascadingcalls)||(attribID==sim_scriptattribute_enabled)||(attribID==sim_customizationscriptattribute_cleanupbeforesave) )
                 retVal=simSetScriptAttribute_internal(scriptID,attribID,0.0f,luaToBool(L,3));
-            if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount) )
+            if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount)||(attribID==sim_scriptattribute_debuglevel) )
                 retVal=simSetScriptAttribute_internal(scriptID,attribID,0.0f,luaToInt(L,3));
         }
     }
@@ -16188,7 +16360,7 @@ int _simGetScriptAttribute(luaWrap_lua_State* L)
         {
             if ( (attribID==sim_customizationscriptattribute_activeduringsimulation)||(attribID==sim_childscriptattribute_automaticcascadingcalls)||(attribID==sim_scriptattribute_enabled)||(attribID==sim_customizationscriptattribute_cleanupbeforesave) )
                 luaWrap_lua_pushboolean(L,intVal);
-            if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount) )
+            if ( (attribID==sim_scriptattribute_executionorder)||(attribID==sim_scriptattribute_executioncount)||(attribID==sim_scriptattribute_scripttype) )
                 luaWrap_lua_pushnumber(L,intVal);
             LUA_END(1);
         }
@@ -17406,6 +17578,30 @@ int _simGetGraphCurve(luaWrap_lua_State* L)
     LUA_END(0);
 }
 
+int _simGetGraphInfo(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.getGraphInfo");
+
+    if (checkInputArguments(L,&errorString,lua_arg_number,0))
+    {
+        int graphHandle=(luaWrap_lua_tointeger(L,1));
+        CGraph* graph=App::ct->objCont->getGraph(graphHandle);
+        if (graph!=NULL)
+        {
+            int bitCoded=0;
+            luaWrap_lua_pushnumber(L,bitCoded);
+            pushFloatTableOntoStack(L,3,graph->backgroundColor);
+            pushFloatTableOntoStack(L,3,graph->textColor);
+            LUA_END(3);
+        }
+        else
+            errorString=SIM_ERROR_OBJECT_NOT_GRAPH;
+    }
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
+}
+
 int _simGetShapeViz(luaWrap_lua_State* L)
 {
     LUA_API_FUNCTION_DEBUG;
@@ -17493,8 +17689,9 @@ int _simExecuteScriptString(luaWrap_lua_State* L)
         int s=1;
         if (stack->getStackSize()>0)
         {
-            stack->buildOntoLuaStack(L,true);
-            s++;
+            //stack->printContent(-1);
+            stack->buildOntoLuaStack(L,false);//true);
+            s+=stack->getStackSize();//s++;
         }
         App::ct->interfaceStackContainer->destroyStack(stackHandle);
         LUA_END(s);
@@ -17594,6 +17791,79 @@ int _simGetModuleInfo(luaWrap_lua_State* L)
     LUA_END(0);
 }
 
+int _simRegisterScriptFunction(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.registerScriptFunction");
+
+    int retVal=-1;
+    if (checkInputArguments(L,&errorString,lua_arg_string,0,lua_arg_string,0))
+    {
+        std::string funcNameAtPluginName(luaWrap_lua_tostring(L,1));
+        std::string ct(luaWrap_lua_tostring(L,2));
+        ct="####"+ct;
+        retVal=simRegisterScriptCallbackFunction_internal(funcNameAtPluginName.c_str(),ct.c_str(),NULL);
+    }
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
+
+int _simRegisterScriptVariable(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.registerScriptVariable");
+
+    int retVal=-1;
+    if (checkInputArguments(L,&errorString,lua_arg_string,0))
+    {
+        const char* varNameAtPluginName=luaWrap_lua_tostring(L,1);
+        retVal=simRegisterScriptVariable_internal(varNameAtPluginName,NULL,0);
+    }
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
+
+int _simIsDeprecated(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.isDeprecated");
+
+    int retVal=-1;
+    if (checkInputArguments(L,&errorString,lua_arg_string,0))
+        retVal=simIsDeprecated_internal(luaWrap_lua_tostring(L,1));
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
+
+int _simGetPersistentDataTags(luaWrap_lua_State* L)
+{
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.getPersistentDataTags");
+
+    int tagCount;
+    char* data=simGetPersistentDataTags_internal(&tagCount);
+    if (data!=NULL)
+    {
+        std::vector<std::string> stringTable;
+        size_t off=0;
+        for (int i=0;i<tagCount;i++)
+        {
+            stringTable.push_back(data+off);
+            off+=strlen(data+off)+1;
+        }
+        pushStringTableOntoStack(L,stringTable);
+        simReleaseBuffer_internal(data);
+        LUA_END(1);
+    }
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    LUA_END(0);
+}
 
 
 //****************************************************
@@ -18788,14 +19058,6 @@ int _simCreateMotionPlanning(luaWrap_lua_State* L)
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simCreateMotionPlanning");
 
-    if (!App::userSettings->enableOldMotionPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldMotionPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
-
     int retVal=-1;
     if (luaWrap_lua_gettop(L)>0)
     {
@@ -18870,14 +19132,6 @@ int _simRemoveMotionPlanning(luaWrap_lua_State* L)
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simRemoveMotionPlanning");
 
-    if (!App::userSettings->enableOldMotionPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldMotionPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
-
     int retVal=-1;
     if (checkInputArguments(L,&errorString,lua_arg_number,0))
     {
@@ -18894,14 +19148,6 @@ int _simGetPathPlanningHandle(luaWrap_lua_State* L)
 { // DEPRECATED since 3.3.0
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simGetPathPlanningHandle");
-
-    if (!App::userSettings->enableOldPathPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldPathPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
 
     int retVal=-1; // means error
     if (checkInputArguments(L,&errorString,lua_arg_string,0))
@@ -18924,14 +19170,6 @@ int _simGetMotionPlanningHandle(luaWrap_lua_State* L)
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simGetMotionPlanningHandle");
 
-    if (!App::userSettings->enableOldMotionPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldMotionPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
-
     int retVal=-1; // means error
     if (checkInputArguments(L,&errorString,lua_arg_string,0))
     {
@@ -18952,14 +19190,6 @@ int _simSearchPath(luaWrap_lua_State* L)
 { // DEPRECATED since 3.3.0
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simSearchPath");
-
-    if (!App::userSettings->enableOldPathPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldPathPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
 
     int retVal=-1; // means error
     if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_number,0))
@@ -19068,14 +19298,6 @@ int _simInitializePathSearch(luaWrap_lua_State* L)
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simInitializePathSearch");
 
-    if (!App::userSettings->enableOldPathPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldPathPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
-
     int retVal=-1; // means error
     if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_number,0,lua_arg_number,0))
     {
@@ -19095,14 +19317,6 @@ int _simPerformPathSearchStep(luaWrap_lua_State* L)
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simPerformPathSearchStep");
 
-    if (!App::userSettings->enableOldPathPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldPathPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
-
     int retVal=-1; // means error
     if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_bool,0))
     {
@@ -19120,14 +19334,6 @@ int _simFindMpPath(luaWrap_lua_State* L)
 { // DEPRECATED since 3.3.0
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simFindMpPath");
-
-    if (!App::userSettings->enableOldMotionPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldMotionPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
 
     if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_number,1,lua_arg_number,1,lua_arg_number,0,lua_arg_number,0))
     {
@@ -19179,14 +19385,6 @@ int _simSimplifyMpPath(luaWrap_lua_State* L)
 { // DEPRECATED since 3.3.0
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simSimplifyMpPath");
-
-    if (!App::userSettings->enableOldMotionPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldMotionPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
 
     if (checkInputArguments(L,&errorString,lua_arg_number,0))
     {
@@ -19246,14 +19444,6 @@ int _simGetMpConfigTransition(luaWrap_lua_State* L)
 { // DEPRECATED since 3.3.0
     LUA_API_FUNCTION_DEBUG;
     LUA_START("simGetMpConfigTransition");
-
-    if (!App::userSettings->enableOldMotionPlanningGui)
-    {
-        int currentScriptID=getCurrentScriptID(L);
-        CLuaScriptObject* scr=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
-        if (!scr->checkAndSetWarning_oldMotionPlanningFunctionality_oldCompatibility_11_2_2016())
-            luaApiCallWarning(functionName.c_str(),"It is recommended to use the new path/motion planning functionality based on the OMPL plugin for V-REP.");
-    }
 
     if (checkInputArguments(L,&errorString,lua_arg_number,0,lua_arg_number,1,lua_arg_number,1,lua_arg_number,0))
     {
@@ -20200,3 +20390,269 @@ int _simGetObjectLastSelection(luaWrap_lua_State* L)
     LUA_END(1);
 }
 
+int _simHandleChildScripts_legacy(luaWrap_lua_State* L)
+{ // DEPRECATED
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.handleChildScripts_legacy");
+
+    int retVal=-1; // means error
+    if (checkInputArguments(L,&errorString,lua_arg_number,0))
+        retVal=_simHandleChildScripts2_legacy(L,functionName,errorString);
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
+
+int _simHandleChildScripts2_legacy(luaWrap_lua_State* L,std::string& functionName,std::string& errorString)
+{ // DEPRECATED
+    functionName="sim.handleChildScripts_legacy";
+    int retVal=-1;
+    int callType=luaWrap_lua_tointeger(L,1);
+    int currentScriptID=getCurrentScriptID(L);
+    CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(currentScriptID);
+    if (it!=NULL)
+    {
+        if ( (it->getScriptType()==sim_scripttype_mainscript)||(it->getScriptType()==sim_scripttype_childscript) )
+        { // only main and child scripts can call this function
+            if ( (it->getScriptType()==sim_scripttype_mainscript)||((it->getScriptType()==sim_scripttype_childscript)&&(!it->getThreadedExecution())) )
+            { // Threaded scripts cannot call this function
+                if ( it->getAutomaticCascadingCallsDisabled_OLD()||(it->getScriptType()==sim_scripttype_mainscript) )
+                {
+                    // We read the function input arguments:
+                    CInterfaceStack inputArguments;
+                    inputArguments.buildFromLuaStack(L,2);
+                    int startTime=VDateTime::getTimeInMs();
+                    retVal=handleChildScriptsRoutine_OLD(callType,it,inputArguments);
+                    App::ct->calcInfo->addChildScriptCalcTime(VDateTime::getTimeInMs()-startTime,false);
+                    if (callType==sim_syscb_actuation)
+                        App::ct->calcInfo->addChildScriptExecCnt(retVal,false);
+                }
+                else
+                    errorString=SIM_ERROR_AUTOMATIC_CASCADING_CALLS_NOT_DISABLED;
+            }
+            else
+                errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_NON_THREADED_CHILD_SCRIPTS;
+        }
+        else
+            errorString=SIM_ERROR_NOT_MAIN_NOR_CHILD_SCRIPT;
+    }
+    return(retVal);
+}
+
+int handleChildScriptsRoutine_OLD(int callType,CLuaScriptObject* it,CInterfaceStack& inputArguments)
+{ // DEPRECATED
+    std::vector<int> childScriptIDsToRun;
+
+    // Now find all first child scripts in the hierarchy, including threaded or explicit handling flagged ones:
+    if (it->getScriptType()==sim_scripttype_mainscript)
+    { // we have a main script here
+        for (int i=0;i<int(App::ct->objCont->objectList.size());i++)
+        {   // Do we have a parentless object?
+            C3DObject* q=App::ct->objCont->getObject(App::ct->objCont->objectList[i]);
+            if ( (q!=NULL)&&(q->getParent()==NULL) )
+                q->getChildScriptsToRun_OLD(childScriptIDsToRun);
+        }
+    }
+    else
+    { // we have a script linked to a 3d object or a passive script here
+        C3DObject* obj=App::ct->objCont->getObject(it->getObjectIDThatScriptIsAttachedTo_child());
+        if (obj!=NULL)
+        {
+            for (int i=0;i<int(obj->childList.size());i++)
+                obj->childList[i]->getChildScriptsToRun_OLD(childScriptIDsToRun);
+        }
+    }
+
+    // Now we order all scripts according to their execution order settings:
+    std::vector<int> firstToExecute;
+    std::vector<int> normalToExecute;
+    std::vector<int> lastToExecute;
+    for (int i=0;i<int(childScriptIDsToRun.size());i++)
+    {
+        CLuaScriptObject* as=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(childScriptIDsToRun[i]);
+        if (as!=NULL)//&&(!as->getScriptIsDisabled()) )
+        {
+            if (as->getThreadedExecution())
+            { // We have a threaded script. We just skip it and explore beyond:
+                C3DObject* obj=App::ct->objCont->getObject(as->getObjectIDThatScriptIsAttachedTo_child());
+                if (obj!=NULL)
+                {
+                    for (int j=0;j<int(obj->childList.size());j++)
+                        obj->childList[j]->getChildScriptsToRun_OLD(childScriptIDsToRun); // append to the end of the list
+                }
+            }
+            else
+            {
+                if (as->getExecutionOrder()==sim_scriptexecorder_first)
+                    firstToExecute.push_back(childScriptIDsToRun[i]);
+                if (as->getExecutionOrder()==sim_scriptexecorder_normal)
+                    normalToExecute.push_back(childScriptIDsToRun[i]);
+                if (as->getExecutionOrder()==sim_scriptexecorder_last)
+                    lastToExecute.push_back(childScriptIDsToRun[i]);
+            }
+        }
+    }
+    childScriptIDsToRun.clear();
+    childScriptIDsToRun.insert(childScriptIDsToRun.end(),firstToExecute.begin(),firstToExecute.end());
+    childScriptIDsToRun.insert(childScriptIDsToRun.end(),normalToExecute.begin(),normalToExecute.end());
+    childScriptIDsToRun.insert(childScriptIDsToRun.end(),lastToExecute.begin(),lastToExecute.end());
+
+    // Now we run all the scripts:
+    int retVal=0;
+    for (int i=0;i<int(childScriptIDsToRun.size());i++)
+    {
+        CLuaScriptObject* as=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(childScriptIDsToRun[i]);
+        if (as!=NULL)
+        {
+            if (!as->getScriptIsDisabled())
+            {
+                C3DObject* obj=App::ct->objCont->getObject(as->getObjectIDThatScriptIsAttachedTo_child());
+                if ((obj!=NULL)&&((obj->getCumulativeModelProperty()&sim_modelproperty_scripts_inactive)==0))
+                {
+                    retVal++;
+                    as->runNonThreadedChildScript(callType,&inputArguments,NULL);
+                }
+            }
+            if (!as->getAutomaticCascadingCallsDisabled_OLD())
+            { // now handle the childen of that one:
+                handleChildScriptsRoutine_OLD(callType,as,inputArguments);
+            }
+        }
+    }
+    return(retVal);
+}
+
+int _simLaunchThreadedChildScripts_legacy(luaWrap_lua_State* L)
+{ // DEPRECATED
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.launchThreadedChildScripts_legacy");
+
+    int retVal=-1; // means error
+    int currentScriptID=getCurrentScriptID(L);
+    CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(currentScriptID);
+    if (it!=NULL)
+    {
+        if (it->getScriptType()==sim_scripttype_mainscript)
+        { // only main script can call this function
+            int startTime=VDateTime::getTimeInMs();
+            retVal=launchThreadedChildScriptsRoutine_OLD(it);
+            App::ct->calcInfo->addChildScriptCalcTime(VDateTime::getTimeInMs()-startTime,true);
+            App::ct->calcInfo->addChildScriptExecCnt(retVal,true);
+        }
+        else
+            errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_MAIN_SCRIPT;
+    }
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}
+
+int launchThreadedChildScriptsRoutine_OLD(CLuaScriptObject* it)
+{ // DEPRECATED
+    std::vector<int> childScriptIDsToRun;
+
+    // Now find all first child scripts in the hierarchy, including non-threaded or explicit handling flagged onces:
+    if (it->getScriptType()==sim_scripttype_mainscript)
+    { // we have a main script here
+        for (int i=0;i<int(App::ct->objCont->objectList.size());i++)
+        {   // Do we have a parentless object?
+            C3DObject* q=App::ct->objCont->getObject(App::ct->objCont->objectList[i]);
+            if ( (q!=NULL)&&(q->getParent()==NULL) )
+                q->getChildScriptsToRun_OLD(childScriptIDsToRun);
+        }
+    }
+    else
+    { // we have a script linked to a 3d object or a passive script here
+        C3DObject* obj=App::ct->objCont->getObject(it->getObjectIDThatScriptIsAttachedTo_child());
+        if (obj!=NULL)
+        {
+            for (int i=0;i<int(obj->childList.size());i++)
+                obj->childList[i]->getChildScriptsToRun_OLD(childScriptIDsToRun);
+        }
+    }
+
+    // Now we order all scripts according to their execution order settings:
+    std::vector<int> firstToExecute;
+    std::vector<int> normalToExecute;
+    std::vector<int> lastToExecute;
+    for (int i=0;i<int(childScriptIDsToRun.size());i++)
+    {
+        CLuaScriptObject* as=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(childScriptIDsToRun[i]);
+        if (as!=NULL) //&&(!as->getScriptIsDisabled()) )
+        {
+            if (!as->getThreadedExecution())
+            { // We have a non-threaded script. We just skip it and explore beyond:
+                C3DObject* obj=App::ct->objCont->getObject(as->getObjectIDThatScriptIsAttachedTo_child());
+                if (obj!=NULL)
+                {
+                    for (int j=0;j<int(obj->childList.size());j++)
+                        obj->childList[j]->getChildScriptsToRun_OLD(childScriptIDsToRun); // append to the end of the list
+                }
+            }
+            else
+            {
+                if (as->getExecutionOrder()==sim_scriptexecorder_first)
+                    firstToExecute.push_back(childScriptIDsToRun[i]);
+                if (as->getExecutionOrder()==sim_scriptexecorder_normal)
+                    normalToExecute.push_back(childScriptIDsToRun[i]);
+                if (as->getExecutionOrder()==sim_scriptexecorder_last)
+                    lastToExecute.push_back(childScriptIDsToRun[i]);
+            }
+        }
+    }
+    childScriptIDsToRun.clear();
+    childScriptIDsToRun.insert(childScriptIDsToRun.end(),firstToExecute.begin(),firstToExecute.end());
+    childScriptIDsToRun.insert(childScriptIDsToRun.end(),normalToExecute.begin(),normalToExecute.end());
+    childScriptIDsToRun.insert(childScriptIDsToRun.end(),lastToExecute.begin(),lastToExecute.end());
+
+    // Now we run all the scripts, except the disabled ones:
+    int retVal=0;
+    for (int i=0;i<int(childScriptIDsToRun.size());i++)
+    {
+        CLuaScriptObject* as=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(childScriptIDsToRun[i]);
+        if (as!=NULL)
+        {
+            if (!as->getScriptIsDisabled())
+            {
+                C3DObject* obj=App::ct->objCont->getObject(as->getObjectIDThatScriptIsAttachedTo_child());
+                if ((obj!=NULL)&&((obj->getCumulativeModelProperty()&sim_modelproperty_scripts_inactive)==0))
+                {
+                    retVal++;
+                    as->launchThreadedChildScript();
+                }
+            }
+            // now handle the childen of that one:
+            launchThreadedChildScriptsRoutine_OLD(as);
+        }
+    }
+    return(retVal);
+}
+
+int _simResumeThreads_legacy(luaWrap_lua_State* L)
+{ // DEPRECATED
+    LUA_API_FUNCTION_DEBUG;
+    LUA_START("sim.resumeThreads_legacy");
+
+    int retVal=-1;
+    int currentScriptID=getCurrentScriptID(L);
+    CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(currentScriptID);
+    if (it->getScriptType()==sim_scripttype_mainscript)
+    {
+        if (checkInputArguments(L,&errorString,lua_arg_number,0))
+        {
+            int loc=luaWrap_lua_tointeger(L,1);
+            int startTime=VDateTime::getTimeInMs();
+            retVal=CThreadPool::handleAllThreads_withResumeLocation(loc);
+            App::ct->calcInfo->addChildScriptCalcTime(VDateTime::getTimeInMs()-startTime,true);
+            App::ct->calcInfo->addChildScriptExecCnt(retVal,true);
+        }
+    }
+    else
+        errorString=SIM_ERROR_CAN_ONLY_BE_CALLED_FROM_MAIN_SCRIPT;
+
+    LUA_SET_OR_RAISE_ERROR(); // we might never return from this!
+    luaWrap_lua_pushnumber(L,retVal);
+    LUA_END(1);
+}

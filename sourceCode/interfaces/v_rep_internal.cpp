@@ -3409,7 +3409,6 @@ simInt simSetInt32Parameter_internal(simInt parameter,simInt intState)
         CApiErrors::setApiCallErrorReportMode(intState);
         return(1);
     }
-
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         if (parameter==sim_intparam_server_port_next)
@@ -3518,7 +3517,8 @@ simInt simSetInt32Parameter_internal(simInt parameter,simInt intState)
             if (App::ct->simulation==NULL)
                 return(-1);
             App::ct->simulation->setDisableWarningsFlags(intState);
-        }
+            return(1);
+       }
 
         if ( (parameter==sim_intparam_prox_sensor_select_down)||(parameter==sim_intparam_prox_sensor_select_up) )
         {
@@ -3822,6 +3822,13 @@ simInt simGetInt32Parameter_internal(simInt parameter,simInt* intState)
             intState[0]=App::ct->dynamicsContainer->getCurrentIterationCount();
             return(1);
         }
+        if (parameter==sim_intparam_job_count)
+        {
+            if (App::ct->environment==NULL)
+                return(-1);
+            intState[0]=App::ct->environment->getJobCount();
+            return(1);
+        }
         if (parameter==sim_intparam_scene_index)
         {
             intState[0]=App::ct->getCurrentInstanceIndex();
@@ -4048,7 +4055,7 @@ simChar* simGetStringParameter_internal(simInt parameter)
         {
             if (App::ct->environment==NULL)
                 return(NULL);
-            std::string tmp(App::ct->environment->getSceneUniqueUpdatableString());
+            std::string tmp(App::ct->environment->getUniquePersistentIdString());
             tmp=CTTUtil::encode64(tmp);
             char* retVal=new char[tmp.length()+1];
             for (int i=0;i<int(tmp.length());i++)
@@ -4136,9 +4143,7 @@ simFloat simGetSimulationTime_internal()
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1.0f);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
@@ -5094,36 +5099,43 @@ simInt simHandleMainScript_internal()
 {
     C_API_FUNCTION_DEBUG;
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
+    int retVal=0;
+
+    // Plugins:
     int data[4]={0,0,0,0};
     int rtVal[4]={-1,-1,-1,-1};
     void* returnVal=CPluginContainer::sendEventCallbackMessageToAllPlugins(sim_message_eventcallback_mainscriptabouttobecalled,data,NULL,rtVal);
     delete[] (char*)returnVal;
-    if (rtVal[0]!=-1)
-    { // a plugin doesn't want to run the main script!
-        // Handle add-on execution (during non-simulation, it happens elsewhere!):
-        App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aos_run,NULL,NULL);
 
-        return(sim_script_main_script_not_called); // this should not generate an error
-    }
+    // Customization scripts:
+    int res=0;
+    CInterfaceStack outStack;
+    App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_beforemainscript,NULL,&outStack,&res);
+    bool cs=(res!=1);
 
-    App::ct->calcInfo->simulationPassStart();
-    CLuaScriptObject* it=App::ct->luaScriptContainer->getMainScript();
-    if (it==NULL)
+    // Add-on scripts:
+    bool as=App::ct->addOnScriptContainer->handleAddOnScriptExecution_beforeMainScript();
+
+    if ( ( (rtVal[0]==-1)&&cs&&as )||App::ct->simulation->didStopRequestCounterChangeSinceSimulationStart() )
     {
-        // Handle add-on execution (during non-simulation, it happens elsewhere!):
-        App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aos_run,NULL,NULL);
-
-        return(sim_script_main_script_nonexistent); // this should not generate an error
+        CLuaScriptObject* it=App::ct->luaScriptContainer->getMainScript();
+        if (it!=NULL)
+        {
+            App::ct->calcInfo->simulationPassStart();
+            retVal=it->runMainScript(-1,NULL,NULL);
+            App::ct->calcInfo->simulationPassEnd();
+        }
+        else
+        { // we don't have a main script
+            retVal=sim_script_main_script_nonexistent; // this should not generate an error
+        }
     }
-    int retVal=0;
-
-    retVal=it->runMainScript(-1,NULL,NULL);
-
-    App::ct->calcInfo->simulationPassEnd();
+    else
+    { // a plugin or customization script doesn't want to run the main script!
+        retVal=sim_script_main_script_not_called; // this should not generate an error
+    }
 
     // Handle add-on execution (during non-simulation, it happens elsewhere!):
     App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_aos_run,NULL,NULL);
@@ -5163,9 +5175,7 @@ simInt simSetScriptText_internal(simInt scriptHandle,const simChar* scriptText)
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
@@ -5176,19 +5186,24 @@ simInt simSetScriptText_internal(simInt scriptHandle,const simChar* scriptText)
             return(-1);
         }
 
-#ifdef SIM_WITH_GUI
-        if (App::mainWindow!=NULL)
+        if ( (it->getScriptType()!=sim_scripttype_childscript)||(!it->getThreadedExecution())||App::ct->simulation->isSimulationStopped() )
         {
-            bool wasOpen=App::mainWindow->scintillaEditorContainer->closeEditor(scriptHandle);
-            it->setScriptText(scriptText,NULL);
-            if (wasOpen)
-                App::mainWindow->scintillaEditorContainer->openEditorForScript(scriptHandle);
+#ifdef SIM_WITH_GUI
+            if (App::mainWindow!=NULL)
+            {
+                bool wasOpen=App::mainWindow->scintillaEditorContainer->closeEditor(scriptHandle);
+                it->setScriptText(scriptText,NULL);
+                if (wasOpen)
+                    App::mainWindow->scintillaEditorContainer->openEditorForScript(scriptHandle);
+            }
+            else
+#endif
+                it->setScriptText(scriptText,NULL);
+            it->killLuaState();
+            return(1);
         }
         else
-#endif
-            it->setScriptText(scriptText,NULL);
-
-        return(1);
+            return(0);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
     return(-1);
@@ -5364,9 +5379,7 @@ simInt simGetScriptProperty_internal(simInt scriptHandle,simInt* scriptProperty,
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
@@ -5391,46 +5404,51 @@ simInt simAssociateScriptWithObject_internal(simInt scriptHandle,simInt associat
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
+        int retVal=-1;
         CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_noAddOnsNorSandbox(scriptHandle);
-        if (it==NULL)
+        if (it!=NULL)
         {
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_INEXISTANT);
-            return(-1);
-        }
-        if (it->getScriptType()!=sim_scripttype_childscript)
-        {
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_NOT_CHILD_SCRIPT);
-            return(-1);
-        }
-        if (associatedObjectHandle!=-1)
-        {
-            if (!doesObjectExist(__func__,associatedObjectHandle))
+            if ( (it->getScriptType()==sim_scripttype_childscript)||(it->getScriptType()==sim_scripttype_customizationscript) )
             {
-                return(-1);
+                if (associatedObjectHandle==-1)
+                { // remove association
+                    if (it->getScriptType()==sim_scripttype_childscript)
+                        it->setObjectIDThatScriptIsAttachedTo_child(-1);
+                    if (it->getScriptType()==sim_scripttype_customizationscript)
+                        it->setObjectIDThatScriptIsAttachedTo_customization(-1);
+                    App::setLightDialogRefreshFlag();
+                    retVal=1;
+                }
+                else
+                { // set association
+                    if (doesObjectExist(__func__,associatedObjectHandle))
+                    { // object does exist
+                        if ( (it->getObjectIDThatScriptIsAttachedTo_child()==-1)&&(it->getObjectIDThatScriptIsAttachedTo_customization()==-1) )
+                        { // script not yet associated
+                            if ( ((it->getScriptType()==sim_scripttype_childscript)&&(App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(associatedObjectHandle)==NULL))||
+                                 ((it->getScriptType()==sim_scripttype_customizationscript)&&(App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(associatedObjectHandle)==NULL)) )
+                            { // object has no child/customization script yet
+                                if (it->getScriptType()==sim_scripttype_childscript)
+                                    it->setObjectIDThatScriptIsAttachedTo_child(associatedObjectHandle);
+                                if (it->getScriptType()==sim_scripttype_customizationscript)
+                                    it->setObjectIDThatScriptIsAttachedTo_customization(associatedObjectHandle);
+                                App::setLightDialogRefreshFlag();
+                                retVal=1;
+                            }
+                        }
+                    }
+                }
             }
-            if (App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(associatedObjectHandle)!=NULL)
-            { // object has already a script attached!
-                return(-1);
-            }
+            else
+                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_NOT_CHILD_OR_CUSTOMIZATION_SCRIPT);
         }
-        if ((it->getObjectIDThatScriptIsAttachedTo_child()!=-1)&&(associatedObjectHandle!=-1))
-            return(-1); // script already associated
-
-
-//      if (!App::ct->simulation->isSimulationStopped())
-//      {
-//          CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SIMULATION_NOT_STOPPED);
-//          return(-1);
-//      }
-        it->setObjectIDThatScriptIsAttachedTo_child(associatedObjectHandle);
-        App::setLightDialogRefreshFlag();
-        return(1);
+        else
+            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_INEXISTANT);
+        return(retVal);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
     return(-1);
@@ -5442,9 +5460,7 @@ simInt simAddScript_internal(simInt scriptProperty)
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
@@ -6073,21 +6089,19 @@ simInt simRegisterScriptCallbackFunction_internal(const simChar* funcNameAtPlugi
     return(-1);
 }
 
-simInt simRegisterScriptVariable_internal(const simChar* varName,const simChar* varValue,simInt stackHandle)
+simInt simRegisterScriptVariable_internal(const simChar* varNameAtPluginName,const simChar* varValue,simInt stackHandle)
 {
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         bool retVal=1;
-        if (App::ct->luaCustomFuncAndVarContainer->removeCustomVariable(varName))
+        if (App::ct->luaCustomFuncAndVarContainer->removeCustomVariable(varNameAtPluginName))
             retVal=0;// that variable already existed. We remove it and replace it!
-        if (!App::ct->luaCustomFuncAndVarContainer->insertCustomVariable(varName,varValue,stackHandle))
+        if (!App::ct->luaCustomFuncAndVarContainer->insertCustomVariable(varNameAtPluginName,varValue,stackHandle))
         {
             CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_CUSTOM_LUA_VAR_COULD_NOT_BE_REGISTERED);
             return(-1);
@@ -6504,9 +6518,7 @@ simInt simStopSimulation_internal()
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
@@ -6542,72 +6554,6 @@ simInt simPauseSimulation_internal()
     return(-1);
 }
 
-simInt simGetMechanismHandle_internal(const simChar* mechanismName)
-{
-    C_API_FUNCTION_DEBUG;
-
-    std::string mechanismNameAdjusted=getCNameSuffixAdjustedName(mechanismName);
-    enableCNameSuffixAdjustment();
-    if (!isSimulatorInitialized(__func__))
-    {
-        return(-1);
-    }
-
-    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
-    {
-        CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismNameAdjusted.c_str());
-        if (it==NULL)
-        {
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_MECHANISM_INEXISTANT);
-            return(-1);
-        }
-        int retVal=it->getObjectID();
-        return(retVal);
-    }
-    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
-    return(-1);
-}
-
-simInt simHandleMechanism_internal(simInt mechanismHandle)
-{
-    C_API_FUNCTION_DEBUG;
-
-    if (!isSimulatorInitialized(__func__))
-    {
-        return(-1);
-    }
-
-    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
-    {
-        if ( (mechanismHandle!=sim_handle_all)&&(mechanismHandle!=sim_handle_all_except_explicit) )
-        {
-            CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismHandle);
-            if (it==NULL)
-            {
-                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_MECHANISM_INEXISTANT);
-                return(-1);
-            }
-        }
-        int calcCnt=0;
-        if (mechanismHandle<0)
-            calcCnt=App::ct->constraintSolver->computeAllMechanisms(mechanismHandle==sim_handle_all_except_explicit);
-        else
-        { // explicit handling
-            CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismHandle);
-            if (!it->getExplicitHandling())
-            {
-                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_OBJECT_NOT_TAGGED_FOR_EXPLICIT_HANDLING);
-                return(-1);
-            }
-            if (it->computeGcs())
-                calcCnt++;
-        }
-        return(calcCnt);
-    }
-    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
-    return(-1);
-}
-
 simInt simAddStatusbarMessage_internal(const simChar* message)
 {
     C_API_FUNCTION_DEBUG;
@@ -6626,8 +6572,9 @@ simInt simAddStatusbarMessage_internal(const simChar* message)
 #endif
         if (message!=NULL)
         {
-            App::addStatusbarMessage(message);
-            if (std::string(message).compare(0,18,"Lua runtime error:")==0)
+            bool scriptErrorMsg=(std::string(message).compare(0,18,"Lua runtime error:")==0);
+            App::addStatusbarMessage(message,scriptErrorMsg);
+            if (scriptErrorMsg)
             { // this is to intercept the xpcall error message generated in a threaded child script, and to flash the status bar
                 SUIThreadCommand cmdIn;
                 SUIThreadCommand cmdOut;
@@ -8359,8 +8306,8 @@ simInt simReadForceSensor_internal(simInt objectHandle,simFloat* forceVector,sim
             return(-1);
         if (App::ct->simulation->isSimulationStopped())
         {
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SIMULATION_NOT_RUNNING);
-            return(-1);
+//            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SIMULATION_NOT_RUNNING);
+            return(0);
         }
         CForceSensor* it=App::ct->objCont->getForceSensor(handle);
         int retVal=0;
@@ -9432,9 +9379,7 @@ simInt simAuxiliaryConsoleOpen_internal(const simChar* title,simInt maxLines,sim
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
@@ -9478,15 +9423,23 @@ simInt simAuxiliaryConsoleShow_internal(simInt consoleHandle,simBool showState)
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
 #ifdef SIM_WITH_GUI
-        if ( (App::mainWindow!=NULL)&&(App::mainWindow->scintillaConsoleContainer->consoleSetShowState(consoleHandle,showState!=0)) )
-            return(1);
+        int handleFlags=consoleHandle&0x0ff00000;
+        int handle=consoleHandle&0x000fffff;
+        if ((handleFlags&sim_handleflag_extended)!=0)
+        { // we just wanna now if the console is still open
+            if ( (App::mainWindow!=NULL)&&(App::mainWindow->scintillaConsoleContainer->isConsoleHandleValid(handle)) )
+                return(1);
+        }
+        else
+        { // normal operation
+            if ( (App::mainWindow!=NULL)&&(App::mainWindow->scintillaConsoleContainer->consoleSetShowState(handle,showState!=0)) )
+                return(1);
+        }
 #endif
         return(0);
     }
@@ -9499,9 +9452,7 @@ simInt simAuxiliaryConsolePrint_internal(simInt consoleHandle,const simChar* tex
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
@@ -11649,14 +11600,14 @@ simInt simGetObjectFloatParameter_internal(simInt objectHandle,simInt parameterI
                     parameter[0]=v(2);
                 retVal=1;
             }
-            if ((parameterID==sim_shapefloatparam_init_velocity_a)||(parameterID==sim_shapefloatparam_init_velocity_b)||(parameterID==sim_shapefloatparam_init_velocity_g))
+            if ((parameterID==sim_shapefloatparam_init_ang_velocity_x)||(parameterID==sim_shapefloatparam_init_ang_velocity_y)||(parameterID==sim_shapefloatparam_init_ang_velocity_z))
             {
                 C3Vector v(shape->getInitialDynamicAngularVelocity());
-                if (parameterID==sim_shapefloatparam_init_velocity_a)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_x)
                     parameter[0]=v(0);
-                if (parameterID==sim_shapefloatparam_init_velocity_b)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_y)
                     parameter[0]=v(1);
-                if (parameterID==sim_shapefloatparam_init_velocity_g)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_z)
                     parameter[0]=v(2);
                 retVal=1;
             }
@@ -12007,14 +11958,14 @@ simInt simSetObjectFloatParameter_internal(simInt objectHandle,simInt parameterI
                 shape->setInitialDynamicLinearVelocity(v);
                 retVal=1;
             }
-            if ((parameterID==sim_shapefloatparam_init_velocity_a)||(parameterID==sim_shapefloatparam_init_velocity_b)||(parameterID==sim_shapefloatparam_init_velocity_g))
+            if ((parameterID==sim_shapefloatparam_init_ang_velocity_x)||(parameterID==sim_shapefloatparam_init_ang_velocity_y)||(parameterID==sim_shapefloatparam_init_ang_velocity_z))
             {
                 C3Vector v(shape->getInitialDynamicAngularVelocity());
-                if (parameterID==sim_shapefloatparam_init_velocity_a)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_x)
                     v(0)=parameter;
-                if (parameterID==sim_shapefloatparam_init_velocity_b)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_y)
                     v(1)=parameter;
-                if (parameterID==sim_shapefloatparam_init_velocity_g)
+                if (parameterID==sim_shapefloatparam_init_ang_velocity_z)
                     v(2)=parameter;
                 shape->setInitialDynamicAngularVelocity(v);
                 retVal=1;
@@ -12206,7 +12157,16 @@ simChar* simGetObjectStringParameter_internal(simInt objectHandle,simInt paramet
         CShape* shape=App::ct->objCont->getShape(objectHandle);
         if (parameterID==sim_objstringparam_dna)
         {
-            std::string s(object->getUniqueUpdatableString());
+            std::string s(object->getDnaString());
+            retVal=new char[s.length()+1];
+            for (size_t i=0;i<s.length();i++)
+                retVal[i]=s[i];
+            retVal[s.length()]=0;
+            parameterLength[0]=(int)s.length();
+        }
+        if (parameterID==sim_objstringparam_unique_id)
+        {
+            std::string s(object->getUniquePersistentIdString());
             retVal=new char[s.length()+1];
             for (size_t i=0;i<s.length();i++)
                 retVal[i]=s[i];
@@ -12386,7 +12346,7 @@ simInt simGetJointForce_internal(simInt jointHandle,simFloat* forceOrTorque)
     return(-1);
 }
 
-simInt simPersistentDataWrite_internal(const simChar* dataName,const simChar* dataValue,simInt dataLength,simInt options)
+simInt simPersistentDataWrite_internal(const simChar* dataTag,const simChar* dataValue,simInt dataLength,simInt options)
 {
     C_API_FUNCTION_DEBUG;
 
@@ -12395,14 +12355,14 @@ simInt simPersistentDataWrite_internal(const simChar* dataName,const simChar* da
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
-        App::ct->persistentDataContainer->writeData(dataName,std::string(dataValue,dataLength),(options&1)!=0);
+        App::ct->persistentDataContainer->writeData(dataTag,std::string(dataValue,dataLength),(options&1)!=0);
         return(1);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
     return(-1);
 }
 
-simChar* simPersistentDataRead_internal(const simChar* dataName,simInt* dataLength)
+simChar* simPersistentDataRead_internal(const simChar* dataTag,simInt* dataLength)
 {
     C_API_FUNCTION_DEBUG;
 
@@ -12412,7 +12372,7 @@ simChar* simPersistentDataRead_internal(const simChar* dataName,simInt* dataLeng
     IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
     {
         std::string sigVal;
-        if (App::ct->persistentDataContainer->readData(dataName,sigVal))
+        if (App::ct->persistentDataContainer->readData(dataTag,sigVal))
         {
             char* retVal=new char[sigVal.length()];
             for (unsigned int i=0;i<sigVal.length();i++)
@@ -12645,31 +12605,21 @@ simInt simCheckVisionSensor_internal(simInt sensorHandle,simInt entityHandle,sim
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
         if (!doesObjectExist(__func__,sensorHandle))
-        {
             return(-1);
-        }
         if (!isVisionSensor(__func__,sensorHandle))
-        {
             return(-1);
-        }
         if ( (entityHandle!=sim_handle_all)&&(!doesEntityExist(__func__,entityHandle)) )
-        {
             return(-1);
-        }
         if (entityHandle==sim_handle_all)
             entityHandle=-1;
 
         if (!App::ct->mainSettings->visionSensorsEnabled)
-        {
             return(0);
-        }
 
         if (auxValues!=NULL)
             auxValues[0]=NULL;
@@ -15082,29 +15032,6 @@ simInt* simGetCollectionObjects_internal(simInt collectionHandle,simInt* objectC
     return(NULL);
 }
 
-simInt simHandleCustomizationScripts_internal(simInt callType)
-{
-    C_API_FUNCTION_DEBUG;
-
-    if (!isSimulatorInitialized(__func__))
-    {
-        return(-1);
-    }
-
-    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
-    {
-        int retVal=0;
-        if (App::getEditModeType()==NO_EDIT_MODE)
-        {
-            retVal=App::ct->luaScriptContainer->handleCustomizationScriptExecution(callType,NULL,NULL);
-            App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
-        }
-        return(retVal);
-    }
-    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
-    return(-1);
-}
-
 simInt simSetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,simFloat floatVal,simInt intOrBoolVal)
 {
     C_API_FUNCTION_DEBUG;
@@ -15151,6 +15078,11 @@ simInt simSetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,sim
             it->setScriptIsDisabled(intOrBoolVal==0);
             retVal=1;
         }
+        if (attributeID==sim_scriptattribute_debuglevel)
+        {
+            it->setDebugLevel(intOrBoolVal);
+            retVal=1;
+        }
 
 
         return(retVal);
@@ -15164,9 +15096,7 @@ simInt simGetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,sim
     C_API_FUNCTION_DEBUG;
 
     if (!isSimulatorInitialized(__func__))
-    {
         return(-1);
-    }
 
     IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
     {
@@ -15209,6 +15139,18 @@ simInt simGetScriptAttribute_internal(simInt scriptHandle,simInt attributeID,sim
         if (attributeID==sim_scriptattribute_executioncount)
         {
             intOrBoolVal[0]=it->getNumberOfPasses();
+            retVal=1;
+        }
+        if (attributeID==sim_scriptattribute_debuglevel)
+        {
+            intOrBoolVal[0]=it->getDebugLevel();
+            retVal=1;
+        }
+        if (attributeID==sim_scriptattribute_scripttype)
+        {
+            intOrBoolVal[0]=it->getScriptType();
+            if (it->getThreadedExecution())
+                intOrBoolVal[0]|=sim_scripttype_threaded;
             retVal=1;
         }
         return(retVal);
@@ -15671,119 +15613,6 @@ simInt simExportIk_internal(const simChar* pathAndFilename,simInt reserved1,simV
     return(-1);
 }
 
-simInt simCallScriptFunction_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull)
-{
-    C_API_FUNCTION_DEBUG;
-    CLuaScriptObject* script=NULL;
-
-    std::string funcName;
-    if (scriptHandleOrType>=SIM_IDSTART_LUASCRIPT)
-    { // script is identified by its ID
-        std::string funcNameAtScriptName(functionNameAtScriptName);
-        size_t p=funcNameAtScriptName.find('@');
-        if (p!=std::string::npos)
-            funcName.assign(funcNameAtScriptName.begin(),funcNameAtScriptName.begin()+p);
-        else
-            funcName=funcNameAtScriptName;
-        script=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(scriptHandleOrType);
-    }
-    else
-    { // script is identified by a script type and sometimes also a script name
-        if (reservedSetToNull==NULL)
-        {
-            std::string scriptName;
-            std::string funcNameAtScriptName(functionNameAtScriptName);
-            size_t p=funcNameAtScriptName.find('@');
-            if (p!=std::string::npos)
-            {
-                scriptName.assign(funcNameAtScriptName.begin()+p+1,funcNameAtScriptName.end());
-                funcName.assign(funcNameAtScriptName.begin(),funcNameAtScriptName.begin()+p);
-            }
-            else
-                funcName=funcNameAtScriptName;
-            if (scriptHandleOrType==sim_scripttype_mainscript)
-                script=App::ct->luaScriptContainer->getMainScript();
-            if (scriptHandleOrType==sim_scripttype_generalcallback)
-                script=App::ct->luaScriptContainer->getGeneralCallbackHandlingScript_callback_OLD();
-            if (scriptHandleOrType==sim_scripttype_contactcallback)
-                script=App::ct->luaScriptContainer->getCustomContactHandlingScript_callback_OLD();
-            if (scriptHandleOrType==sim_scripttype_childscript)
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objId);
-            }
-            if (scriptHandleOrType==sim_scripttype_jointctrlcallback)
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_jointCallback_OLD(objId);
-            }
-            if (scriptHandleOrType==sim_scripttype_customizationscript)
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objId);
-            }
-        }
-        else
-        { // this is the old way of doing it. Deprecated. Was only 2 months active, not officially
-            funcName=functionNameAtScriptName;
-            if (scriptHandleOrType==0) // main script
-                script=App::ct->luaScriptContainer->getMainScript();
-            if (scriptHandleOrType==1) // general callback
-                script=App::ct->luaScriptContainer->getGeneralCallbackHandlingScript_callback_OLD();
-            if (scriptHandleOrType==2) // contact callback
-                script=App::ct->luaScriptContainer->getCustomContactHandlingScript_callback_OLD();
-            if (scriptHandleOrType==3) // child script
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objId);
-            }
-            if (scriptHandleOrType==4) // joint callback
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_jointCallback_OLD(objId);
-            }
-            if (scriptHandleOrType==5) // customization
-            {
-                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
-                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objId);
-            }
-        }
-    }
-
-    if (script!=NULL)
-    {
-        int retVal=-1; // error
-        if (script->getThreadedExecutionIsUnderWay())
-        { // very special handling here!
-            if (VThread::areThreadIDsSame(script->getThreadedScriptThreadId(),VThread::getCurrentThreadId()))
-                retVal=script->callScriptFunction(funcName.c_str(),data);
-            else
-            { // we have to execute that function via another thread!
-                void* d[4];
-                int callType=0;
-                d[0]=&callType;
-                d[1]=script;
-                d[2]=(void*)funcName.c_str();
-                d[3]=data;
-
-                retVal=CThreadPool::callRoutineViaSpecificThread(script->getThreadedScriptThreadId(),d);
-            }
-        }
-        else
-        {
-            if (VThread::isCurrentThreadTheMainSimulationThread())
-            { // For now we don't allow non-main threads to call non-threaded scripts!
-                retVal=script->callScriptFunction(funcName.c_str(),data);
-            }
-        }
-        if (retVal==-1)
-            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_FAILED_CALLING_SCRIPT_FUNCTION);
-        return(retVal);
-    }
-    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_INEXISTANT);
-
-    return(-1);
-}
 
 simInt simCallScriptFunctionEx_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId)
 {
@@ -15987,21 +15816,19 @@ simInt simGetConfigForTipPose_internal(simInt ikGroupHandle,simInt jointCnt,cons
         }
         if ( (!err)&&(collisionPairCnt>0)&&(collisionPairs!=NULL) )
         {
+            bool e=false;
             for (int i=0;i<collisionPairCnt;i++)
             {
-                if (collisionPairs[2*i+0]!=-1)
-                {
-                    if (!doesCollectionExist(__func__,collisionPairs[2*i+0]))
-                        err=true;
-                    else
-                    {
-                        if (collisionPairs[2*i+1]!=sim_handle_all)
-                        {
-                            if (!doesCollectionExist(__func__,collisionPairs[2*i+1]))
-                                err=true;
-                        }
-                    }
-                }
+                C3DObject* eo1=App::ct->objCont->getObject(collisionPairs[2*i+0]);
+                CRegCollection* ec1=App::ct->collections->getCollection(collisionPairs[2*i+0]);
+                C3DObject* eo2=App::ct->objCont->getObject(collisionPairs[2*i+1]);
+                CRegCollection* ec2=App::ct->collections->getCollection(collisionPairs[2*i+1]);
+                e|=( ((eo1==NULL)&&(ec1==NULL)) || ((eo2==NULL)&&(ec2==NULL)&&(collisionPairs[2*i+1]!=sim_handle_all)) );
+            }
+            if (e)
+            {
+                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_INVALID_COLLISION_PAIRS);
+                err=e;
             }
         }
         if (!err)
@@ -18495,7 +18322,7 @@ simInt simExecuteScriptString_internal(simInt scriptHandleOrType,const simChar* 
         if (scriptHandleOrType>=SIM_IDSTART_LUASCRIPT)
         { // script is identified by its ID
             std::string strAtScriptName(stringAtScriptName);
-            size_t p=strAtScriptName.find('@');
+            size_t p=strAtScriptName.rfind('@');
             if (p!=std::string::npos)
                 stringToExecute.assign(strAtScriptName.begin(),strAtScriptName.begin()+p);
             else
@@ -18506,7 +18333,7 @@ simInt simExecuteScriptString_internal(simInt scriptHandleOrType,const simChar* 
         {
             std::string scriptName;
             std::string strAtScriptName(stringAtScriptName);
-            size_t p=strAtScriptName.find('@');
+            size_t p=strAtScriptName.rfind('@');
             if (p!=std::string::npos)
             {
                 scriptName.assign(strAtScriptName.begin()+p+1,strAtScriptName.end());
@@ -18777,6 +18604,98 @@ simInt simGetModuleInfo_internal(const simChar* moduleName,simInt infoType,simCh
     return(-1);
 }
 
+simInt simIsDeprecated_internal(const simChar* funcOrConst)
+{
+    C_API_FUNCTION_DEBUG;
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        int retVal=isFuncOrConstDeprecated(funcOrConst);
+        if (retVal<0)
+            retVal=App::ct->luaCustomFuncAndVarContainer->isFuncOrConstDeprecated(funcOrConst);
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+simChar* simGetPersistentDataTags_internal(simInt* tagCount)
+{
+    C_API_FUNCTION_DEBUG;
+
+    if (!isSimulatorInitialized(__func__))
+        return(NULL);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
+    {
+        std::vector<std::string> allTags;
+        tagCount[0]=App::ct->persistentDataContainer->getAllDataNames(allTags);
+        char* retBuffer=NULL;
+        if (allTags.size()>0)
+        {
+            tagCount[0]=int(allTags.size());
+            int totChars=0;
+            for (size_t i=0;i<allTags.size();i++)
+                totChars+=(int)allTags[i].length()+1;
+            retBuffer=new char[totChars];
+            totChars=0;
+            for (size_t i=0;i<allTags.size();i++)
+            {
+                for (size_t j=0;j<allTags[i].length();j++)
+                    retBuffer[totChars+j]=allTags[i][j];
+                retBuffer[totChars+allTags[i].length()]=0;
+                totChars+=(int)allTags[i].length()+1;
+            }
+        }
+        return(retBuffer);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
+    return(NULL);
+}
+
+simInt simEventNotification_internal(const simChar* event)
+{
+    C_API_FUNCTION_DEBUG;
+    int retVal=-1;
+
+    if (!isSimulatorInitialized(__func__))
+        return(retVal);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_WRITE_DATA
+    {
+        tinyxml2::XMLDocument xmldoc;
+        tinyxml2::XMLError error=xmldoc.Parse(event);
+        if(error==tinyxml2::XML_NO_ERROR)
+        {
+            tinyxml2::XMLElement* rootElement=xmldoc.FirstChildElement();
+            const char* origin=rootElement->Attribute("origin");
+            if (origin!=NULL)
+            {
+                if (strcmp(origin,"codeEditor")==0)
+                {
+                    const char* msg=rootElement->Attribute("msg");
+                    const char* handle=rootElement->Attribute("handle");
+                    if ((msg!=NULL)&&(handle!=NULL))
+                    {
+                        if (strcmp(msg,"close")==0)
+                        {
+                            int h;
+                            if (tt::stringToInt(handle,h))
+                            {
+                                if (CPluginContainer::isCodeEditorPluginAvailable())
+                                { // testing
+                                    retVal=CPluginContainer::codeEditor_close(h,NULL);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
+    return(retVal);
+}
 
 
 //************************************************************************************************************
@@ -19449,8 +19368,7 @@ simInt _simHandleCustomContact_internal(simInt objHandle1,simInt objHandle2,simI
     C_API_FUNCTION_DEBUG;
 
     // 1. We handle the new calling method:
-    int objectId=App::ct->luaScriptContainer->getObjectIdContactCallbackFunctionAvailable();
-    if ( (objectId>=0)&&((engine&1024)==0) ) // the engine flag 1024 means: the calling thread is not the simulation thread. We would have problems with the scripts
+    if ( ((engine&1024)==0)&&App::ct->luaScriptContainer->isContactCallbackFunctionAvailable() ) // the engine flag 1024 means: the calling thread is not the simulation thread. We would have problems with the scripts
     {
         CInterfaceStack inStack;
         inStack.pushTableOntoStack();
@@ -19464,69 +19382,60 @@ simInt _simHandleCustomContact_internal(simInt objHandle1,simInt objHandle2,simI
         inStack.pushNumberOntoStack(double(engine));
         inStack.insertDataIntoStackTable();
         CInterfaceStack outStack;
-        C3DObject* obj=App::ct->objCont->getObject(objectId);
-        if (obj!=NULL) // we could still run it in that situation, but is not desired, since the script itself will shortly be destroyed.. or is unattached!
-        {
-            CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objectId);
-            if (it->getContainsContactCallbackFunction())
-                it->runNonThreadedChildScript(sim_syscb_contactcallback,&inStack,&outStack);
-            else
-            {
-                it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objectId);
-                if (it->getContainsContactCallbackFunction())
-                    it->runCustomizationScript(sim_syscb_contactcallback,&inStack,&outStack);
-            }
+        int retInfo=0;
+        App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_childscript,sim_syscb_contactcallback,&inStack,&outStack,&retInfo);
+        if (retInfo>0)
+            App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_contactcallback,&inStack,&outStack,&retInfo);
 
-            bool ignoreContact;
-            if (outStack.getStackMapBoolValue("ignoreContact",ignoreContact))
+        bool ignoreContact;
+        if (outStack.getStackMapBoolValue("ignoreContact",ignoreContact))
+        {
+            dataInt[0]=0;
+            if (!ignoreContact)
             {
-                dataInt[0]=0;
-                if (!ignoreContact)
+                bool collisionResponse=false;
+                outStack.getStackMapBoolValue("collisionResponse",collisionResponse);
+                if (collisionResponse)
                 {
-                    bool collisionResponse=false;
-                    outStack.getStackMapBoolValue("collisionResponse",collisionResponse);
-                    if (collisionResponse)
+                    if (engine==sim_physics_ode)
                     {
-                        if (engine==sim_physics_ode)
-                        {
-                            outStack.getStackMapIntValue("ode.maxContacts",dataInt[1]);
-                            outStack.getStackMapIntValue("ode.contactMode",dataInt[2]);
-                        }
-                        if (engine==sim_physics_bullet)
-                        {
-                            outStack.getStackMapFloatValue("bullet.friction",dataFloat[0]);
-                            outStack.getStackMapFloatValue("bullet.restitution",dataFloat[1]);
-                        }
-                        if (engine==sim_physics_ode)
-                        {
-                            outStack.getStackMapFloatValue("ode.mu",dataFloat[0]);
-                            outStack.getStackMapFloatValue("ode.mu2",dataFloat[1]);
-                            outStack.getStackMapFloatValue("ode.bounce",dataFloat[2]);
-                            outStack.getStackMapFloatValue("ode.bounceVel",dataFloat[3]);
-                            outStack.getStackMapFloatValue("ode.softCfm",dataFloat[4]);
-                            outStack.getStackMapFloatValue("ode.softErp",dataFloat[5]);
-                            outStack.getStackMapFloatValue("ode.motion1",dataFloat[6]);
-                            outStack.getStackMapFloatValue("ode.motion2",dataFloat[7]);
-                            outStack.getStackMapFloatValue("ode.motionN",dataFloat[8]);
-                            outStack.getStackMapFloatValue("ode.slip1",dataFloat[9]);
-                            outStack.getStackMapFloatValue("ode.slip2",dataFloat[10]);
-                            outStack.getStackMapFloatArray("ode.fDir1",dataFloat+11,3);
-                        }
-                        if (engine==sim_physics_vortex)
-                        {
-                            //outStack.getStackMapFloatValue("vortex.xxxx",dataFloat[0]);
-                        }
-                        if (engine==sim_physics_newton)
-                        {
-                            outStack.getStackMapFloatValue("newton.staticFriction",dataFloat[0]);
-                            outStack.getStackMapFloatValue("newton.kineticFriction",dataFloat[1]);
-                            outStack.getStackMapFloatValue("newton.restitution",dataFloat[2]);
-                        }
-                        return(1); // collision
+                        outStack.getStackMapIntValue("ode.maxContacts",dataInt[1]);
+                        outStack.getStackMapIntValue("ode.contactMode",dataInt[2]);
                     }
-                    else
-                        return(0); // no collision
+                    if (engine==sim_physics_bullet)
+                    {
+                        outStack.getStackMapFloatValue("bullet.friction",dataFloat[0]);
+                        outStack.getStackMapFloatValue("bullet.restitution",dataFloat[1]);
+                    }
+                    if (engine==sim_physics_ode)
+                    {
+                        outStack.getStackMapFloatValue("ode.mu",dataFloat[0]);
+                        outStack.getStackMapFloatValue("ode.mu2",dataFloat[1]);
+                        outStack.getStackMapFloatValue("ode.bounce",dataFloat[2]);
+                        outStack.getStackMapFloatValue("ode.bounceVel",dataFloat[3]);
+                        outStack.getStackMapFloatValue("ode.softCfm",dataFloat[4]);
+                        outStack.getStackMapFloatValue("ode.softErp",dataFloat[5]);
+                        outStack.getStackMapFloatValue("ode.motion1",dataFloat[6]);
+                        outStack.getStackMapFloatValue("ode.motion2",dataFloat[7]);
+                        outStack.getStackMapFloatValue("ode.motionN",dataFloat[8]);
+                        outStack.getStackMapFloatValue("ode.slip1",dataFloat[9]);
+                        outStack.getStackMapFloatValue("ode.slip2",dataFloat[10]);
+                        outStack.getStackMapFloatArray("ode.fDir1",dataFloat+11,3);
+                    }
+                    if (engine==sim_physics_vortex)
+                    {
+                        //outStack.getStackMapFloatValue("vortex.xxxx",dataFloat[0]);
+                    }
+                    if (engine==sim_physics_newton)
+                    {
+                        outStack.getStackMapFloatValue("newton.staticFriction",dataFloat[0]);
+                        outStack.getStackMapFloatValue("newton.kineticFriction",dataFloat[1]);
+                        outStack.getStackMapFloatValue("newton.restitution",dataFloat[2]);
+                    }
+                    return(1); // collision
                 }
+                else
+                    return(0); // no collision
             }
         }
     }
@@ -19591,9 +19500,8 @@ simVoid _simDynCallback_internal(const simInt* intData,const simFloat* floatData
     C_API_FUNCTION_DEBUG;
 
     CInterfaceStack inStack;
-    const std::vector<int>* ids=App::ct->luaScriptContainer->getObjectIdsWhereDynCallbackFunctionsAvailable();
-    if (ids->size()>0)
-    {
+    if (App::ct->luaScriptContainer->isDynCallbackFunctionAvailable())
+    { // to make it a bit faster than blindly parsing the whole object hierarchy
         inStack.pushTableOntoStack();
         inStack.pushStringOntoStack("passCnt",0);
         inStack.pushNumberOntoStack(double(intData[1]));
@@ -19611,19 +19519,8 @@ simVoid _simDynCallback_internal(const simInt* intData,const simFloat* floatData
         inStack.pushBoolOntoStack(intData[3]!=0);
         inStack.insertDataIntoStackTable();
 
-        for (size_t i=0;i<ids->size();i++)
-        {
-            C3DObject* obj=App::ct->objCont->getObject(ids->at(i));
-            if (obj!=NULL) // we could still run it in that situation, but is not desired, since the script itself will shortly be destroyed.. or is unattached!
-            {
-                CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(obj->getID());
-                if ( (it!=NULL)&&it->getContainsDynCallbackFunction() )
-                    it->runNonThreadedChildScript(sim_syscb_dyncallback,&inStack,NULL);
-                it=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(obj->getID());
-                if ( (it!=NULL)&&it->getContainsDynCallbackFunction() )
-                    it->runCustomizationScript(sim_syscb_dyncallback,&inStack,NULL);
-            }
-        }
+        App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_childscript,sim_syscb_dyncallback,&inStack,NULL,NULL);
+        App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_dyncallback,&inStack,NULL,NULL);
     }
 }
 
@@ -20576,7 +20473,7 @@ simInt simClearScriptVariable_internal(const simChar* reservedSetToNull,simInt s
 
     if (script!=NULL)
     {
-        int retVal=script->clearVariable(variableName.c_str());
+        int retVal=script->clearScriptVariable(variableName.c_str());
         if (retVal==-1)
             CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_OPERATION_FAILED);
         return(retVal);
@@ -21784,5 +21681,202 @@ simInt simRegisterJointCtrlCallback_internal(simInt(*callBack)(simInt,simInt,sim
         return(1);
     }
     CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_WRITE);
+    return(-1);
+}
+
+simInt simGetMechanismHandle_internal(const simChar* mechanismName)
+{ // deprecated
+    C_API_FUNCTION_DEBUG;
+
+    std::string mechanismNameAdjusted=getCNameSuffixAdjustedName(mechanismName);
+    enableCNameSuffixAdjustment();
+    if (!isSimulatorInitialized(__func__))
+        return(-1);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismNameAdjusted.c_str());
+        if (it==NULL)
+        {
+            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_MECHANISM_INEXISTANT);
+            return(-1);
+        }
+        int retVal=it->getObjectID();
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+
+simInt simHandleMechanism_internal(simInt mechanismHandle)
+{ // deprecated
+    C_API_FUNCTION_DEBUG;
+
+    if (!isSimulatorInitialized(__func__))
+        return(-1);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        if ( (mechanismHandle!=sim_handle_all)&&(mechanismHandle!=sim_handle_all_except_explicit) )
+        {
+            CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismHandle);
+            if (it==NULL)
+            {
+                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_MECHANISM_INEXISTANT);
+                return(-1);
+            }
+        }
+        int calcCnt=0;
+        if (mechanismHandle<0)
+            calcCnt=App::ct->constraintSolver->computeAllMechanisms(mechanismHandle==sim_handle_all_except_explicit);
+        else
+        { // explicit handling
+            CConstraintSolverObject* it=App::ct->constraintSolver->getObject(mechanismHandle);
+            if (!it->getExplicitHandling())
+            {
+                CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_OBJECT_NOT_TAGGED_FOR_EXPLICIT_HANDLING);
+                return(-1);
+            }
+            if (it->computeGcs())
+                calcCnt++;
+        }
+        return(calcCnt);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+
+simInt simHandleCustomizationScripts_internal(simInt callType)
+{ // deprecated
+    C_API_FUNCTION_DEBUG;
+
+    if (!isSimulatorInitialized(__func__))
+        return(-1);
+
+    IF_C_API_SIM_OR_UI_THREAD_CAN_READ_DATA
+    {
+        int retVal=0;
+        if (App::getEditModeType()==NO_EDIT_MODE)
+        {
+            retVal=App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,callType,NULL,NULL,NULL);
+            App::ct->luaScriptContainer->removeDestroyedScripts(sim_scripttype_customizationscript);
+        }
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_COULD_NOT_LOCK_RESOURCES_FOR_READ);
+    return(-1);
+}
+
+simInt simCallScriptFunction_internal(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull)
+{ // DEPRECATED
+    C_API_FUNCTION_DEBUG;
+    CLuaScriptObject* script=NULL;
+
+    std::string funcName;
+    if (scriptHandleOrType>=SIM_IDSTART_LUASCRIPT)
+    { // script is identified by its ID
+        std::string funcNameAtScriptName(functionNameAtScriptName);
+        size_t p=funcNameAtScriptName.find('@');
+        if (p!=std::string::npos)
+            funcName.assign(funcNameAtScriptName.begin(),funcNameAtScriptName.begin()+p);
+        else
+            funcName=funcNameAtScriptName;
+        script=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(scriptHandleOrType);
+    }
+    else
+    { // script is identified by a script type and sometimes also a script name
+        if (reservedSetToNull==NULL)
+        {
+            std::string scriptName;
+            std::string funcNameAtScriptName(functionNameAtScriptName);
+            size_t p=funcNameAtScriptName.find('@');
+            if (p!=std::string::npos)
+            {
+                scriptName.assign(funcNameAtScriptName.begin()+p+1,funcNameAtScriptName.end());
+                funcName.assign(funcNameAtScriptName.begin(),funcNameAtScriptName.begin()+p);
+            }
+            else
+                funcName=funcNameAtScriptName;
+            if (scriptHandleOrType==sim_scripttype_mainscript)
+                script=App::ct->luaScriptContainer->getMainScript();
+            if (scriptHandleOrType==sim_scripttype_generalcallback)
+                script=App::ct->luaScriptContainer->getGeneralCallbackHandlingScript_callback_OLD();
+            if (scriptHandleOrType==sim_scripttype_contactcallback)
+                script=App::ct->luaScriptContainer->getCustomContactHandlingScript_callback_OLD();
+            if (scriptHandleOrType==sim_scripttype_childscript)
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objId);
+            }
+            if (scriptHandleOrType==sim_scripttype_jointctrlcallback)
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_jointCallback_OLD(objId);
+            }
+            if (scriptHandleOrType==sim_scripttype_customizationscript)
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(scriptName);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objId);
+            }
+        }
+        else
+        { // this is the old way of doing it. Deprecated. Was only 2 months active, not officially
+            funcName=functionNameAtScriptName;
+            if (scriptHandleOrType==0) // main script
+                script=App::ct->luaScriptContainer->getMainScript();
+            if (scriptHandleOrType==1) // general callback
+                script=App::ct->luaScriptContainer->getGeneralCallbackHandlingScript_callback_OLD();
+            if (scriptHandleOrType==2) // contact callback
+                script=App::ct->luaScriptContainer->getCustomContactHandlingScript_callback_OLD();
+            if (scriptHandleOrType==3) // child script
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_child(objId);
+            }
+            if (scriptHandleOrType==4) // joint callback
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_jointCallback_OLD(objId);
+            }
+            if (scriptHandleOrType==5) // customization
+            {
+                int objId=App::ct->objCont->getObjectIdentifier(reservedSetToNull);
+                script=App::ct->luaScriptContainer->getScriptFromObjectAttachedTo_customization(objId);
+            }
+        }
+    }
+
+    if (script!=NULL)
+    {
+        int retVal=-1; // error
+        if (script->getThreadedExecutionIsUnderWay())
+        { // very special handling here!
+            if (VThread::areThreadIDsSame(script->getThreadedScriptThreadId(),VThread::getCurrentThreadId()))
+                retVal=script->callScriptFunction(funcName.c_str(),data);
+            else
+            { // we have to execute that function via another thread!
+                void* d[4];
+                int callType=0;
+                d[0]=&callType;
+                d[1]=script;
+                d[2]=(void*)funcName.c_str();
+                d[3]=data;
+
+                retVal=CThreadPool::callRoutineViaSpecificThread(script->getThreadedScriptThreadId(),d);
+            }
+        }
+        else
+        {
+            if (VThread::isCurrentThreadTheMainSimulationThread())
+            { // For now we don't allow non-main threads to call non-threaded scripts!
+                retVal=script->callScriptFunction(funcName.c_str(),data);
+            }
+        }
+        if (retVal==-1)
+            CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_FAILED_CALLING_SCRIPT_FUNCTION);
+        return(retVal);
+    }
+    CApiErrors::setApiCallErrorMessage(__func__,SIM_ERROR_SCRIPT_INEXISTANT);
+
     return(-1);
 }

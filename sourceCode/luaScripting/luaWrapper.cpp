@@ -11,6 +11,11 @@ extern "C" {
 
 typedef int (__cdecl *pluaLibGet_LUA_MULTRET)(void);
 typedef int (__cdecl *pluaLibGet_LUA_MASKCOUNT)(void);
+typedef int (__cdecl *pluaLibGet_LUA_MASKCALL)(void);
+typedef int (__cdecl *pluaLibGet_LUA_MASKRET)(void);
+typedef int (__cdecl *pluaLibGet_LUA_HOOKCOUNT)(void);
+typedef int (__cdecl *pluaLibGet_LUA_HOOKCALL)(void);
+typedef int (__cdecl *pluaLibGet_LUA_HOOKRET)(void);
 typedef int (__cdecl *pluaLibGet_LUA_GLOBALSINDEX)(void);
 typedef luaWrap_lua_State* (__cdecl *pluaLib_luaL_newstate)(void);
 typedef void (__cdecl *pluaLib_lua_close)(luaWrap_lua_State* L);
@@ -30,6 +35,7 @@ typedef void (__cdecl *pluaLib_lua_createtable)(luaWrap_lua_State* L,int narr, i
 typedef int (__cdecl *pluaLib_lua_tointeger)(luaWrap_lua_State* L,int idx);
 typedef luaWrap_lua_Number (__cdecl *pluaLib_lua_tonumber)(luaWrap_lua_State* L,int idx);
 typedef int (__cdecl *pluaLib_lua_toboolean)(luaWrap_lua_State* L,int idx);
+typedef const void* (__cdecl *pluaLib_lua_topointer)(luaWrap_lua_State* L,int idx);
 typedef const char* (__cdecl *pluaLib_lua_tostring)(luaWrap_lua_State* L,int idx);
 typedef const char* (__cdecl *pluaLib_lua_tolstring)(luaWrap_lua_State* L,int idx,size_t* len);
 typedef int (__cdecl *pluaLib_lua_isnumber)(luaWrap_lua_State* L,int idx);
@@ -68,6 +74,11 @@ typedef int (__cdecl *pluaLib_lua_error)(luaWrap_lua_State* L);
 
 pluaLibGet_LUA_MULTRET luaLibGet_LUA_MULTRET;
 pluaLibGet_LUA_MASKCOUNT luaLibGet_LUA_MASKCOUNT;
+pluaLibGet_LUA_MASKCALL luaLibGet_LUA_MASKCALL;
+pluaLibGet_LUA_MASKRET luaLibGet_LUA_MASKRET;
+pluaLibGet_LUA_HOOKCOUNT luaLibGet_LUA_HOOKCOUNT;
+pluaLibGet_LUA_HOOKCALL luaLibGet_LUA_HOOKCALL;
+pluaLibGet_LUA_HOOKRET luaLibGet_LUA_HOOKRET;
 pluaLibGet_LUA_GLOBALSINDEX luaLibGet_LUA_GLOBALSINDEX;
 pluaLib_luaL_newstate luaLib_luaL_newstate;
 pluaLib_lua_close luaLib_lua_close;
@@ -87,6 +98,7 @@ pluaLib_lua_createtable luaLib_lua_createtable;
 pluaLib_lua_tointeger luaLib_lua_tointeger;
 pluaLib_lua_tonumber luaLib_lua_tonumber;
 pluaLib_lua_toboolean luaLib_lua_toboolean;
+pluaLib_lua_topointer luaLib_lua_topointer;
 pluaLib_lua_tostring luaLib_lua_tostring;
 pluaLib_lua_tolstring luaLib_lua_tolstring;
 pluaLib_lua_isnumber luaLib_lua_isnumber;
@@ -133,6 +145,11 @@ bool _getLibProcAddresses()
 {
     luaLibGet_LUA_MULTRET=(pluaLibGet_LUA_MULTRET)(_getProcAddress("luaLibGet_LUA_MULTRET"));
     luaLibGet_LUA_MASKCOUNT=(pluaLibGet_LUA_MASKCOUNT)(_getProcAddress("luaLibGet_LUA_MASKCOUNT"));
+    luaLibGet_LUA_MASKCALL=(pluaLibGet_LUA_MASKCALL)(_getProcAddress("luaLibGet_LUA_MASKCALL"));
+    luaLibGet_LUA_MASKRET=(pluaLibGet_LUA_MASKRET)(_getProcAddress("luaLibGet_LUA_MASKRET"));
+    luaLibGet_LUA_HOOKCOUNT=(pluaLibGet_LUA_HOOKCOUNT)(_getProcAddress("luaLibGet_LUA_HOOKCOUNT"));
+    luaLibGet_LUA_HOOKCALL=(pluaLibGet_LUA_HOOKCALL)(_getProcAddress("luaLibGet_LUA_HOOKCALL"));
+    luaLibGet_LUA_HOOKRET=(pluaLibGet_LUA_HOOKRET)(_getProcAddress("luaLibGet_LUA_HOOKRET"));
     luaLibGet_LUA_GLOBALSINDEX=(pluaLibGet_LUA_GLOBALSINDEX)(_getProcAddress("luaLibGet_LUA_GLOBALSINDEX"));
     luaLib_luaL_newstate=(pluaLib_luaL_newstate)(_getProcAddress("luaLib_luaL_newstate"));
     luaLib_lua_close=(pluaLib_lua_close)(_getProcAddress("luaLib_lua_close"));
@@ -152,6 +169,7 @@ bool _getLibProcAddresses()
     luaLib_lua_tointeger=(pluaLib_lua_tointeger)(_getProcAddress("luaLib_lua_tointeger"));
     luaLib_lua_tonumber=(pluaLib_lua_tonumber)(_getProcAddress("luaLib_lua_tonumber"));
     luaLib_lua_toboolean=(pluaLib_lua_toboolean)(_getProcAddress("luaLib_lua_toboolean"));
+    luaLib_lua_topointer=(pluaLib_lua_topointer)(_getProcAddress("luaLib_lua_topointer"));
     luaLib_lua_tostring=(pluaLib_lua_tostring)(_getProcAddress("luaLib_lua_tostring"));
     luaLib_lua_tolstring=(pluaLib_lua_tolstring)(_getProcAddress("luaLib_lua_tolstring"));
     luaLib_lua_isnumber=(pluaLib_lua_isnumber)(_getProcAddress("luaLib_lua_isnumber"));
@@ -190,6 +208,11 @@ bool _getLibProcAddresses()
 
     if (luaLibGet_LUA_MULTRET==NULL) return false;
     if (luaLibGet_LUA_MASKCOUNT==NULL) return false;
+    if (luaLibGet_LUA_MASKCALL==NULL) return false;
+    if (luaLibGet_LUA_MASKRET==NULL) return false;
+    if (luaLibGet_LUA_HOOKCOUNT==NULL) return false;
+    if (luaLibGet_LUA_HOOKCALL==NULL) return false;
+    if (luaLibGet_LUA_HOOKRET==NULL) return false;
     if (luaLibGet_LUA_GLOBALSINDEX==NULL) return false;
     if (luaLib_luaL_newstate==NULL) return false;
     if (luaLib_lua_close==NULL) return false;
@@ -209,6 +232,7 @@ bool _getLibProcAddresses()
     if (luaLib_lua_tointeger==NULL) return false;
     if (luaLib_lua_tonumber==NULL) return false;
     if (luaLib_lua_toboolean==NULL) return false;
+    if (luaLib_lua_topointer==NULL) return false;
     if (luaLib_lua_tostring==NULL) return false;
     if (luaLib_lua_tolstring==NULL) return false;
     if (luaLib_lua_isnumber==NULL) return false;
@@ -329,6 +353,41 @@ int luaWrapGet_LUA_MASKCOUNT()
     if (lib!=NULL)
         return(luaLibGet_LUA_MASKCOUNT());
     return(LUA_MASKCOUNT);
+}
+
+int luaWrapGet_LUA_MASKCALL()
+{
+    if (lib!=NULL)
+        return(luaLibGet_LUA_MASKCALL());
+    return(LUA_MASKCALL);
+}
+
+int luaWrapGet_LUA_MASKRET()
+{
+    if (lib!=NULL)
+        return(luaLibGet_LUA_MASKRET());
+    return(LUA_MASKRET);
+}
+
+int luaWrapGet_LUA_HOOKCOUNT()
+{
+    if (lib!=NULL)
+        return(luaLibGet_LUA_HOOKCOUNT());
+    return(LUA_HOOKCOUNT);
+}
+
+int luaWrapGet_LUA_HOOKCALL()
+{
+    if (lib!=NULL)
+        return(luaLibGet_LUA_HOOKCALL());
+    return(LUA_HOOKCALL);
+}
+
+int luaWrapGet_LUA_HOOKRET()
+{
+    if (lib!=NULL)
+        return(luaLibGet_LUA_HOOKRET());
+    return(LUA_HOOKRET);
 }
 
 int luaWrapGet_LUA_GLOBALSINDEX()
@@ -475,6 +534,13 @@ int luaWrap_lua_toboolean(luaWrap_lua_State* L,int idx)
     if (lib!=NULL)
         return(luaLib_lua_toboolean(L,idx));
     return(lua_toboolean((lua_State*)L,idx));
+}
+
+const void* luaWrap_lua_topointer(luaWrap_lua_State* L,int idx)
+{
+    if (lib!=NULL)
+        return(luaLib_lua_topointer(L,idx));
+    return(lua_topointer((lua_State*)L,idx));
 }
 
 const char* luaWrap_lua_tostring(luaWrap_lua_State* L,int idx)

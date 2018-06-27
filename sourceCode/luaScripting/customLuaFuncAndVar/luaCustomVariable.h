@@ -11,19 +11,22 @@ public:
 
     virtual ~CLuaCustomVariable();
     
-    void pushVariableOntoLuaStack(luaWrap_lua_State* L,bool handleOnlyRequireAssignments);
-    bool shouldBeDestroyed(const char* pluginName);
-    bool isVariableNameSame(const char* fullName);
-    bool getNoAutoCompletion();
-    std::string getVariableName();
+    void pushVariableOntoLuaStack(luaWrap_lua_State* L,bool handleOnlyRequireAssignments) const;
+    bool shouldBeDestroyed(const char* pluginName) const;
+    bool isVariableNameSame(const char* fullName) const;
+    bool isPluginNameSame(const char* plugName) const;
+    bool isDeprecated() const;
+    bool getHasAutoCompletion() const;
+    std::string getVariableName() const;
 
 protected:
-    std::string _getVariableNameFromFull(const char* fullName);
-    std::string _getPluginNameFromFull(const char* fullName);
+    std::string _getVariableNameFromFull(const char* fullName) const;
+    std::string _getPluginNameFromFull(const char* fullName) const;
 
     std::string _pluginName;
     std::string _variableName;
     std::string _variableValue;
     int _variableStackValue;
-    bool _noAutocompletion;
+    bool _isDeprecated;
+    bool _hasAutocompletion;
 };

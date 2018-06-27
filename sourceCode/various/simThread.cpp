@@ -1218,7 +1218,7 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
                 else
                 {
                     it->setLocalObjectProperty(p|sim_objectproperty_canupdatedna);
-                    it->generateUniqueUpdatableString();
+                    it->generateDnaString();
                 }
             }
         }
@@ -3933,9 +3933,20 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
             if (it!=NULL)
                 it->setExecutionOrder(cmd.intParams[1]);
         }
-
-
-
+        if (cmd.cmdId==SET_TREETRAVERSALDIR_SCRIPTGUITRIGGEREDCMD)
+        {
+            int scriptID=cmd.intParams[0];
+            CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(scriptID);
+            if (it!=NULL)
+                it->setTreeTraversalDirection(cmd.intParams[1]);
+        }
+        if (cmd.cmdId==SET_DEBUGMODE_SCRIPTGUITRIGGEREDCMD)
+        {
+            int scriptID=cmd.intParams[0];
+            CLuaScriptObject* it=App::ct->luaScriptContainer->getScriptFromID_alsoAddOnsAndSandbox(scriptID);
+            if (it!=NULL)
+                it->setDebugLevel(cmd.intParams[1]);
+        }
         if (cmd.cmdId==SET_ALL_SCRIPTSIMULPARAMETERGUITRIGGEREDCMD)
         {
             int scriptID=cmd.intParams[0];
@@ -4082,18 +4093,6 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
             CGraph* it=App::ct->objCont->getGraph(cmd.intParams[0]);
             if (it!=NULL)
                 it->xYZPlanesDisplay=!it->xYZPlanesDisplay;
-        }
-        if (cmd.cmdId==TOGGLE_SHOWGRIDS_GRAPHGUITRIGGEREDCMD)
-        {
-            CGraph* it=App::ct->objCont->getGraph(cmd.intParams[0]);
-            if (it!=NULL)
-                it->graphGrid=!it->graphGrid;
-        }
-        if (cmd.cmdId==TOGGLE_SHOWGRIDVALUES_GRAPHGUITRIGGEREDCMD)
-        {
-            CGraph* it=App::ct->objCont->getGraph(cmd.intParams[0]);
-            if (it!=NULL)
-                it->graphValues=!it->graphValues;
         }
         if (cmd.cmdId==TOGGLE_TIMEGRAPHVISIBLE_GRAPHGUITRIGGEREDCMD)
         {
@@ -5714,12 +5713,6 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
             }
         }
 
-
-
-        if (cmd.cmdId==ENABLE_OLDMOTIONPLANNING_USERSETTINGSGUITRIGGEREDCMD)
-            App::userSettings->enableOldMotionPlanningGui=true;
-        if (cmd.cmdId==ENABLE_OLDPATHPLANNING_USERSETTINGSGUITRIGGEREDCMD)
-            App::userSettings->enableOldPathPlanningGui=true;
         if (cmd.cmdId==SAVE_USERSETTINGSGUITRIGGEREDCMD)
             App::userSettings->saveUserSettings();
         if (cmd.cmdId==SET_TRANSLATIONSTEPSIZE_USERSETTINGSGUITRIGGEREDCMD)
@@ -5874,8 +5867,8 @@ void CSimThread::_executeSimulationThreadCommand(SSimulationThreadCommand cmd)
                 stack.pushStringOntoStack("brCallIndex",0);
                 stack.pushNumberOntoStack(int(executeBrCallIndex));
                 stack.insertDataIntoStackTable();
+                App::ct->luaScriptContainer->handleCascadedScriptExecution(sim_scripttype_customizationscript,sim_syscb_br,&stack,NULL,NULL);
                 App::ct->addOnScriptContainer->handleAddOnScriptExecution(sim_syscb_br,&stack,NULL);
-                App::ct->luaScriptContainer->handleCustomizationScriptExecution(sim_syscb_br,&stack,NULL);
             }
         }
 
@@ -6379,9 +6372,9 @@ void CSimThread::_handleAutoSaveSceneCommand(SSimulationThreadCommand cmd)
                     testScene+=".";
                     testScene+=VREP_SCENE_EXTENSION;
                     CFileOperations::saveScene(testScene.c_str(),false,false,false,false);
-                    std::string info=IDSNS_AUTO_SAVED_SCENE;
-                    info+=" ("+testScene+")";
-                    App::addStatusbarMessage(info.c_str());
+                    //std::string info=IDSNS_AUTO_SAVED_SCENE;
+                    //info+=" ("+testScene+")";
+                    //App::addStatusbarMessage(info.c_str());
                     App::ct->mainSettings->setScenePathAndName(savedLoc.c_str());
                     App::ct->environment->autoSaveLastSaveTimeInSecondsSince1970=VDateTime::getSecondsSince1970();
                 }

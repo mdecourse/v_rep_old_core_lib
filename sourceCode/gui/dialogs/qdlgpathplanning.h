@@ -73,8 +73,6 @@ public:
 
     void on_qqComputePath_clicked();
 
-    void on_qqNoFuncButton_clicked();
-
 private:
     Ui::CQDlgPathPlanning *ui;
 };

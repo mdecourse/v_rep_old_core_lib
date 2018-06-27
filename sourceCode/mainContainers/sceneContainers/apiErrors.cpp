@@ -204,7 +204,7 @@ void CApiErrors::setLuaCallErrorMessage(const char* functionName,const char* err
                 if ((it->getErrorReportMode()&sim_api_error_output)!=0)
                 {
                     std::string tmp=IDSNOTR_FUNCTION_CALL_ERROR_LUA_API+msg;
-                    App::addStatusbarMessage(tmp.c_str());
+                    App::addStatusbarMessage(tmp.c_str(),true);
                     SUIThreadCommand cmdIn;
                     SUIThreadCommand cmdOut;
                     cmdIn.cmdId=FLASH_STATUSBAR_UITHREADCMD;
@@ -275,7 +275,7 @@ void CApiErrors::setLuaCallErrorMessage_fromPlugin(const char* functionName,cons
         App::ct->simulation->pauseOnErrorRequested();
         msg=getLocationString()+msg;
         std::string tmp="Error: "+msg;
-        App::addStatusbarMessage(tmp.c_str());
+        App::addStatusbarMessage(tmp.c_str(),true);
         SUIThreadCommand cmdIn;
         SUIThreadCommand cmdOut;
         cmdIn.cmdId=FLASH_STATUSBAR_UITHREADCMD;

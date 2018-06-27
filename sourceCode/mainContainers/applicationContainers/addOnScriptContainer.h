@@ -31,8 +31,8 @@ public:
     void addCallbackStructureObjectToDestroyAtTheEndOfSimulation_new(SScriptCallBack* object);
     void addCallbackStructureObjectToDestroyAtTheEndOfSimulation_old(SLuaCallBack* object);
 
-    void handleAddOnScriptExecution(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack);
-    void callAddOnWithData(int callType,CInterfaceStack* inStack);
+    bool handleAddOnScriptExecution_beforeMainScript();
+    int handleAddOnScriptExecution(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack);
     void setAdditionalAddOnScript(std::string scriptNameWithExtension);
 
     std::vector<CLuaScriptObject*> allAddOnScripts;

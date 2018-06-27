@@ -113,8 +113,6 @@ VREP_DLLEXPORT simInt simHandleMill(simInt millHandle,simFloat* removedSurfaceAn
 VREP_DLLEXPORT simInt simHandleIkGroup(simInt ikGroupHandle);
 VREP_DLLEXPORT simInt simCheckIkGroup(simInt ikGroupHandle,simInt jointCnt,const simInt* jointHandles,simFloat* jointValues,const simInt* jointOptions);
 VREP_DLLEXPORT simInt simHandleDynamics(simFloat deltaTime);
-VREP_DLLEXPORT simInt simGetMechanismHandle(const simChar* mechanismName);
-VREP_DLLEXPORT simInt simHandleMechanism(simInt mechanismHandle);
 VREP_DLLEXPORT simInt simGetScriptHandle(const simChar* scriptName);
 VREP_DLLEXPORT simInt simSetScriptText(simInt scriptHandle,const simChar* scriptText);
 VREP_DLLEXPORT const simChar* simGetScriptText(simInt scriptHandle);
@@ -181,7 +179,7 @@ VREP_DLLEXPORT simInt simGetDialogResult(simInt genericDialogHandle);
 VREP_DLLEXPORT simChar* simGetDialogInput(simInt genericDialogHandle);
 VREP_DLLEXPORT simInt simEndDialog(simInt genericDialogHandle);
 VREP_DLLEXPORT simInt simRegisterScriptCallbackFunction(const simChar* funcNameAtPluginName,const simChar* callTips,simVoid(*callBack)(struct SScriptCallBack* cb));
-VREP_DLLEXPORT simInt simRegisterScriptVariable(const simChar* varName,const simChar* varValue,simInt stackHandle);
+VREP_DLLEXPORT simInt simRegisterScriptVariable(const simChar* varNameAtPluginName,const simChar* varValue,simInt stackHandle);
 VREP_DLLEXPORT simInt simSetJointTargetVelocity(simInt objectHandle,simFloat targetVelocity);
 VREP_DLLEXPORT simInt simGetJointTargetVelocity(simInt objectHandle,simFloat* targetVelocity);
 VREP_DLLEXPORT simInt simSetPathTargetNominalVelocity(simInt objectHandle,simFloat targetNominalVelocity);
@@ -350,7 +348,6 @@ VREP_DLLEXPORT simInt simScaleObject(simInt objectHandle,simFloat xScale,simFloa
 VREP_DLLEXPORT simInt simSetShapeTexture(simInt shapeHandle,simInt textureId,simInt mappingMode,simInt options,const simFloat* uvScaling,const simFloat* position,const simFloat* orientation);
 VREP_DLLEXPORT simInt simGetShapeTextureId(simInt shapeHandle);
 VREP_DLLEXPORT simInt* simGetCollectionObjects(simInt collectionHandle,simInt* objectCount);
-VREP_DLLEXPORT simInt simHandleCustomizationScripts(simInt callType);
 VREP_DLLEXPORT simInt simSetScriptAttribute(simInt scriptHandle,simInt attributeID,simFloat floatVal,simInt intOrBoolVal);
 VREP_DLLEXPORT simInt simGetScriptAttribute(simInt scriptHandle,simInt attributeID,simFloat* floatVal,simInt* intOrBoolVal);
 VREP_DLLEXPORT simInt simReorientShapeBoundingBox(simInt shapeHandle,simInt relativeToHandle,simInt reservedSetToZero);
@@ -367,7 +364,6 @@ VREP_DLLEXPORT simInt simTransformImage(simUChar* image,const simInt* resolution
 VREP_DLLEXPORT simInt simGetQHull(const simFloat* inVertices,simInt inVerticesL,simFloat** verticesOut,simInt* verticesOutL,simInt** indicesOut,simInt* indicesOutL,simInt reserved1,const simFloat* reserved2);
 VREP_DLLEXPORT simInt simGetDecimatedMesh(const simFloat* inVertices,simInt inVerticesL,const simInt* inIndices,simInt inIndicesL,simFloat** verticesOut,simInt* verticesOutL,simInt** indicesOut,simInt* indicesOutL,simFloat decimationPercent,simInt reserved1,const simFloat* reserved2);
 VREP_DLLEXPORT simInt simExportIk(const simChar* pathAndFilename,simInt reserved1,simVoid* reserved2);
-VREP_DLLEXPORT simInt simCallScriptFunction(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull);
 VREP_DLLEXPORT simInt simCallScriptFunctionEx(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,simInt stackId);
 VREP_DLLEXPORT simInt simComputeJacobian(simInt ikGroupHandle,simInt options,simVoid* reserved);
 VREP_DLLEXPORT simInt simGetConfigForTipPose(simInt ikGroupHandle,simInt jointCnt,const simInt* jointHandles,simFloat thresholdDist,simInt maxTimeInMs,simFloat* retConfig,const simFloat* metric,simInt collisionPairCnt,const simInt* collisionPairs,const simInt* jointOptions,const simFloat* lowLimits,const simFloat* ranges,simVoid* reserved);
@@ -441,6 +437,11 @@ VREP_DLLEXPORT simChar* simGetApiFunc(simInt scriptHandleOrType,const simChar* a
 VREP_DLLEXPORT simChar* simGetApiInfo(simInt scriptHandleOrType,const simChar* apiWord);
 VREP_DLLEXPORT simInt simSetModuleInfo(const simChar* moduleName,simInt infoType,const simChar* stringInfo,simInt intInfo);
 VREP_DLLEXPORT simInt simGetModuleInfo(const simChar* moduleName,simInt infoType,simChar** stringInfo,simInt* intInfo);
+VREP_DLLEXPORT simInt simIsDeprecated(const simChar* funcOrConst);
+VREP_DLLEXPORT simChar* simGetPersistentDataTags(simInt* tagCount);
+VREP_DLLEXPORT simInt simEventNotification(const simChar* event);
+
+
 
 
 VREP_DLLEXPORT simInt _simGetContactCallbackCount();
@@ -607,6 +608,10 @@ VREP_DLLEXPORT simInt simRegisterCustomLuaFunction(const simChar* funcName,const
 VREP_DLLEXPORT simInt simRegisterCustomLuaVariable(const simChar* varName,const simChar* varValue);
 VREP_DLLEXPORT simInt simRegisterContactCallback(simInt(*callBack)(simInt,simInt,simInt,simInt*,simFloat*));
 VREP_DLLEXPORT simInt simRegisterJointCtrlCallback(simInt(*callBack)(simInt,simInt,simInt,const simInt*,const simFloat*,simFloat*));
+VREP_DLLEXPORT simInt simGetMechanismHandle(const simChar* mechanismName);
+VREP_DLLEXPORT simInt simHandleMechanism(simInt mechanismHandle);
+VREP_DLLEXPORT simInt simHandleCustomizationScripts(simInt callType);
+VREP_DLLEXPORT simInt simCallScriptFunction(simInt scriptHandleOrType,const simChar* functionNameAtScriptName,SLuaCallBack* data,const simChar* reservedSetToNull);
 // Deprecated end
 
 #endif // !defined(V_REP_INCLUDED_)

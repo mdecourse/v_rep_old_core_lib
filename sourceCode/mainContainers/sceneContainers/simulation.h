@@ -47,6 +47,7 @@ public:
 
     void incrementStopRequestCounter();
     int getStopRequestCounter();
+    bool didStopRequestCounterChangeSinceSimulationStart();
 
     bool canGoSlower();
     bool canGoFaster();
@@ -172,4 +173,5 @@ private:
     bool _dynamicContentVisualizationOnly;
 
     int _stopRequestCounter;
+    int _stopRequestCounterAtSimulationStart;
 };

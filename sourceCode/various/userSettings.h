@@ -81,8 +81,7 @@ public:
     bool navigationBackwardCompatibility;
     float colorAdjust_backCompatibility;
     bool specificGpuTweak;
-    bool enableOldPathPlanningGui;
-    bool enableOldMotionPlanningGui;
+    bool enableOldCalcModuleGuis;
     bool useAlternateSerialPortRoutines;
     bool enableOpenGlBasedCustomUiEditor;
     bool enableOldCustomContactHandlingEdition;
@@ -115,6 +114,7 @@ public:
     bool doNotShowSceneSelectionThumbnails;
     bool doNotShowProgressBars;
     bool doNotShowAcknowledgmentMessages;
+    bool doNotShowVideoCompressionLibraryLoadError;
     bool redirectStatusbarMsgToConsoleInHeadlessMode;
 
     std::string scriptEditorFont;

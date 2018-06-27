@@ -38,13 +38,9 @@ void CHelpMenu::addMenu(VMenu* menu)
     if (CHelpMenuBase::handleVerSpec_addMenu2())
     {
         VMenu* debugMenu=new VMenu();
-        debugMenu->appendMenuItem(true,CSimAndUiThreadSync::getShowActivityInConsole(),SHOW_GUI_SIM_THREAD_SYNC_ACTIVITY_DEBUG_CMD,IDSN_SHOW_GUI_SIM_THREAD_SYNC_ACTIVITY_DEBUG_MENU_ITEM,true);
-        debugMenu->appendMenuItem(true,CSimAndUiThreadSync::getShowLockFailsActivityInConsole(),SHOW_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY_DEBUG_CMD,IDSN_SHOW_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY_DEBUG_MENU_ITEM,true);
         debugMenu->appendMenuItem(true,CFuncDebug::getDebugMask()&1,SHOW_INTERNAL_FUNCTION_ACCESS_DEBUG_CMD,IDSN_SHOW_INTERNAL_FUNCTION_ACCESS_DEBUG_MENU_ITEM,true);
         debugMenu->appendMenuItem(true,CFuncDebug::getDebugMask()&2,SHOW_C_API_ACCESS_DEBUG_CMD,IDSN_SHOW_C_API_ACCESS_DEBUG_MENU_ITEM,true);
         debugMenu->appendMenuItem(true,CFuncDebug::getDebugMask()&4,SHOW_LUA_API_ACCESS_DEBUG_CMD,IDSN_SHOW_LUA_API_ACCESS_DEBUG_MENU_ITEM,true);
-        debugMenu->appendMenuItem(true,CEasyLock::getShowActivity(),SHOW_EASYLOCK_ACTIVITY_DEBUG_CMD,IDSN_SHOW_EASYLOCK_ACTIVITY_DEBUG_MENU_ITEM,true);
-        debugMenu->appendMenuItem(true,CThreadPool::getShowThreadSwitches(),SHOW_THREAD_SWITCHES_DEBUG_CMD,IDSN_SHOW_THREAD_SWITCHES_DEBUG_MENU_ITEM,true);
         debugMenu->appendMenuItem(true,CDebugLogFile::getDebugToFile(),DEBUG_TO_FILE_DEBUG_CMD,IDSN_SEND_DEBUG_INFO_TO_FILE_MENU_ITEM,true);
         debugMenu->appendMenuSeparator();
         debugMenu->appendMenuItem(true,!CViewableBase::getFrustumCullingEnabled(),DISABLE_FRUSTUM_CULLING_DEBUG_CMD,IDSN_DISABLE_FRUSTUM_CULLING_DEBUG_MENU_ITEM,true);
@@ -102,24 +98,6 @@ bool CHelpMenu::processCommand(int commandID)
         }
         return(true);
     }
-    if (commandID==SHOW_GUI_SIM_THREAD_SYNC_ACTIVITY_DEBUG_CMD)
-    {
-        IF_UI_EVENT_CAN_READ_DATA_CMD("SHOW_GUI_SIM_THREAD_SYNC_ACTIVITY_DEBUG_CMD")
-        {
-            CSimAndUiThreadSync::setShowActivityInConsole(!CSimAndUiThreadSync::getShowActivityInConsole());
-            App::userSettings->saveUserSettings();
-        }
-        return(true);
-    }
-    if (commandID==SHOW_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY_DEBUG_CMD)
-    {
-        IF_UI_EVENT_CAN_READ_DATA_CMD("SHOW_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY_DEBUG_CMD")
-        {
-            CSimAndUiThreadSync::setShowLockFailsActivityInConsole(!CSimAndUiThreadSync::getShowLockFailsActivityInConsole());
-            App::userSettings->saveUserSettings();
-        }
-        return(true);
-    }
     if (commandID==SHOW_INTERNAL_FUNCTION_ACCESS_DEBUG_CMD)
     {
         IF_UI_EVENT_CAN_READ_DATA_CMD("SHOW_INTERNAL_FUNCTION_ACCESS_DEBUG_CMD")
@@ -143,24 +121,6 @@ bool CHelpMenu::processCommand(int commandID)
         IF_UI_EVENT_CAN_READ_DATA_CMD("SHOW_LUA_API_ACCESS_DEBUG_CMD")
         {
             CFuncDebug::setDebugMask(CFuncDebug::getDebugMask()^4);
-            App::userSettings->saveUserSettings();
-        }
-        return(true);
-    }
-    if (commandID==SHOW_EASYLOCK_ACTIVITY_DEBUG_CMD)
-    {
-        IF_UI_EVENT_CAN_READ_DATA_CMD("SHOW_EASYLOCK_ACTIVITY_DEBUG_CMD")
-        {
-            CEasyLock::setShowActivity(!CEasyLock::getShowActivity());
-            App::userSettings->saveUserSettings();
-        }
-        return(true);
-    }
-    if (commandID==SHOW_THREAD_SWITCHES_DEBUG_CMD)
-    {
-        IF_UI_EVENT_CAN_READ_DATA_CMD("SHOW_THREAD_SWITCHES_DEBUG_CMD")
-        {
-            CThreadPool::setShowThreadSwitches(!CThreadPool::getShowThreadSwitches());
             App::userSettings->saveUserSettings();
         }
         return(true);

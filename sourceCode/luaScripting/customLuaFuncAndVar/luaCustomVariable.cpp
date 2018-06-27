@@ -7,13 +7,14 @@ CLuaCustomVariable::CLuaCustomVariable(const char* theFullVariableName,const cha
 {
     _variableName=_getVariableNameFromFull(theFullVariableName);
     _pluginName=_getPluginNameFromFull(theFullVariableName);
-    _noAutocompletion=false;
+    _hasAutocompletion=true;
+    _isDeprecated=(theVariableStackValue==-1);
 
     if (theVariableValue!=NULL)
     { // we register a simple variable
         _variableValue=theVariableValue;
         _variableStackValue=0; // i.e. not using the stack
-        _noAutocompletion=(theVariableStackValue==-1);
+        _hasAutocompletion=(theVariableStackValue!=-1);
     }
     else
     {
@@ -28,12 +29,12 @@ CLuaCustomVariable::~CLuaCustomVariable()
         App::ct->interfaceStackContainer->destroyStack(_variableStackValue);
 }
 
-bool CLuaCustomVariable::getNoAutoCompletion()
+bool CLuaCustomVariable::getHasAutoCompletion() const
 {
-    return(_noAutocompletion);
+    return(_hasAutocompletion);
 }
 
-void CLuaCustomVariable::pushVariableOntoLuaStack(luaWrap_lua_State* L,bool handleOnlyRequireAssignments)
+void CLuaCustomVariable::pushVariableOntoLuaStack(luaWrap_lua_State* L,bool handleOnlyRequireAssignments) const
 {
     if (_variableStackValue==0)
     { // simple variable
@@ -51,32 +52,45 @@ void CLuaCustomVariable::pushVariableOntoLuaStack(luaWrap_lua_State* L,bool hand
     }
     else
     { // stack variable
-        if (!handleOnlyRequireAssignments)
+        if (_variableStackValue!=0)
         {
-            CInterfaceStack* stack=App::ct->interfaceStackContainer->getStack(_variableStackValue);
-            stack->buildOntoLuaStack(L,true);
-            luaWrap_lua_setglobal(L,_variableName.c_str());
+            if (!handleOnlyRequireAssignments)
+            {
+                CInterfaceStack* stack=App::ct->interfaceStackContainer->getStack(_variableStackValue);
+                stack->buildOntoLuaStack(L,true);
+                luaWrap_lua_setglobal(L,_variableName.c_str());
+            }
         }
     }
 }
 
-bool CLuaCustomVariable::isVariableNameSame(const char* fullName)
+bool CLuaCustomVariable::isVariableNameSame(const char* fullName) const
 {
     std::string varName(_getVariableNameFromFull(fullName));
     return(_variableName.compare(varName)==0);
 }
 
-bool CLuaCustomVariable::shouldBeDestroyed(const char* pluginName)
+bool CLuaCustomVariable::isPluginNameSame(const char* plugName) const
+{
+    return(_pluginName.compare(plugName)==0);
+}
+
+bool CLuaCustomVariable::isDeprecated() const
+{
+    return(_isDeprecated);
+}
+
+bool CLuaCustomVariable::shouldBeDestroyed(const char* pluginName) const
 {
     return(_pluginName.compare(pluginName)==0);
 }
 
-std::string CLuaCustomVariable::getVariableName()
+std::string CLuaCustomVariable::getVariableName() const
 {
     return(_variableName);
 }
 
-std::string CLuaCustomVariable::_getVariableNameFromFull(const char* fullName)
+std::string CLuaCustomVariable::_getVariableNameFromFull(const char* fullName) const
 {
     std::string f(fullName);
     size_t p=f.find('@');
@@ -86,7 +100,7 @@ std::string CLuaCustomVariable::_getVariableNameFromFull(const char* fullName)
     return(subF);
 }
 
-std::string CLuaCustomVariable::_getPluginNameFromFull(const char* fullName)
+std::string CLuaCustomVariable::_getPluginNameFromFull(const char* fullName) const
 {
     std::string f(fullName);
     size_t p=f.find('@');

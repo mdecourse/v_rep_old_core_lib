@@ -72,4 +72,5 @@ public:
         #endif
         return(retStr);
     }
+    static void handleVerSpecStatusBarMsg(const char* txt,bool html,bool scriptErrorMsg) {}
 };

@@ -250,7 +250,7 @@ CScintillaUserModalDlg::CScintillaUserModalDlg(const std::string& xmlInfo,QWidge
                 _allKeywords2+=App::ct->luaCustomFuncAndVarContainer->allCustomVariables[i]->getVariableName();
                 SScintillaUserKeyword b;
                 b.keyword=App::ct->luaCustomFuncAndVarContainer->allCustomVariables[i]->getVariableName();
-                b.autocomplete=!App::ct->luaCustomFuncAndVarContainer->allCustomVariables[i]->getNoAutoCompletion();
+                b.autocomplete=App::ct->luaCustomFuncAndVarContainer->allCustomVariables[i]->getHasAutoCompletion();
                 b.callTip="";
                 _keywords2.push_back(b);
             }

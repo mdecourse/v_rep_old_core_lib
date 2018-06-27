@@ -1,4 +1,3 @@
-
 #include "vrepMainHeader.h"
 #include "qdlgcalcdialogcontainer.h"
 #include "ui_qdlgcalcdialogcontainer.h"
@@ -11,39 +10,51 @@
 #include "qdlgpathplanning.h"
 #include "qdlgmotionplanning.h"
 
-#define TOP_BORDER_WIDTH 60
-
 CQDlgCalcDialogContainer::CQDlgCalcDialogContainer(QWidget *parent) :
     CDlgEx(parent),
     ui(new Ui::CQDlgCalcDialogContainer)
 {
     _dlgType=CALCULATION_DLG;
     ui->setupUi(this);
+
+    if (App::userSettings->enableOldCalcModuleGuis)
+        topBorderWidth=60;
+    else
+    {
+        topBorderWidth=35;
+        QRect geom=ui->qqGroupBox->geometry();
+        geom.setHeight(57);
+        ui->qqGroupBox->setGeometry(geom);
+    }
+    ui->qqPathPlanning->setVisible(App::userSettings->enableOldCalcModuleGuis);
+    ui->qqMotionPlanning->setVisible(App::userSettings->enableOldCalcModuleGuis);
+    ui->qqGcs->setVisible(App::userSettings->enableOldCalcModuleGuis);
+
     pageDlgs[0]=new CQDlgCollisions();
     originalHeights[0]=pageDlgs[0]->size().height();
 
     pageDlgs[1]=new CQDlgDistances();
     originalHeights[1]=pageDlgs[1]->size().height();
 
-    pageDlgs[2]=new CQDlgMotionPlanning();
+    pageDlgs[2]=new CQDlgIk();
     originalHeights[2]=pageDlgs[2]->size().height();
 
-    pageDlgs[3]=new CQDlgPathPlanning();
+    pageDlgs[3]=new CQDlgDynamics();
     originalHeights[3]=pageDlgs[3]->size().height();
 
-    pageDlgs[4]=new CQDlgIk();
+    pageDlgs[4]=new CQDlgPathPlanning();
     originalHeights[4]=pageDlgs[4]->size().height();
 
-    pageDlgs[5]=new CQDlgConstraintSolver();
+    pageDlgs[5]=new CQDlgMotionPlanning();
     originalHeights[5]=pageDlgs[5]->size().height();
 
-    pageDlgs[6]=new CQDlgDynamics();
+    pageDlgs[6]=new CQDlgConstraintSolver();
     originalHeights[6]=pageDlgs[6]->size().height();
 
     currentPage=0;
     desiredPage=0;
     bl=new QVBoxLayout();
-    bl->setContentsMargins(0,TOP_BORDER_WIDTH,0,0);
+    bl->setContentsMargins(0,topBorderWidth,0,0);
     setLayout(bl);
     bl->addWidget(pageDlgs[0]);
     bl->addWidget(pageDlgs[1]);
@@ -60,27 +71,8 @@ CQDlgCalcDialogContainer::CQDlgCalcDialogContainer(QWidget *parent) :
     pageDlgs[6]->setVisible(false);
 
     QSize s(pageDlgs[currentPage]->size());
-    s.setHeight(originalHeights[currentPage]+TOP_BORDER_WIDTH);
+    s.setHeight(originalHeights[currentPage]+topBorderWidth);
     setFixedSize(s);
-
-/*
-#ifndef WIN_VREP
-    // Since Qt5, we have problems on Linux (resizing-->dlg shifts in position) and Mac (resising-->ugly glitch)
-    // In that case we keep constant-size dialogs.
-    if (QT_VERSION>=0x050000)
-    {
-        int dlgMaxHeight=0;
-        for (int i=0;i<7;i++)
-        {
-            int si=pageDlgs[i]->size().height();
-            if (si>dlgMaxHeight)
-                dlgMaxHeight=si;
-        }
-        s.setHeight(dlgMaxHeight+TOP_BORDER_WIDTH);
-        setFixedSize(s);
-    }
-#endif
-*/
 }
 
 CQDlgCalcDialogContainer::~CQDlgCalcDialogContainer()
@@ -97,11 +89,11 @@ void CQDlgCalcDialogContainer::refresh()
 {
     ui->qqCollision->setChecked(desiredPage==0);
     ui->qqDistance->setChecked(desiredPage==1);
-    ui->qqMotionPlanning->setChecked(desiredPage==2);
-    ui->qqPathPlanning->setChecked(desiredPage==3);
-    ui->qqIk->setChecked(desiredPage==4);
-    ui->qqGcs->setChecked(desiredPage==5);
-    ui->qqDynamics->setChecked(desiredPage==6);
+    ui->qqIk->setChecked(desiredPage==2);
+    ui->qqDynamics->setChecked(desiredPage==3);
+    ui->qqPathPlanning->setChecked(desiredPage==4);
+    ui->qqMotionPlanning->setChecked(desiredPage==5);
+    ui->qqGcs->setChecked(desiredPage==6);
 
     if (desiredPage!=currentPage)
     {
@@ -110,37 +102,9 @@ void CQDlgCalcDialogContainer::refresh()
         pageDlgs[currentPage]->setVisible(true);
 
         QSize s(pageDlgs[currentPage]->size());
-        s.setHeight(originalHeights[currentPage]+TOP_BORDER_WIDTH);
+        s.setHeight(originalHeights[currentPage]+topBorderWidth);
 
-#ifdef MAC_VREP
-        if (QT_VERSION>=0x050000)
-        { // Since Qt5, we have problems on Mac (resising-->ugly glitch)
-            setVisible(false);
-            setFixedSize(s);
-            setVisible(true);
-        }
-        else
-            setFixedSize(s);
-#else
         setFixedSize(s);
-#endif
-
-/*
-#ifdef WIN_VREP
-        // Since Qt5, we have problems on Linux (resizing-->dlg shifts in position) and Mac (resising-->ugly glitch)
-        // In that case we keep constant-size dialogs.
-        QSize s(pageDlgs[currentPage]->size());
-        s.setHeight(originalHeights[currentPage]+TOP_BORDER_WIDTH);
-        setFixedSize(s);
-#else
-        if (QT_VERSION<0x050000)
-        {
-            QSize s(pageDlgs[currentPage]->size());
-            s.setHeight(originalHeights[currentPage]+TOP_BORDER_WIDTH);
-            setFixedSize(s);
-        }
-#endif
-*/
     }
     pageDlgs[currentPage]->refresh();
 }
@@ -163,7 +127,7 @@ void CQDlgCalcDialogContainer::on_qqDistance_clicked()
     }
 }
 
-void CQDlgCalcDialogContainer::on_qqMotionPlanning_clicked()
+void CQDlgCalcDialogContainer::on_qqIk_clicked()
 {
     IF_UI_EVENT_CAN_READ_DATA
     {
@@ -172,7 +136,7 @@ void CQDlgCalcDialogContainer::on_qqMotionPlanning_clicked()
     }
 }
 
-void CQDlgCalcDialogContainer::on_qqPathPlanning_clicked()
+void CQDlgCalcDialogContainer::on_qqDynamics_clicked()
 {
     IF_UI_EVENT_CAN_READ_DATA
     {
@@ -181,7 +145,7 @@ void CQDlgCalcDialogContainer::on_qqPathPlanning_clicked()
     }
 }
 
-void CQDlgCalcDialogContainer::on_qqIk_clicked()
+void CQDlgCalcDialogContainer::on_qqPathPlanning_clicked()
 {
     IF_UI_EVENT_CAN_READ_DATA
     {
@@ -190,7 +154,7 @@ void CQDlgCalcDialogContainer::on_qqIk_clicked()
     }
 }
 
-void CQDlgCalcDialogContainer::on_qqGcs_clicked()
+void CQDlgCalcDialogContainer::on_qqMotionPlanning_clicked()
 {
     IF_UI_EVENT_CAN_READ_DATA
     {
@@ -199,7 +163,7 @@ void CQDlgCalcDialogContainer::on_qqGcs_clicked()
     }
 }
 
-void CQDlgCalcDialogContainer::on_qqDynamics_clicked()
+void CQDlgCalcDialogContainer::on_qqGcs_clicked()
 {
     IF_UI_EVENT_CAN_READ_DATA
     {
@@ -207,3 +171,4 @@ void CQDlgCalcDialogContainer::on_qqDynamics_clicked()
         refresh();
     }
 }
+

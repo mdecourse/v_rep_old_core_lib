@@ -144,6 +144,7 @@ void CSimulation::simulationAboutToStart()
     _threadedRenderingToggle=false;
     _threadedRenderingMessageShown=false;
     _desiredFasterOrSlowerSpeed=0;
+    _stopRequestCounterAtSimulationStart=_stopRequestCounter;
     #ifdef SIM_WITH_GUI
         if ( (App::mainWindow!=NULL) && App::userSettings->sceneHierarchyHiddenDuringSimulation )
         {
@@ -782,6 +783,11 @@ int CSimulation::getStopRequestCounter()
     return(_stopRequestCounter);
 }
 
+bool CSimulation::didStopRequestCounterChangeSinceSimulationStart()
+{
+    return(_stopRequestCounter!=_stopRequestCounterAtSimulationStart);
+}
+
 bool CSimulation::processCommand(int commandID)
 { // Return value is true if the command belonged to hierarchy menu and was executed
     if (commandID==SIMULATION_COMMANDS_TOGGLE_REAL_TIME_SIMULATION_SCCMD)
@@ -940,14 +946,6 @@ bool CSimulation::processCommand(int commandID)
         }
         else
         { // We are in the UI thread. Execute the command via the main thread:
-/*
- * testing
-            CThreadPool::setSimulationEmergencyStop(true);
-            CThreadPool::forceAutomaticThreadSwitch_simulationEnding(); // 21/6/2014
-            App::ct->simulatorMessageQueue->addCommand(sim_message_simulation_stop_request,0,0,0,0,NULL,0);
-            incrementStopRequestCounter();
-*/
-
             SSimulationThreadCommand cmd;
             cmd.cmdId=commandID;
             App::appendSimulationThreadCommand(cmd);

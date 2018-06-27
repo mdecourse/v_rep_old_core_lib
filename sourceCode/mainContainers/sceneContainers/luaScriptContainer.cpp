@@ -115,6 +115,27 @@ void CLuaScriptContainer::addCallbackStructureObjectToDestroyAtTheEndOfSimulatio
 {
     _callbackStructureToDestroyAtEndOfSimulation_old.push_back(object);
 }
+
+void CLuaScriptContainer::resetScriptFlagCalledInThisSimulationStep()
+{
+    for (size_t i=0;i<allScripts.size();i++)
+        allScripts[i]->setCalledInThisSimulationStep(false);
+}
+
+int CLuaScriptContainer::getCalledScriptsCountInThisSimulationStep(int scriptType)
+{
+    int cnt=0;
+    for (size_t i=0;i<allScripts.size();i++)
+    {
+        bool threaded=(scriptType==(sim_scripttype_childscript|sim_scripttype_threaded));
+        if (threaded)
+            scriptType=sim_scripttype_childscript;
+        if ( (allScripts[i]->getScriptType()==scriptType)&&(allScripts[i]->getThreadedExecution()==threaded)&&allScripts[i]->getCalledInThisSimulationStep() )
+            cnt++;
+    }
+    return(cnt);
+}
+
 int CLuaScriptContainer::removeDestroyedScripts(int scriptType)
 {
     FUNCTION_DEBUG;
@@ -153,53 +174,26 @@ int CLuaScriptContainer::getMainScriptExecTimeInMs() const
     return(VDateTime::getTimeDiffInMs(_mainScriptStartTimeInMs));
 }
 
-void CLuaScriptContainer::checkIfContactCallbackFunctionAvailable()
+bool CLuaScriptContainer::isContactCallbackFunctionAvailable()
 {
-    _objectIdContactCallbackFunctionAvailable=-1;
     for (size_t i=0;i<allScripts.size();i++)
-    { // we prioritize child scripts:
-        CLuaScriptObject* it=allScripts[i];
-        if ( (it->getScriptType()==sim_scripttype_childscript)&&it->getContainsContactCallbackFunction()&&(!it->getThreadedExecution()))
-            _objectIdContactCallbackFunctionAvailable=it->getObjectIDThatScriptIsAttachedTo_child();
-    }
-    if (_objectIdContactCallbackFunctionAvailable==-1)
-    { // then we check customization scripts:
-        for (size_t i=0;i<allScripts.size();i++)
-        {
-            CLuaScriptObject* it=allScripts[i];
-            if ( (it->getScriptType()==sim_scripttype_customizationscript)&&it->getContainsContactCallbackFunction())
-                _objectIdContactCallbackFunctionAvailable=it->getObjectIDThatScriptIsAttachedTo_customization();
-        }
-    }
-}
-
-void CLuaScriptContainer::checkAvailableDynCallbackFunctions()
-{
-    _objectIdsWhereDynCallbackFunctionsAvailable.clear();
-    for (size_t i=0;i<App::ct->objCont->objectList.size();i++)
     {
-        int objId=App::ct->objCont->objectList[i];
-        bool addIt=false;
-        CLuaScriptObject* it=getScriptFromObjectAttachedTo_child(objId);
-        addIt=( (it!=NULL)&&it->getContainsDynCallbackFunction()&&(!it->getThreadedExecution()) );
-        if (!addIt)
-        {
-            it=getScriptFromObjectAttachedTo_customization(objId);
-            addIt=( (it!=NULL)&&it->getContainsDynCallbackFunction() );
-        }
-        if (addIt)
-            _objectIdsWhereDynCallbackFunctionsAvailable.push_back(objId);
+        CLuaScriptObject* it=allScripts[i];
+        if (it->getContainsContactCallbackFunction())
+            return(true);
     }
+    return(false);
 }
 
-int CLuaScriptContainer::getObjectIdContactCallbackFunctionAvailable() const
+bool CLuaScriptContainer::isDynCallbackFunctionAvailable()
 {
-    return(_objectIdContactCallbackFunctionAvailable);
-}
-
-const std::vector<int>* CLuaScriptContainer::getObjectIdsWhereDynCallbackFunctionsAvailable() const
-{
-    return(&_objectIdsWhereDynCallbackFunctionsAvailable);
+    for (size_t i=0;i<allScripts.size();i++)
+    {
+        CLuaScriptObject* it=allScripts[i];
+        if (it->getContainsDynCallbackFunction())
+            return(true);
+    }
+    return(false);
 }
 
 void CLuaScriptContainer::removeAllScripts()
@@ -422,20 +416,17 @@ int CLuaScriptContainer::insertDefaultScript_mainAndChildScriptsOnly(int scriptT
 void CLuaScriptContainer::callAddOnMainChildCustomizationWithData(int callType,CInterfaceStack* inStack)
 {
     FUNCTION_DEBUG;
-    // 1. Add-ons
-    App::ct->addOnScriptContainer->callAddOnWithData(callType,inStack);
-    CLuaScriptObject* script=NULL;
     if (!App::ct->simulation->isSimulationStopped())
     {
-        // 2. Main script:
-        script=getMainScript();
+        CLuaScriptObject* script=getMainScript();
         if (script!=NULL)
+        {
             script->runMainScript(callType,inStack,NULL);
-        // 3. Non-threaded child scripts:
-        handleNonThreadedChildScript_specialCall(callType,inStack,NULL);
+            handleCascadedScriptExecution(sim_scripttype_childscript,callType,inStack,NULL,NULL);
+        }
     }
-    // 4. Customization scripts:
-    handleCustomizationScriptExecution(callType,inStack,NULL);
+    handleCascadedScriptExecution(sim_scripttype_customizationscript,callType,inStack,NULL,NULL);
+    App::ct->addOnScriptContainer->handleAddOnScriptExecution(callType,inStack,NULL);
 }
 
 void CLuaScriptContainer::sceneOrModelAboutToBeSaved(int modelBase)
@@ -472,66 +463,111 @@ void CLuaScriptContainer::sceneOrModelAboutToBeSaved(int modelBase)
         }
     }
 }
-void CLuaScriptContainer::handleNonThreadedChildScript_specialCall(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack)
+
+int CLuaScriptContainer::_getScriptsToExecute(int scriptType,std::vector<CLuaScriptObject*>& scripts) const
 {
-    // Do 3 loops, for the first, normal and last execution order.
-    // We always go through the whole scripts, since some scripts might be destroyed
-    // on the way:
-    for (int priority=sim_scriptexecorder_first;priority<=sim_scriptexecorder_last;priority++)
+    std::vector<C3DObject*> orderFirst;
+    std::vector<C3DObject*> orderNormal;
+    std::vector<C3DObject*> orderLast;
+    std::vector<std::vector<C3DObject*>* > toHandle;
+    toHandle.push_back(&orderFirst);
+    toHandle.push_back(&orderNormal);
+    toHandle.push_back(&orderLast);
+    for (size_t i=0;i<App::ct->objCont->orphanList.size();i++)
     {
-        for (size_t i=0;i<allScripts.size();i++)
+        C3DObject* it=App::ct->objCont->getObject(App::ct->objCont->orphanList[i]);
+        toHandle[it->getScriptExecutionOrder(scriptType)]->push_back(it);
+    }
+    for (size_t i=0;i<toHandle.size();i++)
+    {
+        for (size_t j=0;j<toHandle[i]->size();j++)
+            toHandle[i]->at(j)->getScriptsToExecute(scriptType,sim_scripttreetraversal_reverse,scripts);
+    }
+    return(int(scripts.size()));
+}
+
+int CLuaScriptContainer::handleCascadedScriptExecution(int scriptType,int callTypeOrResumeLocation,CInterfaceStack* inStack,CInterfaceStack* outStack,int* retInfo)
+{
+    int cnt=0;
+    if (retInfo!=NULL)
+        retInfo[0]=0;
+    std::vector<CLuaScriptObject*> scripts;
+    _getScriptsToExecute(scriptType,scripts);
+    for (size_t i=0;i<scripts.size();i++)
+    {
+        CLuaScriptObject* script=scripts[i];
+        if (!script->getScriptIsDisabled())
         {
-            CLuaScriptObject* it=allScripts[i];
-            if ( (it->getScriptType()==sim_scripttype_childscript)&&(it->getExecutionOrder()==priority)&&(!it->getThreadedExecution()) )
+            if (scriptType==sim_scripttype_customizationscript)
             {
-                C3DObject* obj=App::ct->objCont->getObject(it->getObjectIDThatScriptIsAttachedTo_child());
-                if (obj!=NULL) // we could still run it in that situation, but is not desired, since the script itself will shortly be destroyed.. or is unattached!
+                bool doIt=true;
+                if ( (callTypeOrResumeLocation==sim_syscb_dyncallback)&&(!script->getContainsDynCallbackFunction()) )
+                    doIt=false;
+                if ( (callTypeOrResumeLocation==sim_syscb_contactcallback)&&(!script->getContainsContactCallbackFunction()) )
+                    doIt=false;
+                if (doIt)
                 {
-                    if (it->runNonThreadedChildScript(callType,inStack,outStack))
+                    if (script->runCustomizationScript(callTypeOrResumeLocation,inStack,outStack)==1)
                     {
-                        if (outStack!=NULL)
-                            return;
+                        cnt++;
+                        if (callTypeOrResumeLocation==sim_syscb_contactcallback)
+                        {
+                            if (retInfo!=NULL)
+                                retInfo[0]=1;
+                            break;
+                        }
+                        if (callTypeOrResumeLocation==sim_syscb_beforemainscript)
+                        {
+                            bool doNotRunMainScript;
+                            if ((outStack!=NULL)&&outStack->getStackMapBoolValue("doNotRunMainScript",doNotRunMainScript))
+                            {
+                                if (doNotRunMainScript)
+                                {
+                                    if (retInfo!=NULL)
+                                        retInfo[0]=1;
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
-    }
-}
-
-int CLuaScriptContainer::handleCustomizationScriptExecution(int callType,CInterfaceStack* inStack,CInterfaceStack* outStack)
-{ // returns the number of different customization scripts executed
-    int retVal=0;
-
-    // Do 3 loops, for the first, normal and last execution order.
-    // We always go through the whole scripts, since some scripts might be destroyed
-    // on the way:
-    bool breakOut=false;
-    for (int priority=sim_scriptexecorder_first;priority<=sim_scriptexecorder_last;priority++)
-    {
-        for (size_t i=0;i<allScripts.size();i++)
-        {
-            CLuaScriptObject* it=allScripts[i];
-            if ( (it->getScriptType()==sim_scripttype_customizationscript)&&(it->getExecutionOrder()==priority) )
+            else if ((scriptType&sim_scripttype_childscript)!=0)
             {
-                C3DObject* obj=App::ct->objCont->getObject(it->getObjectIDThatScriptIsAttachedTo_customization());
-                if (obj!=NULL) // we could still run it in that situation, but is not desired, since the script itself will shortly be destroyed.. or is unattached!
+                if (script->getThreadedExecution())
                 {
-                    if (it->runCustomizationScript(callType,inStack,outStack))
+                    if (callTypeOrResumeLocation==sim_scriptthreadresume_launch)
                     {
-                        retVal++;
-                        if (outStack!=NULL)
+                        if (script->launchThreadedChildScript())
+                            cnt++;
+                    }
+                    else
+                        cnt+=script->resumeThreadedChildScriptIfLocationMatch(callTypeOrResumeLocation);
+                }
+                else
+                {
+                    bool doIt=true;
+                    if ( (callTypeOrResumeLocation==sim_syscb_dyncallback)&&(!script->getContainsDynCallbackFunction()) )
+                        doIt=false;
+                    if ( (callTypeOrResumeLocation==sim_syscb_contactcallback)&&(!script->getContainsContactCallbackFunction()) )
+                        doIt=false;
+                    if (doIt)
+                    {
+                        if (script->runNonThreadedChildScript(callTypeOrResumeLocation,inStack,outStack)==1)
                         {
-                            breakOut=true;
-                            break;
+                            cnt++;
+                            if (callTypeOrResumeLocation==sim_syscb_contactcallback)
+                            {
+                                if (retInfo!=NULL)
+                                    retInfo[0]=1;
+                                break;
+                            }
                         }
                     }
                 }
             }
         }
-        if (breakOut)
-            break;
     }
-    return(retVal);
+    return(cnt);
 }
 
 int CLuaScriptContainer::getScriptSimulationParameter_mainAndChildScriptsOnly(int scriptHandle,const char* parameterName,std::string& parameterValue) const

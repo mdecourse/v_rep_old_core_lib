@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>380</width>
-    <height>363</height>
+    <height>404</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,7 +38,7 @@
      <x>10</x>
      <y>240</y>
      <width>361</width>
-     <height>111</height>
+     <height>151</height>
     </rect>
    </property>
    <property name="title">
@@ -115,7 +115,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Execution order</string>
+     <string>Execution priority</string>
     </property>
    </widget>
    <widget class="QComboBox" name="qqExecutionOrder">
@@ -142,6 +142,52 @@
     </property>
     <property name="text">
      <string>Disable with error</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="qqTreeTraversalDirection">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>100</y>
+      <width>211</width>
+      <height>18</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>100</y>
+      <width>131</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Tree traversal</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="qqDebugMode">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>120</y>
+      <width>211</width>
+      <height>18</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>120</y>
+      <width>131</width>
+      <height>18</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Debug mode</string>
     </property>
    </widget>
   </widget>
@@ -197,6 +243,7 @@
   <tabstop>qqDisableWithError</tabstop>
   <tabstop>qqAssociatedObjectCombo</tabstop>
   <tabstop>qqExecutionOrder</tabstop>
+  <tabstop>qqTreeTraversalDirection</tabstop>
  </tabstops>
  <resources/>
  <connections/>

@@ -56,9 +56,11 @@ public:
     static bool setThreadResumeLocation(int location,int order);
     static bool switchBackToPreviousThread();
     static void switchBackToPreviousThreadIfNeeded();
+    static bool isSwitchBackToPreviousThreadNeeded();
 
     static void prepareAllThreadsForResume_calledBeforeMainScript();
     static int handleAllThreads_withResumeLocation(int location);
+    static int handleThread_ifHasResumeLocation(VTHREAD_ID_TYPE theThread,bool allThreadsWithResumeLocation,int location);
 
     static CVThreadData* getCurrentThreadData();
     static CVThreadData* getThreadData(VTHREAD_ID_TYPE threadId);

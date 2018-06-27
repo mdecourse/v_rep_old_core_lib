@@ -21,21 +21,21 @@ CEnvironment::CEnvironment()
     _sceneIsClosingFlag=false;
     setUpDefaultValues();
     _sceneUniqueID=_nextSceneUniqueID++;
-    generateSceneUniqueUpdatableString();
+    generateNewUniquePersistentIdString();
 }
 
 CEnvironment::~CEnvironment()
 {
 }
 
-void CEnvironment::generateSceneUniqueUpdatableString()
+void CEnvironment::generateNewUniquePersistentIdString()
 {
-    _sceneUniqueUpdatableString=CTTUtil::generateUniqueString();
+    _sceneUniquePersistentIdString=CTTUtil::generateUniqueReadableString();
 }
 
-std::string CEnvironment::getSceneUniqueUpdatableString() const
+std::string CEnvironment::getUniquePersistentIdString() const
 {
-    return(_sceneUniqueUpdatableString);
+    return(_sceneUniquePersistentIdString);
 }
 
 int CEnvironment::getNextSceneUniqueId()
@@ -505,7 +505,7 @@ void CEnvironment::serialize(CSer& ar)
         ar.flush();
 
         ar.storeDataName("Ups");
-        ar << _sceneUniqueUpdatableString;
+        ar << _sceneUniquePersistentIdString;
         ar.flush();
 
         ar.storeDataName(SER_END_OF_OBJECT);
@@ -689,10 +689,11 @@ void CEnvironment::serialize(CSer& ar)
                 if (theName.compare("Ups")==0)
                 {
                     noHit=false;
+                    std::string s;
                     ar >> byteQuantity;
-                    ar >> _sceneUniqueUpdatableString;
-                    if (_sceneUniqueUpdatableString.size()==0)
-                        generateSceneUniqueUpdatableString();
+                    ar >> s;
+                    if (s.size()!=0)
+                        _sceneUniquePersistentIdString=s;
                 }
                 if (noHit)
                     ar.loadUnknownData();
@@ -754,6 +755,11 @@ void CEnvironment::reactivateFogThatWasTemporarilyDisabled()
 std::string CEnvironment::getCurrentJob()
 {
     return(_currentJob);
+}
+
+int CEnvironment::getJobCount()
+{
+    return(int(_jobs.size()));
 }
 
 int CEnvironment::getJobIndex(const std::string& name)

@@ -17,6 +17,7 @@ public:
 
     void writeData(const char* dataName,const std::string& value,bool toFile);
     bool readData(const char* dataName,std::string& value);
+    int getAllDataNames(std::vector<std::string>& names);
 
 protected:
     void _writeData(const char* dataName,const std::string& value);

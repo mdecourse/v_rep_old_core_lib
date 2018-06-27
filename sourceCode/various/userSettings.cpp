@@ -62,13 +62,9 @@
 #define _USR_IDLE_FPS "idleFps"
 #define _USR_UNDO_REDO_MAX_BUFFER_SIZE "undoRedoMaxBufferSize"
 #define _USR_ALWAYS_SHOW_CONSOLE "alwaysShowConsole"
-#define _USR_DEBUG_GUI_SIM_THREAD_SYNC_ACTIVITY "debugGuiThreadAndSimThreadSynchronizationActivity"
-#define _USR_DEBUG_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY "debugGuiThreadAndSimThreadSynchronizationLockFailActivity"
 #define _USR_DEBUG_INTERNAL_FUNCTION_ACCESS "debugInternalFunctionAccess"
 #define _USR_DEBUG_C_API_ACCESS "debugCApiAccess"
 #define _USR_DEBUG_LUA_API_ACCESS "debugLuaApiAccess"
-#define _USR_DEBUG_THREAD_SWITCHES "debugThreadSwitches"
-#define _USR_DEBUG_EASYLOCK_ACTIVITY "debugEasylockActivity"
 #define _USR_DEBUG_TO_FILE "sendDebugInformationToFile"
 #define _USR_FORCE_BUG_FIX_REL_30002 "forceBugFix_rel30002"
 #define _USR_ALLOW_TRANSPARENT_DIALOGS  "allowTransparentDialogs"
@@ -85,8 +81,7 @@
 #define _USR_NAVIGATION_BACKWARD_COMPATIBILITY_MODE "navigationBackwardCompatibility"
 #define _USR_COLOR_ADJUST_BACK_COMPATIBILITY "colorAdjust_backCompatibility"
 #define _USR_SPECIFIC_GPU_TWEAK "specificGpuTweak"
-#define _USR_ENABLE_OLD_PATH_PLANNING_GUI "enableOldPathPlanningGui"
-#define _USR_ENABLE_OLD_MOTION_PLANNING_GUI "enableOldMotionPlanningGui"
+#define _USR_ENABLE_OLD_CALC_MODULE_GUIS "enableOldCalcModuleGuis"
 #define _USR_USE_ALTERNATE_SERIAL_PORT_ROUTINES "useAlternateSerialPortRoutines"
 #define _USR_ENABLE_OPENGL_BASED_CUSTOM_UI_EDITOR "enableOpenGlBasedCustomUiEditor"
 #define _USR_CHANGE_SCRIPT_CODE_NEW_API_NOTATION "changeScriptCodeForNewApiNotation"
@@ -247,6 +242,7 @@
 #define _USR_DO_NOT_SHOW_SCENE_SELECTION_THUMBNAILS "doNotShowSceneSelectionThumbnails"
 #define _USR_DO_NOT_SHOW_PROGRESS_BARS "doNotShowProgressBars"
 #define _USR_DO_NOT_SHOW_ACKNOWLEDGMENT_MESSAGES "doNotShowAcknowledgmentMessages"
+#define _USR_DO_NOT_SHOW_VIDEO_COMPRESSION_LIBRARY_LOAD_ERROR "doNotShowVideoCompressionLibraryLoadError"
 #define _USR_REDIRECT_STATUSBAR_MSG_TO_CONSOLE_IN_HEADLESS_MODE "redirectStatusbarMsgToConsoleInHeadlessMode"
 
 #define _USR_SCRIPT_EDITOR_FONT "scriptEditorFont"
@@ -463,6 +459,7 @@ CUserSettings::CUserSettings()
     doNotShowSceneSelectionThumbnails=false;
     doNotShowProgressBars=false;
     doNotShowAcknowledgmentMessages=false;
+    doNotShowVideoCompressionLibraryLoadError=false;
     redirectStatusbarMsgToConsoleInHeadlessMode=false;
 
 
@@ -472,8 +469,7 @@ CUserSettings::CUserSettings()
     navigationBackwardCompatibility=false;
     colorAdjust_backCompatibility=1.0f; // default
     specificGpuTweak=false; // default
-    enableOldPathPlanningGui=false; // default
-    enableOldMotionPlanningGui=false; // default
+    enableOldCalcModuleGuis=false; // default
     useAlternateSerialPortRoutines=false;
     enableOpenGlBasedCustomUiEditor=false;
     changeScriptCodeForNewApiNotation=1;
@@ -681,18 +677,9 @@ void CUserSettings::saveUserSettings()
     c.addRandomLine("// Debugging");
     c.addRandomLine("// =================================================");
     c.addBoolean(_USR_ALWAYS_SHOW_CONSOLE,alwaysShowConsole,"");
-#ifdef SIM_WITHOUT_QT_AT_ALL
-    c.addBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_ACTIVITY,false,"will also slow down V-REP");
-    c.addBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY,false,"");
-#else
-    c.addBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_ACTIVITY,CSimAndUiThreadSync::getShowActivityInConsole(),"will also slow down V-REP");
-    c.addBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY,CSimAndUiThreadSync::getShowLockFailsActivityInConsole(),"");
-#endif
     c.addBoolean(_USR_DEBUG_INTERNAL_FUNCTION_ACCESS,(CFuncDebug::getDebugMask()&1)!=0,"will also heavily slow down V-REP");
     c.addBoolean(_USR_DEBUG_C_API_ACCESS,(CFuncDebug::getDebugMask()&2)!=0,"will also drastically slow down V-REP");
     c.addBoolean(_USR_DEBUG_LUA_API_ACCESS,(CFuncDebug::getDebugMask()&4)!=0,"will also slow down V-REP");
-    c.addBoolean(_USR_DEBUG_THREAD_SWITCHES,CEasyLock::getShowActivity(),"will also slow down V-REP");
-    c.addBoolean(_USR_DEBUG_EASYLOCK_ACTIVITY,CThreadPool::getShowThreadSwitches(),"will also slow down V-REP");
     c.addBoolean(_USR_DEBUG_TO_FILE,CDebugLogFile::getDebugToFile(),"if true, debug info is sent to debugLog.txt");
     c.addRandomLine("");
     c.addRandomLine("");
@@ -914,6 +901,7 @@ void CUserSettings::saveUserSettings()
     c.addBoolean(_USR_DO_NOT_SHOW_SCENE_SELECTION_THUMBNAILS,doNotShowSceneSelectionThumbnails,"");
     c.addBoolean(_USR_DO_NOT_SHOW_PROGRESS_BARS,doNotShowProgressBars,"");
     c.addBoolean(_USR_DO_NOT_SHOW_ACKNOWLEDGMENT_MESSAGES,doNotShowAcknowledgmentMessages,"");
+    c.addBoolean(_USR_DO_NOT_SHOW_VIDEO_COMPRESSION_LIBRARY_LOAD_ERROR,doNotShowVideoCompressionLibraryLoadError,"");
     c.addBoolean(_USR_REDIRECT_STATUSBAR_MSG_TO_CONSOLE_IN_HEADLESS_MODE,redirectStatusbarMsgToConsoleInHeadlessMode,"");
 
 
@@ -927,8 +915,7 @@ void CUserSettings::saveUserSettings()
     c.addBoolean(_USR_NAVIGATION_BACKWARD_COMPATIBILITY_MODE,navigationBackwardCompatibility,"recommended to keep false.");
     c.addFloat(_USR_COLOR_ADJUST_BACK_COMPATIBILITY,colorAdjust_backCompatibility,"recommended to keep 1.0");
     c.addBoolean(_USR_SPECIFIC_GPU_TWEAK,specificGpuTweak,"");
-    c.addBoolean(_USR_ENABLE_OLD_PATH_PLANNING_GUI,enableOldPathPlanningGui,"");
-    c.addBoolean(_USR_ENABLE_OLD_MOTION_PLANNING_GUI,enableOldMotionPlanningGui,"");
+    c.addBoolean(_USR_ENABLE_OLD_CALC_MODULE_GUIS,enableOldCalcModuleGuis,"");
     c.addBoolean(_USR_USE_ALTERNATE_SERIAL_PORT_ROUTINES,useAlternateSerialPortRoutines,"");
     c.addBoolean(_USR_ENABLE_OPENGL_BASED_CUSTOM_UI_EDITOR,enableOpenGlBasedCustomUiEditor,"");
     c.addInteger(_USR_CHANGE_SCRIPT_CODE_NEW_API_NOTATION,changeScriptCodeForNewApiNotation,"1=enabled, 0=disabled.");
@@ -1028,12 +1015,6 @@ void CUserSettings::loadUserSettings()
     // *****************************
     c.getBoolean(_USR_ALWAYS_SHOW_CONSOLE,alwaysShowConsole);
     bool dummyBool=false;
-#ifndef SIM_WITHOUT_QT_AT_ALL
-    if (c.getBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_ACTIVITY,dummyBool))
-        CSimAndUiThreadSync::setShowActivityInConsole(dummyBool);
-    if (c.getBoolean(_USR_DEBUG_GUI_SIM_THREAD_SYNC_FAILS_ACTIVITY,dummyBool))
-        CSimAndUiThreadSync::setShowLockFailsActivityInConsole(dummyBool);
-#endif
     int dummyInt=0;
     if (c.getBoolean(_USR_DEBUG_INTERNAL_FUNCTION_ACCESS,dummyBool))
     {
@@ -1051,10 +1032,6 @@ void CUserSettings::loadUserSettings()
             dummyInt+=4;
     }
     CFuncDebug::setDebugMask(dummyInt);
-    if (c.getBoolean(_USR_DEBUG_THREAD_SWITCHES,dummyBool))
-        CThreadPool::setShowThreadSwitches(dummyBool);
-    if (c.getBoolean(_USR_DEBUG_EASYLOCK_ACTIVITY,dummyBool))
-        CEasyLock::setShowActivity(dummyBool);
     if (c.getBoolean(_USR_DEBUG_TO_FILE,dummyBool))
         CDebugLogFile::setDebugToFile(dummyBool);
 
@@ -1264,6 +1241,7 @@ void CUserSettings::loadUserSettings()
     c.getBoolean(_USR_DO_NOT_SHOW_SCENE_SELECTION_THUMBNAILS,doNotShowSceneSelectionThumbnails);
     c.getBoolean(_USR_DO_NOT_SHOW_PROGRESS_BARS,doNotShowProgressBars);
     c.getBoolean(_USR_DO_NOT_SHOW_ACKNOWLEDGMENT_MESSAGES,doNotShowAcknowledgmentMessages);
+    c.getBoolean(_USR_DO_NOT_SHOW_VIDEO_COMPRESSION_LIBRARY_LOAD_ERROR,doNotShowVideoCompressionLibraryLoadError);
     c.getBoolean(_USR_REDIRECT_STATUSBAR_MSG_TO_CONSOLE_IN_HEADLESS_MODE,redirectStatusbarMsgToConsoleInHeadlessMode);
 
 
@@ -1273,8 +1251,7 @@ void CUserSettings::loadUserSettings()
     c.getBoolean(_USR_NAVIGATION_BACKWARD_COMPATIBILITY_MODE,navigationBackwardCompatibility);
     c.getFloat(_USR_COLOR_ADJUST_BACK_COMPATIBILITY,colorAdjust_backCompatibility);
     c.getBoolean(_USR_SPECIFIC_GPU_TWEAK,specificGpuTweak);
-    c.getBoolean(_USR_ENABLE_OLD_PATH_PLANNING_GUI,enableOldPathPlanningGui);
-    c.getBoolean(_USR_ENABLE_OLD_MOTION_PLANNING_GUI,enableOldMotionPlanningGui);
+    c.getBoolean(_USR_ENABLE_OLD_CALC_MODULE_GUIS,enableOldCalcModuleGuis);
     c.getBoolean(_USR_USE_ALTERNATE_SERIAL_PORT_ROUTINES,useAlternateSerialPortRoutines);
     c.getBoolean(_USR_ENABLE_OPENGL_BASED_CUSTOM_UI_EDITOR,enableOpenGlBasedCustomUiEditor);
     c.getInteger(_USR_CHANGE_SCRIPT_CODE_NEW_API_NOTATION,changeScriptCodeForNewApiNotation);
